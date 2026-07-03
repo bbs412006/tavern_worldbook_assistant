@@ -1,0 +1,15 @@
+{
+  "id": "a33d4634-788a-4fb2-9bb6-ce054e8065d6",
+  "name": "脚本-实时修改",
+  "content": "const __WB_ASSISTANT_URLS__ = [\n  'http://localhost:5500/worldbook_assistant_package/dist/worldbook_assistant_build/index.js?v=20260216-25',\n  'http://localhost:5500/dist/worldbook_assistant_build/index.js?v=20260216-25'\n];\n(async () => {\n  for (const url of __WB_ASSISTANT_URLS__) {\n    try {\n      await import(url);\n      console.info('[WorldbookAssistant] loaded from', url);\n      return;\n    } catch (error) {\n      console.warn('[WorldbookAssistant] failed url', url, error);\n    }\n  }\n  toastr.error('世界书助手加载失败，请检查 localhost:5500 静态服务根目录', 'Worldbook Assistant');\n})();",
+  "info": "",
+  "buttons": []
+}
+
+
+
+
+
+
+
+
