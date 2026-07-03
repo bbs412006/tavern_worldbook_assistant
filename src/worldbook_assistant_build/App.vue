@@ -929,73 +929,26 @@
     <!-- ═══ Desktop Layout ═══ -->
     <template v-if="!isMobile">
 
-    <!-- ═══ Desktop Browse Mode ═══ -->
+    <!-- ═══ Desktop Browse Mode (via BrowsePanel) ═══ -->
     <template v-if="panelMode === 'browse'">
-      <section class="wb-toolbar browse-toolbar">
-        <label class="toolbar-label">
-          <span>世界书</span>
-          <div ref="worldbookPickerRef" class="worldbook-picker">
-            <button class="worldbook-picker-trigger" type="button" @click="toggleWorldbookPicker">
-              <span class="worldbook-picker-trigger-text" :title="selectedWorldbookName || '请选择世界书'">
-                {{ selectedWorldbookName || '请选择世界书' }}
-              </span>
-              <span class="worldbook-picker-trigger-arrow">{{ worldbookPickerOpen ? '▴' : '▾' }}</span>
-            </button>
-            <div v-if="worldbookPickerOpen" class="worldbook-picker-dropdown">
-              <input
-                ref="worldbookPickerSearchInputRef"
-                v-model="worldbookPickerSearchText"
-                type="text"
-                class="text-input worldbook-picker-search"
-                placeholder="搜索世界书..."
-                @keydown.enter.prevent="filteredSelectableWorldbookNames[0] && selectWorldbookFromPicker(filteredSelectableWorldbookNames[0])"
-              />
-              <div class="worldbook-picker-list">
-                <button
-                  v-for="name in filteredSelectableWorldbookNames"
-                  :key="`browse-wb-${name}`"
-                  class="worldbook-picker-item"
-                  :class="{ active: name === selectedWorldbookName }"
-                  type="button"
-                  @click="selectWorldbookFromPicker(name)"
-                >
-                  {{ name }}
-                </button>
-                <div v-if="!filteredSelectableWorldbookNames.length" class="empty-note">没有匹配的世界书</div>
-              </div>
-            </div>
-          </div>
-        </label>
-        <button class="btn" type="button" @click="createNewWorldbook">新建</button>
-        <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="duplicateWorldbook">另存为</button>
-        <button class="btn danger" type="button" :disabled="!selectedWorldbookName" @click="deleteCurrentWorldbook">删除</button>
-        <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook">导出</button>
-        <button class="btn" type="button" @click="triggerImport">导入</button>
-        <input
-          ref="importFileInput"
-          class="hidden-input"
-          type="file"
-          accept=".json,application/json"
-          @change="onImportChange"
-        />
-        <button class="btn" type="button" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾 保存</button>
-        <div class="browse-mode-switch">
-          <button class="btn browse-mode-btn active" type="button">📖 浏览</button>
-          <button class="btn browse-mode-btn" type="button" @click="switchPanelMode('editor')">✏️ 编辑</button>
-        </div>
-      </section>
-
-      <!-- Action bar: search + bindings + new entry + global mode -->
-      <section class="browse-action-bar">
-        <input v-model="searchText" type="text" class="text-input browse-search" placeholder="🔍 搜索名称 / 内容 / 关键词" />
-        <span v-if="bindings.global.length" class="binding-tag global">🟢 全局: {{ bindings.global.join(', ') }}</span>
-        <span v-if="bindings.charPrimary" class="binding-tag char">🔵 角色: {{ bindings.charPrimary }}</span>
-        <span v-if="bindings.chat" class="binding-tag chat">🟡 聊天: {{ bindings.chat }}</span>
-        <span class="browse-action-spacer"></span>
-        <span class="browse-entry-count">条目 {{ filteredEntries.length }} / {{ draftEntries.length }}</span>
-        <button class="btn mini" type="button" :disabled="!selectedWorldbookName" @click="addEntry">+ 新条目</button>
-        <button class="btn mini utility-btn" :class="{ active: globalWorldbookMode }" type="button" @click="toggleGlobalMode">🌐 全局模式</button>
-      </section>
+      <BrowsePanel
+        v-model="selectedWorldbookName"
+        :entries="draftEntries"
+        :worldbookNames="selectableWorldbookNames"
+        :bindings="bindings"
+        :hasUnsavedChanges="hasUnsavedChanges"
+        :isMobile="false"
+        :globalMode="globalWorldbookMode"
+        @create="createNewWorldbook"
+        @duplicate="duplicateWorldbook"
+        @delete="deleteCurrentWorldbook"
+        @export="exportCurrentWorldbook"
+        @import="triggerImport"
+        @save="saveCurrentWorldbook"
+        @switch-mode="switchPanelMode"
+        @add-entry="addEntry"
+        @toggle-global="toggleGlobalMode"
+      />
 
       <!-- Global Mode Panel (reuse existing) -->
       <section v-if="globalWorldbookMode" class="wb-bindings browse-global-mode">
@@ -3498,6 +3451,16 @@
 <script setup lang="ts">
 import { diffLines } from 'https://testingcf.jsdelivr.net/npm/diff/+esm';
 import { klona } from 'klona';
+
+// ── Extracted sub-components ──
+import WorldbookPicker from './components/WorldbookPicker.vue';
+import BrowsePanel from './components/BrowsePanel.vue';
+import EditorPanel from './components/EditorPanel.vue';
+import CrossCopyPanel from './components/CrossCopyPanel.vue';
+import GlobalModePanel from './components/GlobalModePanel.vue';
+import TagManager from './components/TagManager.vue';
+import AIChatPanel from './components/AIChatPanel.vue';
+import SettingPanel from './components/SettingPanel.vue';
 
 type StrategyType = WorldbookEntry['strategy']['type'];
 type SecondaryLogic = WorldbookEntry['strategy']['keys_secondary']['logic'];
