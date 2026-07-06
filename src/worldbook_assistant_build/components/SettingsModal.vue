@@ -134,6 +134,8 @@
 </template>
 
 <script setup lang="ts">
+import './modal-shared.css';
+
 defineProps<{
   persistedState: any;
   fabVisible: boolean;
