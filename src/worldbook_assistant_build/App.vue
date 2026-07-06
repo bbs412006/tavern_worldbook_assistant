@@ -2554,228 +2554,43 @@
 
     <!-- ═══ Shared Modals (both mobile & desktop) ═══ -->
     <!-- 设置弹窗 -->
-    <div v-if="showApiSettings" class="ai-tag-review-overlay" @click.self="showApiSettings = false">
-      <div class="ai-tag-review-modal" style="max-width:520px;">
-        <div class="ai-tag-review-head">
-          <span class="ai-tag-review-title">⚙️ 设置中心</span>
-          <button class="ai-tag-review-close" type="button" @click="showApiSettings = false">×</button>
-        </div>
-        <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:60vh;">
-          <div style="border:1px solid var(--wb-border-subtle,#334155);border-radius:8px;padding:10px;">
-            <div style="font-size:13px;font-weight:600;margin-bottom:8px;">体验设置</div>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:6px;">
-              <input type="checkbox" :checked="fabVisible" @change="setFabVisible(($event.target as HTMLInputElement).checked)" />
-              <span>显示悬浮按钮（📖）</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:6px;">
-              <input type="checkbox" :checked="floorBtnVisible" @change="toggleFloorBtns(($event.target as HTMLInputElement).checked)" />
-              <span>显示楼层提取按钮</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-              <input type="checkbox" :checked="persistedState.show_ai_chat" @change="updatePersistedState(s => s.show_ai_chat = ($event.target as HTMLInputElement).checked)" />
-              <span>显示 AI 对话模块</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:6px;">
-              <input
-                type="checkbox"
-                :checked="persistedState.multi_edit.enabled"
-                @change="updatePersistedState(s => s.multi_edit.enabled = ($event.target as HTMLInputElement).checked)"
-              />
-              <span>启用多选配置联动</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-              <input
-                type="checkbox"
-                :checked="persistedState.multi_edit.sync_extra_json"
-                @change="updatePersistedState(s => s.multi_edit.sync_extra_json = ($event.target as HTMLInputElement).checked)"
-                :disabled="!persistedState.multi_edit.enabled"
-              />
-              <span>多选联动时同步高级字段 / extra JSON</span>
-            </label>
-            <label class="field" style="margin-top:8px;">
-              <span>父标签删除策略</span>
-              <select class="text-input" :value="persistedState.tag_editor.delete_parent_mode" @change="setTagDeleteParentMode(($event.target as HTMLSelectElement).value)">
-                <option value="promote">删除父标签并上提子标签</option>
-                <option value="cascade">级联删除整棵标签树</option>
-              </select>
-            </label>
-            <div style="font-size:11px;color:var(--wb-text-muted,#64748b);margin-top:4px;">开启后将在工具栏和移动端 Tab 中显示 AI 对话入口</div>
-            <label class="field" style="margin-top:8px;">
-              <span>排序模式</span>
-              <select class="text-input" :value="persistedState.sort.mode" @change="updatePersistedState(s => s.sort.mode = ($event.target as HTMLSelectElement).value as 'mutate' | 'view')">
-                <option value="mutate">直接排序（修改条目顺序）</option>
-                <option value="view">仅显示排序（不修改数据）</option>
-              </select>
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:6px;">
-              <input
-                type="checkbox"
-                :checked="persistedState.sort.reassign_uid"
-                @change="updatePersistedState(s => s.sort.reassign_uid = ($event.target as HTMLInputElement).checked)"
-              />
-              <span>排序后重新分配 UID（仅直接排序模式）</span>
-            </label>
-            <label class="field" style="margin-top:8px;">
-              <span>主题</span>
-              <select class="text-input" :value="currentTheme" @change="setTheme(($event.target as HTMLSelectElement).value as ThemeKey)">
-                <option v-for="item in themeOptions" :key="`setting-theme-${item.key}`" :value="item.key">{{ item.label }}</option>
-              </select>
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:6px;">
-              <input type="checkbox" :checked="persistedState.glass_mode" @change="updatePersistedState(s => s.glass_mode = ($event.target as HTMLInputElement).checked)" />
-              <span>启用毛玻璃特效 (Glassmorphism)</span>
-            </label>
-          </div>
-          <div style="border-top:1px solid var(--wb-border-subtle,#334155);padding-top:10px;">
-            <div style="font-size:13px;font-weight:600;margin-bottom:8px;">API 设置</div>
-          </div>
-          <div style="display:flex;gap:12px;align-items:center;">
-            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-              <input type="radio" value="custom" :checked="persistedState.ai_api_config.mode === 'custom'" @change="updateApiConfig({ mode: 'custom', use_main_api: false })" />
-              <span>自定义API</span>
-            </label>
-            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-              <input type="radio" value="tavern" :checked="persistedState.ai_api_config.mode === 'tavern'" @change="updateApiConfig({ mode: 'tavern' })" />
-              <span>使用酒馆连接预设</span>
-            </label>
-          </div>
-          <template v-if="persistedState.ai_api_config.mode === 'custom'">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-              <input type="checkbox" :checked="persistedState.ai_api_config.use_main_api" @change="updateApiConfig({ use_main_api: ($event.target as HTMLInputElement).checked })" />
-              <span>使用主API（直接使用酒馆当前API和模型）</span>
-            </label>
-            <template v-if="!persistedState.ai_api_config.use_main_api">
-              <div style="font-size:11px;color:#f59e0b;">⚠️ API密钥将保存在脚本本地存储中。</div>
-              <label class="field">
-                <span>API基础URL</span>
-                <input class="text-input" type="text" :value="persistedState.ai_api_config.apiurl" @change="updateApiConfig({ apiurl: ($event.target as HTMLInputElement).value })" placeholder="https://api.openai.com/v1" />
-              </label>
-              <label class="field">
-                <span>API密钥（可选）</span>
-                <input class="text-input" type="password" :value="persistedState.ai_api_config.key" @change="updateApiConfig({ key: ($event.target as HTMLInputElement).value })" placeholder="sk-..." />
-              </label>
-              <div style="display:flex;gap:10px;">
-                <label class="field" style="flex:1;">
-                  <span>最大Tokens</span>
-                  <input class="text-input" type="number" :value="persistedState.ai_api_config.max_tokens" @change="updateApiConfig({ max_tokens: Number(($event.target as HTMLInputElement).value) || 4096 })" />
-                </label>
-                <label class="field" style="flex:1;">
-                  <span>温度</span>
-                  <input class="text-input" type="number" step="0.1" min="0" max="2" :value="persistedState.ai_api_config.temperature" @change="updateApiConfig({ temperature: Number(($event.target as HTMLInputElement).value) || 1 })" />
-                </label>
-              </div>
-              <button class="btn" type="button" :disabled="apiModelLoading || !persistedState.ai_api_config.apiurl" @click="loadModelList" style="width:100%;">
-                {{ apiModelLoading ? '加载中...' : '加载模型列表' }}
-              </button>
-              <label class="field" v-if="apiModelList.length > 0">
-                <span>选择模型</span>
-                <select class="text-input" :value="persistedState.ai_api_config.model" @change="updateApiConfig({ model: ($event.target as HTMLSelectElement).value })">
-                  <option value="">请选择模型</option>
-                  <option v-for="m in apiModelList" :key="m" :value="m">{{ m }}</option>
-                </select>
-              </label>
-              <label class="field" v-else>
-                <span>模型名称（手动输入）</span>
-                <input class="text-input" type="text" :value="persistedState.ai_api_config.model" @change="updateApiConfig({ model: ($event.target as HTMLInputElement).value })" placeholder="gpt-4o" />
-              </label>
-            </template>
-          </template>
-          <div v-if="persistedState.ai_api_config.mode === 'tavern'" style="font-size:12px;color:var(--wb-text-muted);padding:8px 0;">
-            将直接使用酒馆当前启用的预设和API配置进行生成。
-          </div>
-        </div>
-      </div>
-    </div>
+    <SettingsModal
+      v-if="showApiSettings"
+      :persisted-state="persistedState"
+      :fab-visible="fabVisible"
+      :floor-btn-visible="floorBtnVisible"
+      :current-theme="currentTheme"
+      :theme-options="themeOptions"
+      :api-model-list="apiModelList"
+      :api-model-loading="apiModelLoading"
+      @close="showApiSettings = false"
+      @set-fab-visible="setFabVisible"
+      @toggle-floor-btns="toggleFloorBtns"
+      @update-persisted-state="updatePersistedState"
+      @set-tag-delete-parent-mode="setTagDeleteParentMode"
+      @set-theme="setTheme"
+      @update-api-config="updateApiConfig"
+      @load-model-list="loadModelList"
+    />
 
-    <!-- AI 配置输入弹窗 -->
-    <div v-if="aiConfigTargetWorldbook && !aiConfigPreview && !aiConfigGenerating" class="ai-tag-review-overlay" @click.self="aiConfigTargetWorldbook = ''">
-      <div class="ai-tag-review-modal" style="max-width:600px;">
-        <div class="ai-tag-review-head">
-          <span class="ai-tag-review-title">🔧 AI 配置世界书</span>
-          <button class="ai-tag-review-close" type="button" @click="aiConfigTargetWorldbook = ''">×</button>
-        </div>
-        <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:60vh;">
-          <label class="field">
-            <span>目标世界书</span>
-            <select v-model="aiConfigTargetWorldbook" class="text-input">
-              <option value="">请选择</option>
-              <option v-for="name in worldbookNames" :key="`cfg-wb-${name}`" :value="name">{{ name }}</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>配置指令（自然语言描述）</span>
-            <textarea v-model="aiConfigInput" class="text-input" rows="8" placeholder="例如：
-将以下条目设为蓝灯常驻，位置设为角色定义前：
-- 世界观设定（顺序1）
-- 角色速览（顺序2）
-
-所有条目启用不可递归和防止进一步递归"></textarea>
-          </label>
-          <details style="margin-top:4px;">
-            <summary style="cursor:pointer;color:var(--wb-text-dim);font-size:12px;user-select:none;">📝 查看/修改系统提示词</summary>
-            <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
-              <textarea v-model="aiConfigCustomPrompt" class="text-input" rows="10" :placeholder="'留空则使用默认提示词。\n当前默认提示词会在选择世界书后自动填入条目名。'" style="font-size:12px;font-family:monospace;"></textarea>
-              <div style="display:flex;gap:6px;">
-                <button class="btn" type="button" style="font-size:12px;" @click="aiConfigCustomPrompt = ''">🔄 恢复默认</button>
-                <button class="btn" type="button" style="font-size:12px;" @click="loadDefaultConfigPrompt">📋 加载默认提示词</button>
-              </div>
-            </div>
-          </details>
-          <button class="btn primary" type="button" :disabled="!aiConfigInput.trim() || !aiConfigTargetWorldbook || aiConfigGenerating" @click="aiConfigGenerate" style="width:100%;margin-top:8px;">
-            {{ aiConfigGenerating ? '⏳ AI 分析中...' : '🤖 发送给 AI 分析' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI 配置生成中遮罩 -->
-    <div v-if="aiConfigGenerating" class="ai-tag-review-overlay">
-      <div class="ai-tag-review-modal" style="max-width:400px;text-align:center;padding:40px;">
-        <div style="font-size:24px;margin-bottom:12px;">⏳</div>
-        <div style="color:var(--wb-text-main);">AI 正在分析配置指令...</div>
-      </div>
-    </div>
-
-    <!-- AI 配置预览弹窗 -->
-    <div v-if="aiConfigPreview" class="ai-tag-review-overlay" @click.self="aiConfigPreview = false">
-      <div class="ai-tag-review-modal" style="max-width:700px;">
-        <div class="ai-tag-review-head">
-          <span class="ai-tag-review-title">📋 配置变更预览</span>
-          <button class="ai-tag-review-close" type="button" @click="aiConfigPreview = false">×</button>
-        </div>
-        <div style="padding:16px;overflow-y:auto;max-height:55vh;">
-          <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <thead>
-              <tr style="border-bottom:1px solid var(--wb-border);">
-                <th style="width:30px;padding:6px;"></th>
-                <th style="text-align:left;padding:6px;">条目</th>
-                <th style="text-align:left;padding:6px;">设置项</th>
-                <th style="text-align:left;padding:6px;">旧值</th>
-                <th style="text-align:center;padding:6px;">→</th>
-                <th style="text-align:left;padding:6px;">新值</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(c, i) in aiConfigChanges" :key="i" style="border-bottom:1px solid var(--wb-border);" :style="{ opacity: c.selected ? 1 : 0.4 }">
-                <td style="padding:6px;"><input v-model="c.selected" type="checkbox" /></td>
-                <td style="padding:6px;font-weight:600;">{{ c.name }}</td>
-                <td style="padding:6px;">{{ c.label }}</td>
-                <td style="padding:6px;color:#ef4444;">{{ c.oldValue }}</td>
-                <td style="padding:6px;text-align:center;">→</td>
-                <td style="padding:6px;color:#22c55e;">{{ c.newValue }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="ai-tag-review-actions">
-          <button class="btn" type="button" @click="aiConfigChanges.forEach(c => c.selected = true)">全选</button>
-          <button class="btn" type="button" @click="aiConfigChanges.forEach(c => c.selected = false)">全不选</button>
-          <button class="btn primary" type="button" :disabled="!aiConfigChanges.some(c => c.selected)" @click="aiConfigApply">
-            应用选中变更（{{ aiConfigChanges.filter(c => c.selected).length }}）
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- AI 配置弹窗 -->
+    <AIConfigModal
+      :worldbook-names="worldbookNames"
+      :target-worldbook="aiConfigTargetWorldbook"
+      :input="aiConfigInput"
+      :custom-prompt="aiConfigCustomPrompt"
+      :changes="aiConfigChanges"
+      :preview="aiConfigPreview"
+      :generating="aiConfigGenerating"
+      @update:target-worldbook="aiConfigTargetWorldbook = $event"
+      @update:input="aiConfigInput = $event"
+      @update:custom-prompt="aiConfigCustomPrompt = $event"
+      @close-input="aiConfigTargetWorldbook = ''"
+      @close-preview="aiConfigPreview = false"
+      @load-default-config-prompt="loadDefaultConfigPrompt"
+      @generate="aiConfigGenerate"
+      @apply="aiConfigApply"
+    />
 
     <!-- 标签审查 -->
     <div v-if="aiShowTagReview" class="ai-tag-review-overlay" @click.self="aiShowTagReview = false">
@@ -3461,6 +3276,8 @@ import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
+import SettingsModal from './components/SettingsModal.vue';
+import AIConfigModal from './components/AIConfigModal.vue';
 
 type StrategyType = WorldbookEntry['strategy']['type'];
 type SecondaryLogic = WorldbookEntry['strategy']['keys_secondary']['logic'];
