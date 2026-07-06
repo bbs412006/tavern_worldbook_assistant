@@ -72,6 +72,31 @@
             <span>启用毛玻璃特效 (Glassmorphism)</span>
           </label>
         </div>
+        <div style="border:1px solid var(--wb-border-subtle,#334155);border-radius:8px;padding:10px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px;">版本与更新</div>
+          <div style="display:grid;gap:4px;font-size:12px;color:var(--wb-text-muted,#94a3b8);">
+            <div>当前版本：<strong style="color:var(--wb-text-main,#e2e8f0);">v{{ versionInfo.version }}</strong></div>
+            <div>当前构建：<code>{{ versionInfo.commit }}</code> / {{ versionInfo.branch }}</div>
+            <div>构建时间：{{ formatVersionTime(versionInfo.build_time) }}</div>
+            <div v-if="versionInfo.latest_commit">
+              最新构建：<code>{{ versionInfo.latest_commit }}</code>
+              <span :style="{ color: versionInfo.latest_commit === versionInfo.commit ? '#22c55e' : '#f59e0b' }">
+                {{ versionInfo.latest_commit === versionInfo.commit ? '（已是最新）' : '（有更新）' }}
+              </span>
+            </div>
+            <div v-if="versionInfo.latest_checked_at">检查时间：{{ formatVersionTime(versionInfo.latest_checked_at) }}</div>
+            <div v-if="versionCheckError" style="color:#f87171;">检查失败：{{ versionCheckError }}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="btn" type="button" :disabled="versionCheckLoading" @click="$emit('check-latest-version')">
+              {{ versionCheckLoading ? '检查中...' : '检查最新版本' }}
+            </button>
+            <button class="btn" type="button" @click="$emit('copy-version-import-url')">复制固定版本导入链接</button>
+          </div>
+          <div style="font-size:11px;color:var(--wb-text-muted,#64748b);margin-top:6px;">
+            复制链接后可在酒馆导入脚本时指定版本；固定 commit 链接可用于回退或切换版本。
+          </div>
+        </div>
         <div style="border-top:1px solid var(--wb-border-subtle,#334155);padding-top:10px;">
           <div style="font-size:13px;font-weight:600;margin-bottom:8px;">API 设置</div>
         </div>
@@ -138,6 +163,23 @@
 <script setup lang="ts">
 import './modal-shared.css';
 
+interface VersionInfo {
+  version: string;
+  branch: string;
+  commit: string;
+  build_time: string;
+  latest_commit: string;
+  latest_checked_at: number;
+  latest_url: string;
+}
+
+function formatVersionTime(value: string | number): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString();
+}
+
 defineProps<{
   persistedState: any;
   fabVisible: boolean;
@@ -146,6 +188,9 @@ defineProps<{
   themeOptions: Array<{ key: string; label: string }>;
   apiModelList: string[];
   apiModelLoading: boolean;
+  versionInfo: VersionInfo;
+  versionCheckLoading: boolean;
+  versionCheckError: string;
 }>();
 
 defineEmits<{
@@ -157,5 +202,7 @@ defineEmits<{
   'set-theme': [value: string];
   'update-api-config': [patch: Record<string, unknown>];
   'load-model-list': [];
+  'check-latest-version': [];
+  'copy-version-import-url': [];
 }>();
 </script>

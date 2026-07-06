@@ -3,7 +3,7 @@ import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import _ from 'lodash';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import { ChildProcess, exec, spawn } from 'node:child_process';
+import { ChildProcess, exec, execSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -19,6 +19,16 @@ import webpack from 'webpack';
 import WebpackObfuscator from 'webpack-obfuscator';
 const require = createRequire(import.meta.url);
 const HTMLInlineCSSWebpackPlugin = require('html-inline-css-webpack-plugin').default;
+
+function read_git_value(command: string, fallback: string): string {
+  try {
+    return execSync(command, { cwd: import.meta.dirname, stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim() || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 interface Config {
   port: number;
@@ -465,6 +475,9 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           __VUE_OPTIONS_API__: false,
           __VUE_PROD_DEVTOOLS__: process.env.CI !== 'true',
           __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+          __WB_ASSISTANT_BUILD_COMMIT__: JSON.stringify(read_git_value('git rev-parse --short=12 HEAD', 'unknown')),
+          __WB_ASSISTANT_BUILD_BRANCH__: JSON.stringify(read_git_value('git rev-parse --abbrev-ref HEAD', 'unknown')),
+          __WB_ASSISTANT_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
         }),
       )
       .concat(

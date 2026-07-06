@@ -2569,8 +2569,13 @@
       @update-persisted-state="updatePersistedState"
       @set-tag-delete-parent-mode="setTagDeleteParentMode"
       @set-theme="setTheme"
+      :version-info="versionInfo"
+      :version-check-loading="versionCheckLoading"
+      :version-check-error="versionCheckError"
       @update-api-config="updateApiConfig"
       @load-model-list="loadModelList"
+      @check-latest-version="checkLatestVersion"
+      @copy-version-import-url="copyVersionImportUrl"
     />
 
     <!-- AI 配置弹窗 -->
@@ -3265,6 +3270,10 @@
 </template>
 
 <script setup lang="ts">
+declare const __WB_ASSISTANT_BUILD_COMMIT__: string;
+declare const __WB_ASSISTANT_BUILD_BRANCH__: string;
+declare const __WB_ASSISTANT_BUILD_TIME__: string;
+
 import { diffLines } from 'https://testingcf.jsdelivr.net/npm/diff/+esm';
 import { klona } from 'klona';
 
@@ -3809,6 +3818,16 @@ interface ActivationLog {
   contentPreview: string;
 }
 
+interface VersionInfo {
+  version: string;
+  branch: string;
+  commit: string;
+  build_time: string;
+  latest_commit: string;
+  latest_checked_at: number;
+  latest_url: string;
+}
+
 interface ImportedPayload {
   name: string;
   entries: WorldbookEntry[];
@@ -3857,6 +3876,11 @@ interface MobileEntryLongPressState {
   target: HTMLElement | null;
 }
 
+const APP_VERSION = '0.2.0';
+const VERSION_REPO_OWNER = 'bbs412006';
+const VERSION_REPO_NAME = 'tavern_worldbook_assistant';
+const VERSION_BRANCH = 'ST-Manager-STscript';
+const VERSION_BUNDLE_PATH = 'dist/worldbook_assistant_build/index.js';
 const STORAGE_KEY = 'worldbook_assistant_state_v1';
 const DIRTY_STATE_KEY = '__WB_ASSISTANT_HAS_UNSAVED_CHANGES__';
 const HISTORY_LIMIT = 12;
@@ -4269,6 +4293,20 @@ const bindings = reactive({
 
 const activationLogs = ref<ActivationLog[]>([]);
 const persistedState = ref<PersistedState>(createDefaultPersistedState());
+const versionCheckLoading = ref(false);
+const versionCheckError = ref('');
+const latestVersionCommit = ref('');
+const latestVersionUrl = ref('');
+const latestVersionCheckedAt = ref(0);
+const versionInfo = computed<VersionInfo>(() => ({
+  version: APP_VERSION,
+  branch: __WB_ASSISTANT_BUILD_BRANCH__,
+  commit: __WB_ASSISTANT_BUILD_COMMIT__,
+  build_time: __WB_ASSISTANT_BUILD_TIME__,
+  latest_commit: latestVersionCommit.value,
+  latest_checked_at: latestVersionCheckedAt.value,
+  latest_url: latestVersionUrl.value,
+}));
 
 const subscriptions: EventSubscription[] = [];
 
@@ -6872,6 +6910,55 @@ function updatePersistedState(mutator: (state: PersistedState) => void): void {
   const state = readPersistedState();
   mutator(state);
   writePersistedState(state);
+}
+
+function buildVersionImportUrl(commit = versionInfo.value.commit): string {
+  const safeCommit = commit && commit !== 'unknown' ? commit : VERSION_BRANCH;
+  return `https://cdn.jsdelivr.net/gh/${VERSION_REPO_OWNER}/${VERSION_REPO_NAME}@${safeCommit}/${VERSION_BUNDLE_PATH}`;
+}
+
+async function copyVersionImportUrl(): Promise<void> {
+  const url = latestVersionUrl.value || buildVersionImportUrl();
+  try {
+    await navigator.clipboard?.writeText(url);
+    toastr.success('已复制固定版本导入链接');
+  } catch {
+    window.prompt('复制这个固定版本导入链接', url);
+  }
+}
+
+async function checkLatestVersion(): Promise<void> {
+  if (versionCheckLoading.value) {
+    return;
+  }
+  versionCheckLoading.value = true;
+  versionCheckError.value = '';
+  try {
+    const endpoint = `https://api.github.com/repos/${VERSION_REPO_OWNER}/${VERSION_REPO_NAME}/commits/${VERSION_BRANCH}`;
+    const response = await fetch(endpoint, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`GitHub HTTP ${response.status}`);
+    }
+    const payload = await response.json() as { sha?: string; html_url?: string };
+    const sha = String(payload.sha || '').slice(0, 12);
+    if (!sha) {
+      throw new Error('GitHub 未返回 commit SHA');
+    }
+    latestVersionCommit.value = sha;
+    latestVersionUrl.value = buildVersionImportUrl(sha);
+    latestVersionCheckedAt.value = Date.now();
+    if (sha === versionInfo.value.commit) {
+      toastr.success(`当前已是最新版本（${APP_VERSION} / ${sha}）`);
+    } else {
+      toastr.info(`发现新构建：${sha}，可复制固定版本链接更新`);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    versionCheckError.value = message;
+    toastr.error(`检查更新失败: ${message}`);
+  } finally {
+    versionCheckLoading.value = false;
+  }
 }
 
 function applyLayoutStateFromPersisted(): void {
