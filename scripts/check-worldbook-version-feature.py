@@ -9,9 +9,9 @@ checks = {
     'webpack defines build commit': '__WB_ASSISTANT_BUILD_COMMIT__' in webpack,
     'webpack defines build branch': '__WB_ASSISTANT_BUILD_BRANCH__' in webpack,
     'webpack defines build time': '__WB_ASSISTANT_BUILD_TIME__' in webpack,
-    'app declares version': "APP_VERSION = '0.2.0'" in app,
-    'app has latest version check': 'checkLatestVersion' in app and 'api.github.com/repos' in app and 'VERSION_REPO_OWNER' in app and 'VERSION_BRANCH' in app,
-    'app can copy fixed import url': 'copyVersionImportUrl' in app and 'cdn.jsdelivr.net/gh' in app and 'VERSION_BUNDLE_PATH' in app,
+    'app declares semantic version': "APP_VERSION = '1.3.1'" in app,
+    'app checks latest semantic tag': 'checkLatestVersion' in app and 'api.github.com/repos' in app and '/tags?per_page=100' in app,
+    'app can copy semantic version import url': 'copyVersionImportUrl' in app and "@${version}" in app and 'VERSION_BUNDLE_PATH' in app,
     'settings shows version section': '版本与更新' in settings,
     'settings emits version events': 'check-latest-version' in settings and 'copy-version-import-url' in settings,
 }
