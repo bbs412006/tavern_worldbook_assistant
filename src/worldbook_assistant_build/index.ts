@@ -314,18 +314,17 @@ function ensurePanelStyle(): void {
 @media (orientation: portrait) {
   #${PANEL_ID} {
     inset: 0 !important;
-    margin: 0 !important;
+    margin: auto !important;
     transform: none !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100lvh !important;
+    width: calc(100vw - 16px) !important;
+    height: min(720px, calc(100lvh - 24px)) !important;
     min-width: unset;
-    min-height: unset;
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
+    min-height: 360px;
+    max-width: 520px;
+    max-height: calc(100lvh - 24px);
+    border-radius: 12px;
+    border: 1px solid var(--wb-host-border, #334155);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.48);
     resize: none;
     /* Mobile: use display:none to avoid blocking FAB behind the invisible panel */
     display: none;
