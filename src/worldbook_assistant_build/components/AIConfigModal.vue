@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
   <template v-if="showInput && !preview && !generating">
     <div class="ai-tag-review-overlay" @click.self="$emit('close-input')">
       <div class="ai-tag-review-modal" style="max-width:600px;">
@@ -100,6 +101,7 @@
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
