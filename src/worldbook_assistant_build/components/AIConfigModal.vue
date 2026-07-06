@@ -103,6 +103,8 @@
 </template>
 
 <script setup lang="ts">
+import './modal-shared.css';
+
 defineProps<{
   showInput: boolean;
   worldbookNames: string[];
