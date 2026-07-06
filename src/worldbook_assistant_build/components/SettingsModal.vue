@@ -78,12 +78,13 @@
             <div>当前版本：<strong style="color:var(--wb-text-main,#e2e8f0);">v{{ versionInfo.version }}</strong></div>
             <div>当前构建：<code>{{ versionInfo.commit }}</code> / {{ versionInfo.branch }}</div>
             <div>构建时间：{{ formatVersionTime(versionInfo.build_time) }}</div>
-            <div v-if="versionInfo.latest_commit">
-              最新构建：<code>{{ versionInfo.latest_commit }}</code>
-              <span :style="{ color: versionInfo.latest_commit === versionInfo.commit ? '#22c55e' : '#f59e0b' }">
-                {{ versionInfo.latest_commit === versionInfo.commit ? '（已是最新）' : '（有更新）' }}
+            <div v-if="versionInfo.latest_version">
+              最新版本：<strong style="color:var(--wb-text-main,#e2e8f0);">v{{ versionInfo.latest_version }}</strong>
+              <span :style="{ color: compareVersionText(versionInfo.latest_version, versionInfo.version) <= 0 ? '#22c55e' : '#f59e0b' }">
+                {{ compareVersionText(versionInfo.latest_version, versionInfo.version) <= 0 ? '（已是最新）' : '（有更新）' }}
               </span>
             </div>
+            <div v-if="versionInfo.latest_commit">最新构建：<code>{{ versionInfo.latest_commit }}</code></div>
             <div v-if="versionInfo.latest_checked_at">检查时间：{{ formatVersionTime(versionInfo.latest_checked_at) }}</div>
             <div v-if="versionCheckError" style="color:#f87171;">检查失败：{{ versionCheckError }}</div>
           </div>
@@ -168,6 +169,7 @@ interface VersionInfo {
   branch: string;
   commit: string;
   build_time: string;
+  latest_version: string;
   latest_commit: string;
   latest_checked_at: number;
   latest_url: string;
@@ -178,6 +180,17 @@ function formatVersionTime(value: string | number): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleString();
+}
+
+function compareVersionText(left: string, right: string): number {
+  const parse = (value: string) => value.replace(/^v/i, '').split('.').map(part => Number.parseInt(part, 10) || 0);
+  const leftParts = parse(left);
+  const rightParts = parse(right);
+  for (let index = 0; index < 3; index += 1) {
+    const delta = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
+    if (delta !== 0) return delta;
+  }
+  return 0;
 }
 
 defineProps<{
