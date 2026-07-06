@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
   <div class="ai-tag-review-overlay" @click.self="$emit('close')">
     <div class="ai-tag-review-modal" style="max-width:520px;">
       <div class="ai-tag-review-head">
@@ -131,6 +132,7 @@
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
