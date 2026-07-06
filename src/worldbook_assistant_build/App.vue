@@ -2741,7 +2741,7 @@
             </div>
           </div>
 
-          <div v-if="showEntryHistoryModal" class="wb-modal-backdrop" @click.self="showEntryHistoryModal = false">
+          <div v-if="showEntryHistoryModal" class="wb-modal-backdrop" @click.self="closeEntryHistoryModal">
             <div class="wb-history-modal">
               <div class="wb-history-modal-header">
                 <div>
@@ -2760,7 +2760,7 @@
                   >
                     清空条目历史
                   </button>
-                  <button class="btn mini" type="button" @click="showEntryHistoryModal = false">关闭</button>
+                  <button class="btn mini" type="button" @click="closeEntryHistoryModal">关闭</button>
                 </div>
               </div>
 
@@ -2888,7 +2888,7 @@
             </div>
           </div>
 
-          <div v-if="showWorldbookHistoryModal" class="wb-modal-backdrop" @click.self="showWorldbookHistoryModal = false">
+          <div v-if="showWorldbookHistoryModal" class="wb-modal-backdrop" @click.self="closeWorldbookHistoryModal">
             <div class="wb-history-modal">
               <div class="wb-history-modal-header">
                 <div>
@@ -2907,7 +2907,7 @@
                   >
                     清空整本快照
                   </button>
-                  <button class="btn mini" type="button" @click="showWorldbookHistoryModal = false">关闭</button>
+                  <button class="btn mini" type="button" @click="closeWorldbookHistoryModal">关闭</button>
                 </div>
               </div>
 
@@ -5001,7 +5001,7 @@ const entrySnapshotsForSelected = computed(() => {
   return byWorldbook[String(selectedEntry.value.uid)] ?? [];
 });
 
-const entryVersionViews = computed<EntryVersionView[]>(() => {
+function buildEntryVersionViews(): EntryVersionView[] {
   if (!selectedEntry.value) {
     return [];
   }
@@ -5033,6 +5033,13 @@ const entryVersionViews = computed<EntryVersionView[]>(() => {
     isCurrent: false,
   }));
   return [current, ...(baseline ? [baseline] : []), ...history];
+}
+
+const entryVersionViews = computed<EntryVersionView[]>(() => {
+  if (!showEntryHistoryModal.value) {
+    return [];
+  }
+  return buildEntryVersionViews();
 });
 
 const selectedEntryHistoryLeft = computed(() => {
@@ -5047,7 +5054,7 @@ const canRestoreEntryFromLeft = computed(() => {
   return Boolean(selectedEntry.value && selectedEntryHistoryLeft.value && !selectedEntryHistoryLeft.value.isCurrent);
 });
 
-const worldbookVersionViews = computed<WorldbookVersionView[]>(() => {
+function buildWorldbookVersionViews(): WorldbookVersionView[] {
   if (!selectedWorldbookName.value) {
     return [];
   }
@@ -5073,6 +5080,13 @@ const worldbookVersionViews = computed<WorldbookVersionView[]>(() => {
     isCurrent: false,
   }));
   return [current, ...(originalEntries.value.length ? [baseline] : []), ...history];
+}
+
+const worldbookVersionViews = computed<WorldbookVersionView[]>(() => {
+  if (!showWorldbookHistoryModal.value) {
+    return [];
+  }
+  return buildWorldbookVersionViews();
 });
 
 const selectedWorldbookHistoryLeft = computed(() => {
@@ -5642,6 +5656,11 @@ watch(selectedWorldbookName, name => {
   mobileMultiSelectMode.value = false;
   clearMobileLongPressState();
   mobileSuppressNextTap.value = false;
+  closeEntryHistoryModal();
+  closeWorldbookHistoryModal();
+  if (crossCopyHasCompared.value) {
+    resetCrossCopyCompare('当前世界书已切换，请刷新跨书比较');
+  }
   if (!name) {
     draftEntries.value = [];
     originalEntries.value = [];
@@ -5652,13 +5671,6 @@ watch(selectedWorldbookName, name => {
     state.last_worldbook = name;
   });
   normalizeCrossCopyWorldbookSelection();
-  if (crossCopyHasCompared.value) {
-    if (crossCopySourceWorldbook.value === name && crossCopyUseDraftSourceWhenCurrent.value) {
-      resetCrossCopyCompare('当前世界书已切换，来源草稿基线已变化，请刷新比较');
-    } else if (crossCopyTargetWorldbook.value === name) {
-      resetCrossCopyCompare('当前世界书已切换，目标基线可能变化，请刷新比较');
-    }
-  }
   void loadWorldbook(name);
 });
 
@@ -5786,7 +5798,7 @@ watch(crossCopyDesktopSingleColumn, isSingleColumn => {
 watch(crossCopyMode, enabled => {
   if (!enabled) {
     stopCrossCopyPaneResize();
-    closeCrossCopyDiff();
+    resetCrossCopyCompare();
     crossCopyMobileStep.value = 1;
   }
 });
@@ -9944,12 +9956,28 @@ function createManualSnapshot(): void {
   toastr.success('已创建快照');
 }
 
+function closeEntryHistoryModal(): void {
+  showEntryHistoryModal.value = false;
+  entryHistoryLeftId.value = '';
+  entryHistoryRightId.value = '';
+  stopHistorySectionResize();
+}
+
+function closeWorldbookHistoryModal(): void {
+  showWorldbookHistoryModal.value = false;
+  worldbookHistoryLeftId.value = '';
+  worldbookHistoryRightId.value = '';
+  worldbookHistoryActiveRowKey.value = '';
+  stopHistorySectionResize();
+}
+
 function openEntryHistoryModal(): void {
   if (!selectedEntry.value) {
     toastr.warning('请先选择条目');
     return;
   }
-  const nonCurrent = entryVersionViews.value.find(item => !item.isCurrent) ?? null;
+  const views = buildEntryVersionViews();
+  const nonCurrent = views.find(item => !item.isCurrent) ?? null;
   entryHistoryRightId.value = '__current__';
   entryHistoryLeftId.value = nonCurrent?.id ?? '__current__';
   showEntryHistoryModal.value = true;
@@ -9960,11 +9988,14 @@ function openWorldbookHistoryModal(): void {
     toastr.warning('请先选择世界书');
     return;
   }
-  const nonCurrent = worldbookVersionViews.value.find(item => !item.isCurrent) ?? null;
+  const views = buildWorldbookVersionViews();
+  const nonCurrent = views.find(item => !item.isCurrent) ?? null;
   worldbookHistoryRightId.value = '__current__';
   worldbookHistoryLeftId.value = nonCurrent?.id ?? '__current__';
-  worldbookHistoryActiveRowKey.value = worldbookHistoryCompareRows.value[0]?.key ?? '';
   showWorldbookHistoryModal.value = true;
+  void nextTick(() => {
+    worldbookHistoryActiveRowKey.value = worldbookHistoryCompareRows.value[0]?.key ?? '';
+  });
 }
 
 function createManualEntrySnapshot(): void {
@@ -12585,6 +12616,9 @@ onUnmounted(() => {
     subscription.stop();
   });
   clearMobileLongPressState();
+  closeEntryHistoryModal();
+  closeWorldbookHistoryModal();
+  resetCrossCopyCompare();
   stopFloatingDrag();
   stopPaneResize();
   stopCrossCopyPaneResize();
