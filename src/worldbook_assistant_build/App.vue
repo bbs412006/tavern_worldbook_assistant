@@ -272,7 +272,7 @@
                 <button class="btn" type="button" @click="toggleGlobalMode" :style="{ padding:'8px 14px', fontSize:'13px', background: globalWorldbookMode ? 'var(--wb-primary)' : '', color: globalWorldbookMode ? '#fff' : '' }">🌐 全局</button>
                 <button class="btn" type="button" @click="extractFromChat" style="padding:8px 14px;font-size:13px;">📥 提取</button>
                 <button class="btn" type="button" @click="showApiSettings = true" style="padding:8px 14px;font-size:13px;">⚙️ 设置</button>
-                <button class="btn" type="button" @click="aiConfigPreview = false; aiConfigChanges = []; aiConfigTargetWorldbook = selectedWorldbookName || ''" style="padding:8px 14px;font-size:13px;">🔧 AI配置</button>
+                <button class="btn" type="button" @click="openAiConfigModal" style="padding:8px 14px;font-size:13px;">🔧 AI配置</button>
                 <button class="btn" type="button" :disabled="!draftEntries.length" @click="sortEntries" :class="{ active: viewSortActive }" style="padding:8px 14px;font-size:13px;">🔢 排序</button>
                 <button class="btn" type="button" :disabled="!selectedEntry" @click="openEntryHistoryModal" style="padding:8px 14px;font-size:13px;">🕰️ 条目时光机</button>
                 <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal" style="padding:8px 14px;font-size:13px;">⏪ 整本时光机</button>
@@ -1404,7 +1404,7 @@
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_tag" data-copy-hero="tool_tag" type="button" :class="{ active: tagEditorMode }" @click="tagToggleMode">🏷️ 标签管理</button>
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_copy" data-copy-hero="tool_copy" type="button" :class="{ active: crossCopyMode }" :disabled="isAnyCineLocked" @click="toggleCrossCopyMode">📚 跨书复制</button>
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_settings" data-copy-hero="tool_settings" type="button" @click="showApiSettings = true">⚙️ 设置</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_ai_config" data-copy-hero="tool_ai_config" type="button" @click="aiConfigPreview = false; aiConfigChanges = []; aiConfigTargetWorldbook = selectedWorldbookName || ''">🔧 AI配置</button>
+                <button class="btn history-btn utility-btn" data-focus-hero="tool_ai_config" data-copy-hero="tool_ai_config" type="button" @click="openAiConfigModal">🔧 AI配置</button>
                 <button class="btn history-btn utility-btn focus-tools-collapse" type="button" @click="closeFocusToolsBand">收起工具</button>
               </div>
             </Transition>
@@ -1560,7 +1560,7 @@
                 data-focus-hero="tool_ai_config"
                 data-copy-hero="tool_ai_config"
                 type="button"
-                @click="aiConfigPreview = false; aiConfigChanges = []; aiConfigTargetWorldbook = selectedWorldbookName || ''"
+                @click="openAiConfigModal"
               >
                 🔧 AI配置
               </button>
@@ -2688,11 +2688,11 @@
     </div>
 
     <!-- AI 配置输入弹窗 -->
-    <div v-if="aiConfigTargetWorldbook && !aiConfigPreview && !aiConfigGenerating" class="ai-tag-review-overlay" @click.self="aiConfigTargetWorldbook = ''">
+    <div v-if="showAiConfigModal && !aiConfigPreview && !aiConfigGenerating" class="ai-tag-review-overlay" @click.self="closeAiConfigModal">
       <div class="ai-tag-review-modal" style="max-width:600px;">
         <div class="ai-tag-review-head">
           <span class="ai-tag-review-title">🔧 AI 配置世界书</span>
-          <button class="ai-tag-review-close" type="button" @click="aiConfigTargetWorldbook = ''">×</button>
+          <button class="ai-tag-review-close" type="button" @click="closeAiConfigModal">×</button>
         </div>
         <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:60vh;">
           <label class="field">
@@ -4281,8 +4281,22 @@ const aiConfigInput = ref('');
 const aiConfigChanges = ref<ConfigChange[]>([]);
 const aiConfigPreview = ref(false);
 const aiConfigGenerating = ref(false);
+const showAiConfigModal = ref(false);
 const aiConfigTargetWorldbook = ref('');
 const aiConfigCustomPrompt = ref('');
+
+function openAiConfigModal(): void {
+  aiConfigPreview.value = false;
+  aiConfigChanges.value = [];
+  aiConfigTargetWorldbook.value = selectedWorldbookName.value || '';
+  showAiConfigModal.value = true;
+}
+
+function closeAiConfigModal(): void {
+  showAiConfigModal.value = false;
+  aiConfigPreview.value = false;
+  aiConfigTargetWorldbook.value = '';
+}
 
 const crossCopySourceWorldbook = ref('');
 const crossCopyTargetWorldbook = ref('');
@@ -17361,7 +17375,7 @@ watch(hasUnsavedChanges, (val) => {
 .ai-tag-review-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10020;
+  z-index: 10350;
   background: var(--wb-overlay-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -17612,12 +17626,12 @@ watch(hasUnsavedChanges, (val) => {
     font-size: 0.85em;
   }
 
-  /* ── Tag review modal (mobile full-screen) ── */
+  /* ── Tag review modal (mobile, constrained inside the assistant panel) ── */
   .ai-tag-review-overlay {
     position: absolute;
     inset: 0;
-    padding: 0;
-    z-index: 10200;
+    padding: 8px;
+    z-index: 10350;
     align-items: stretch;
     justify-content: stretch;
   }
@@ -17627,9 +17641,9 @@ watch(hasUnsavedChanges, (val) => {
     max-width: 100% !important;
     max-height: 100% !important;
     height: 100%;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
+    border-radius: 10px;
+    border: 1px solid var(--wb-border-subtle);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
   }
 
   .ai-tag-review-head {
