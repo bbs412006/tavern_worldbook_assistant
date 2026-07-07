@@ -16,6 +16,8 @@ ai_tags_path = root / 'src/worldbook_assistant_build/domain/aiTags.ts'
 ai_tags = ai_tags_path.read_text(encoding='utf-8') if ai_tags_path.exists() else ''
 tags_path = root / 'src/worldbook_assistant_build/domain/tags.ts'
 tags = tags_path.read_text(encoding='utf-8') if tags_path.exists() else ''
+worldbook_path = root / 'src/worldbook_assistant_build/domain/worldbook.ts'
+worldbook = worldbook_path.read_text(encoding='utf-8') if worldbook_path.exists() else ''
 
 checks = {
     'ui constants module exists': ui_constants_path.exists(),
@@ -63,6 +65,11 @@ checks = {
     'tags domain exports tree helpers': 'export function normalizeTagNameKey' in tags and 'export function isTagDescendantOf' in tags and 'export function collectTagSubtreeIds' in tags,
     'app imports tags domain helpers': "from './domain/tags'" in app and 'normalizeTagNameKey' in app and 'collectTagSubtreeIds' in app,
     'app no longer declares tag tree helpers inline': 'function normalizeTagNameKey' not in app and 'function collectTagSubtreeIds' not in app,
+    'worldbook domain module exists': worldbook_path.exists(),
+    'worldbook domain exports import parser': 'export function parseImportedPayload' in worldbook and 'export function collectRawEntries' in worldbook,
+    'worldbook domain exports entry sorter': 'export function compareEntriesByPositionThenOrder' in worldbook,
+    'app imports worldbook domain helpers': "from './domain/worldbook'" in app and 'parseImportedPayload' in app and 'compareEntriesByPositionThenOrder' in app,
+    'app no longer declares worldbook pure helpers inline': 'function parseImportedPayload' not in app and 'function compareEntriesByPositionThenOrder' not in app,
 }
 
 for name, ok in checks.items():
