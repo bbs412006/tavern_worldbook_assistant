@@ -14,6 +14,8 @@ cross_copy_path = root / 'src/worldbook_assistant_build/domain/crossCopy.ts'
 cross_copy = cross_copy_path.read_text(encoding='utf-8') if cross_copy_path.exists() else ''
 ai_tags_path = root / 'src/worldbook_assistant_build/domain/aiTags.ts'
 ai_tags = ai_tags_path.read_text(encoding='utf-8') if ai_tags_path.exists() else ''
+tags_path = root / 'src/worldbook_assistant_build/domain/tags.ts'
+tags = tags_path.read_text(encoding='utf-8') if tags_path.exists() else ''
 
 checks = {
     'ui constants module exists': ui_constants_path.exists(),
@@ -57,6 +59,10 @@ checks = {
     'ai tags domain exports dedupe': 'export function dedupeExtractedTags' in ai_tags,
     'app imports ai tag helpers': "from './domain/aiTags'" in app and 'extractAiTags' in app and 'dedupeExtractedTags' in app,
     'app no longer declares ai tag extractor inline': 'function aiExtractTags' not in app,
+    'tags domain module exists': tags_path.exists(),
+    'tags domain exports tree helpers': 'export function normalizeTagNameKey' in tags and 'export function isTagDescendantOf' in tags and 'export function collectTagSubtreeIds' in tags,
+    'app imports tags domain helpers': "from './domain/tags'" in app and 'normalizeTagNameKey' in app and 'collectTagSubtreeIds' in app,
+    'app no longer declares tag tree helpers inline': 'function normalizeTagNameKey' not in app and 'function collectTagSubtreeIds' not in app,
 }
 
 for name, ok in checks.items():

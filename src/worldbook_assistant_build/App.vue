@@ -3415,6 +3415,7 @@ import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
 import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
+import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
 import {
   CROSS_COPY_ACTION_LABELS,
   CROSS_COPY_STATUS_LABELS,
@@ -6705,50 +6706,11 @@ function tagToggleMode(): void {
   }
 }
 
-function normalizeTagNameKey(name: string): string {
-  return toStringSafe(name).trim().toLowerCase();
-}
-
 function ensureTagAssignTargetSelected(): void {
   if (tagAssignTargetId.value && tagDefinitionMap.value.has(tagAssignTargetId.value)) {
     return;
   }
   tagAssignTargetId.value = tagAssignOptions.value[0]?.id ?? '';
-}
-
-function isTagDescendantOf(targetId: string, potentialAncestorId: string): boolean {
-  if (!targetId || !potentialAncestorId) {
-    return false;
-  }
-  let cursor = tagDefinitionMap.value.get(targetId)?.parent_id ?? null;
-  const seen = new Set<string>();
-  while (cursor && !seen.has(cursor)) {
-    if (cursor === potentialAncestorId) {
-      return true;
-    }
-    seen.add(cursor);
-    cursor = tagDefinitionMap.value.get(cursor)?.parent_id ?? null;
-  }
-  return false;
-}
-
-function collectTagSubtreeIds(rootId: string): string[] {
-  const ids: string[] = [];
-  const queue: string[] = [rootId];
-  const seen = new Set<string>();
-  while (queue.length) {
-    const current = queue.shift()!;
-    if (seen.has(current)) {
-      continue;
-    }
-    seen.add(current);
-    ids.push(current);
-    const children = tagChildrenMap.value.get(current) ?? [];
-    for (const child of children) {
-      queue.push(child.id);
-    }
-  }
-  return ids;
 }
 
 function tagSetParent(tagId: string, parentId: string | null): void {
@@ -6757,7 +6719,7 @@ function tagSetParent(tagId: string, parentId: string | null): void {
   if (!current) {
     return;
   }
-  if (normalizedParent === tagId || (normalizedParent && isTagDescendantOf(normalizedParent, tagId))) {
+  if (normalizedParent === tagId || (normalizedParent && isTagDescendantOf(tagDefinitionMap.value, normalizedParent, tagId))) {
     toastr.warning('不能将标签移动到自己或其子节点下');
     return;
   }
@@ -6794,7 +6756,7 @@ function isTagParentOptionDisabled(tagId: string, parentId: string): boolean {
   if (parentId === tagId) {
     return true;
   }
-  return isTagDescendantOf(parentId, tagId);
+  return isTagDescendantOf(tagDefinitionMap.value, parentId, tagId);
 }
 
 function setTagDeleteParentMode(modeRaw: string): void {
@@ -6859,7 +6821,7 @@ function tagDelete(tagId: string): void {
   }
   const hasChildren = (tagChildrenMap.value.get(tagId) ?? []).length > 0;
   const cascadeDelete = hasChildren && persistedState.value.tag_editor.delete_parent_mode === 'cascade';
-  const deleteIds = cascadeDelete ? collectTagSubtreeIds(tagId) : [tagId];
+  const deleteIds = cascadeDelete ? collectTagSubtreeIds(tagId, tagChildrenMap.value) : [tagId];
   const deleteSet = new Set(deleteIds);
   updatePersistedState(state => {
     if (!cascadeDelete) {
