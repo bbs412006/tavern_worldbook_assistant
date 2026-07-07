@@ -9,7 +9,7 @@ checks = {
     'webpack defines build commit': '__WB_ASSISTANT_BUILD_COMMIT__' in webpack,
     'webpack defines build branch': '__WB_ASSISTANT_BUILD_BRANCH__' in webpack,
     'webpack defines build time': '__WB_ASSISTANT_BUILD_TIME__' in webpack,
-    'app declares semantic version': "APP_VERSION = '1.3.3'" in app,
+    'app declares semantic version': "APP_VERSION = '1.3.4'" in app,
     'app checks latest semantic tag': 'checkLatestVersion' in app and 'api.github.com/repos' in app and '/tags?per_page=100' in app,
     'app can copy semantic version import url': 'copyVersionImportUrl' in app and "@${version}" in app and 'VERSION_BUNDLE_PATH' in app,
     'settings shows version section': '版本与更新' in settings,

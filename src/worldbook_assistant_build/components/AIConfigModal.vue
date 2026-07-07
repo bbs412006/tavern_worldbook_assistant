@@ -1,7 +1,13 @@
 <template>
   <Teleport :to="teleportTarget">
   <template v-if="showInput && !preview && !generating">
-    <div class="ai-tag-review-overlay" @click.self="$emit('close-input')">
+    <div
+      class="ai-tag-review-overlay"
+      @pointerdown.stop
+      @mousedown.stop
+      @touchstart.stop
+      @click.self.stop="$emit('close-input')"
+    >
       <div class="ai-tag-review-modal" style="max-width:600px;">
         <div class="ai-tag-review-head">
           <span class="ai-tag-review-title">🔧 AI 配置世界书</span>
@@ -55,14 +61,27 @@
     </div>
   </template>
 
-  <div v-if="generating" class="ai-tag-review-overlay">
+  <div
+    v-if="generating"
+    class="ai-tag-review-overlay"
+    @pointerdown.stop
+    @mousedown.stop
+    @touchstart.stop
+  >
     <div class="ai-tag-review-modal" style="max-width:400px;text-align:center;padding:40px;">
       <div style="font-size:24px;margin-bottom:12px;">⏳</div>
       <div style="color:var(--wb-text-main);">AI 正在分析配置指令...</div>
     </div>
   </div>
 
-  <div v-if="preview" class="ai-tag-review-overlay" @click.self="$emit('close-preview')">
+  <div
+    v-if="preview"
+    class="ai-tag-review-overlay"
+    @pointerdown.stop
+    @mousedown.stop
+    @touchstart.stop
+    @click.self.stop="$emit('close-preview')"
+  >
     <div class="ai-tag-review-modal" style="max-width:700px;">
       <div class="ai-tag-review-head">
         <span class="ai-tag-review-title">📋 配置变更预览</span>

@@ -3879,7 +3879,7 @@ interface MobileEntryLongPressState {
   target: HTMLElement | null;
 }
 
-const APP_VERSION = '1.3.3';
+const APP_VERSION = '1.3.4';
 const VERSION_REPO_OWNER = 'bbs412006';
 const VERSION_REPO_NAME = 'tavern_worldbook_assistant';
 const VERSION_BRANCH = 'ST-Manager-STscript';
