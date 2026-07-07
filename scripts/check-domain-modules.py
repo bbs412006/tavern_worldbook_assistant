@@ -18,6 +18,8 @@ tags_path = root / 'src/worldbook_assistant_build/domain/tags.ts'
 tags = tags_path.read_text(encoding='utf-8') if tags_path.exists() else ''
 worldbook_path = root / 'src/worldbook_assistant_build/domain/worldbook.ts'
 worldbook = worldbook_path.read_text(encoding='utf-8') if worldbook_path.exists() else ''
+layout_path = root / 'src/worldbook_assistant_build/domain/layout.ts'
+layout = layout_path.read_text(encoding='utf-8') if layout_path.exists() else ''
 
 checks = {
     'ui constants module exists': ui_constants_path.exists(),
@@ -70,6 +72,9 @@ checks = {
     'worldbook domain exports entry sorter': 'export function compareEntriesByPositionThenOrder' in worldbook,
     'app imports worldbook domain helpers': "from './domain/worldbook'" in app and 'parseImportedPayload' in app and 'compareEntriesByPositionThenOrder' in app,
     'app no longer declares worldbook pure helpers inline': 'function parseImportedPayload' not in app and 'function compareEntriesByPositionThenOrder' not in app,
+    'layout domain module exists': layout_path.exists(),
+    'layout domain exports responsive helpers': 'export function isCompactLayoutWidth' in layout and 'export function buildMainLayoutStyle' in layout and 'export function buildEditorShellStyle' in layout,
+    'app imports layout helpers': "from './domain/layout'" in app and 'buildMainLayoutStyle' in app and 'buildEditorShellStyle' in app,
 }
 
 for name, ok in checks.items():

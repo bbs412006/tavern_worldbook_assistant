@@ -3417,6 +3417,7 @@ import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
 import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
 import { compareEntriesByPositionThenOrder, parseImportedPayload } from './domain/worldbook';
+import { buildEditorShellStyle, buildMainLayoutStyle, isCompactLayoutWidth, isDesktopFocusLayout } from './domain/layout';
 import {
   CROSS_COPY_ACTION_LABELS,
   CROSS_COPY_STATUS_LABELS,
@@ -3876,8 +3877,8 @@ const totalContentChars = computed(() =>
 );
 
 const hasUnsavedChanges = computed(() => draftEntriesDigest.value !== originalEntriesDigest.value);
-const isCompactLayout = computed(() => viewportWidth.value <= 1100);
-const isDesktopFocusMode = computed(() => !isMobile.value && !isCompactLayout.value && isFocusEditing.value);
+const isCompactLayout = computed(() => isCompactLayoutWidth(viewportWidth.value));
+const isDesktopFocusMode = computed(() => isDesktopFocusLayout(isMobile.value, isCompactLayout.value, isFocusEditing.value));
 const canResizeHistorySections = computed(() => !isMobile.value && viewportWidth.value > 1380);
 const focusCineEnabled = computed(() => !isMobile.value && viewportWidth.value > 1100);
 const isFocusCineRunning = computed(() => focusCinePhase.value === 'running' || focusCinePhase.value === 'settling');
@@ -3900,30 +3901,26 @@ const activeEditorSideMin = computed(() => (isDesktopFocusMode.value ? FOCUS_EDI
 const activeMainPaneWidth = computed(() => (isDesktopFocusMode.value ? focusMainPaneWidth.value : mainPaneWidth.value));
 const activeEditorSideWidth = computed(() => (isDesktopFocusMode.value ? focusEditorSideWidth.value : editorSideWidth.value));
 
-const mainLayoutStyle = computed<Record<string, string> | undefined>(() => {
-  if (isMobile.value) {
-    return {
-      display: 'block',
-      height: 'auto',
-      overflow: 'visible',
-    };
-  }
-  if (isCompactLayout.value) {
-    return undefined;
-  }
-  return {
-    gridTemplateColumns: `minmax(${activeMainPaneMin.value}px, min(${activeMainPaneWidth.value}px, calc(100% - ${MAIN_EDITOR_MIN + RESIZE_HANDLE_SIZE}px))) ${RESIZE_HANDLE_SIZE}px minmax(0, 1fr)`,
-  };
-});
+const mainLayoutStyle = computed<Record<string, string> | undefined>(() =>
+  buildMainLayoutStyle({
+    isMobile: isMobile.value,
+    isCompactLayout: isCompactLayout.value,
+    activeMainPaneMin: activeMainPaneMin.value,
+    activeMainPaneWidth: activeMainPaneWidth.value,
+    mainEditorMin: MAIN_EDITOR_MIN,
+    resizeHandleSize: RESIZE_HANDLE_SIZE,
+  }),
+);
 
-const editorShellStyle = computed<Record<string, string> | undefined>(() => {
-  if (isCompactLayout.value) {
-    return undefined;
-  }
-  return {
-    gridTemplateColumns: `minmax(0, 1fr) ${RESIZE_HANDLE_SIZE}px minmax(${activeEditorSideMin.value}px, min(${activeEditorSideWidth.value}px, calc(100% - ${EDITOR_CENTER_MIN + RESIZE_HANDLE_SIZE}px)))`,
-  };
-});
+const editorShellStyle = computed<Record<string, string> | undefined>(() =>
+  buildEditorShellStyle({
+    isCompactLayout: isCompactLayout.value,
+    activeEditorSideMin: activeEditorSideMin.value,
+    activeEditorSideWidth: activeEditorSideWidth.value,
+    editorCenterMin: EDITOR_CENTER_MIN,
+    resizeHandleSize: RESIZE_HANDLE_SIZE,
+  }),
+);
 
 const themeStyles = computed(() => {
   const baseColors = THEMES[currentTheme.value].colors;
