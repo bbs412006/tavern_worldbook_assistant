@@ -3,9 +3,11 @@
     <div class="ai-chat-area">
       <div v-if="!activeSession" class="ai-chat-empty">
         <div class="ai-chat-empty-icon">🤖</div>
-        <div class="ai-chat-empty-text">新建一个对话开始生成</div>
-        <button class="btn" type="button" @click="$emit('create-session')">+ 新建对话</button>
-        <button class="btn" type="button" style="margin-top:6px;" @click="$emit('extract-from-chat')">📥 从聊天提取世界书</button>
+        <div class="ai-chat-empty-text">{{ emptyText }}</div>
+        <template v-if="showEmptyActions">
+          <button class="btn" type="button" @click="$emit('create-session')">+ 新建对话</button>
+          <button class="btn" type="button" style="margin-top:6px;" @click="$emit('extract-from-chat')">📥 从聊天提取世界书</button>
+        </template>
       </div>
       <template v-else>
         <div class="ai-chat-messages">
@@ -47,7 +49,7 @@
 <script setup lang="ts">
 import type { AIChatMessage, AIChatSession } from '../domain/types';
 
-defineProps<{
+withDefaults(defineProps<{
   activeSession: AIChatSession | null;
   messages: AIChatMessage[];
   input: string;
@@ -55,7 +57,12 @@ defineProps<{
   isGenerating: boolean;
   streamingText: string;
   isMobile: boolean;
-}>();
+  emptyText?: string;
+  showEmptyActions?: boolean;
+}>(), {
+  emptyText: '新建一个对话开始生成',
+  showEmptyActions: false,
+});
 
 defineEmits<{
   'create-session': [];

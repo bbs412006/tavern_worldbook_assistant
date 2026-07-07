@@ -76,7 +76,9 @@ checks = {
     'layout domain exports responsive helpers': 'export function isCompactLayoutWidth' in layout and 'export function buildMainLayoutStyle' in layout and 'export function buildEditorShellStyle' in layout,
     'app imports layout helpers': "from './domain/layout'" in app and 'buildMainLayoutStyle' in app and 'buildEditorShellStyle' in app,
     'app uses ai chat panel component': '<AIChatPanel' in app,
+    'app uses ai chat panel for mobile and desktop': app.count('<AIChatPanel') >= 2,
     'ai chat panel supports streaming state': 'streamingText' in (root / 'src/worldbook_assistant_build/components/AIChatPanel.vue').read_text(encoding='utf-8'),
+    'ai chat panel can hide empty actions': 'showEmptyActions' in (root / 'src/worldbook_assistant_build/components/AIChatPanel.vue').read_text(encoding='utf-8'),
 }
 
 for name, ok in checks.items():

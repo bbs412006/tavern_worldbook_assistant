@@ -758,6 +758,7 @@
               :is-generating="aiIsGenerating"
               :streaming-text="aiStreamingText"
               :is-mobile="true"
+              :show-empty-actions="true"
               @create-session="aiCreateSession"
               @extract-from-chat="extractFromChat"
               @update:input="aiChatInputText = $event"
@@ -1760,60 +1761,22 @@
                 <div v-if="!aiSessions.length" class="empty-note">暂无对话，点击上方新建</div>
               </div>
             </div>
-            <div class="ai-chat-area">
-              <div v-if="!aiActiveSession" class="ai-chat-empty">
-                <div class="ai-chat-empty-icon">🤖</div>
-                <div class="ai-chat-empty-text">选择或新建一个对话开始生成</div>
-              </div>
-              <template v-else>
-                <div class="ai-chat-messages" ref="aiChatMessagesRef">
-                  <div
-                    v-for="(msg, idx) in aiActiveMessages"
-                    :key="`msg-${idx}`"
-                    class="ai-chat-bubble"
-                    :class="msg.role"
-                  >
-                    <div class="ai-chat-bubble-role">{{ msg.role === 'user' ? '👤 你' : '🤖 AI' }}</div>
-                    <div class="ai-chat-bubble-content">{{ msg.content }}</div>
-                  </div>
-                  <div v-if="aiIsGenerating && aiStreamingText" class="ai-chat-bubble assistant streaming">
-                    <div class="ai-chat-bubble-role">🤖 AI</div>
-                    <div class="ai-chat-bubble-content">{{ aiStreamingText }}<span class="ai-cursor">▌</span></div>
-                  </div>
-                  <div v-if="aiIsGenerating && !aiStreamingText" class="ai-chat-bubble assistant streaming">
-                    <div class="ai-chat-bubble-role">🤖 AI</div>
-                    <div class="ai-chat-bubble-content"><span class="ai-thinking">思考中...</span></div>
-                  </div>
-                </div>
-                <div class="ai-chat-input-bar">
-                  <label class="ai-context-toggle" title="开启后，AI 将能看到酒馆的预设、世界书和正则上下文">
-                    <input v-model="aiUseContext" type="checkbox" />
-                    <span>{{ aiUseContext ? '📖 附带上下文' : '🔒 纯净模式' }}</span>
-                  </label>
-                  <textarea
-                    v-model="aiChatInputText"
-                    class="text-input ai-chat-input"
-                    placeholder="输入提示词，让 AI 生成世界书条目..."
-                    rows="2"
-                    :disabled="aiIsGenerating"
-                    @keydown.enter.exact.prevent="aiSendMessage"
-                  ></textarea>
-                  <button
-                    v-if="!aiIsGenerating"
-                    class="btn ai-send-btn"
-                    type="button"
-                    :disabled="!aiChatInputText.trim()"
-                    @click="aiSendMessage"
-                  >发送</button>
-                  <button
-                    v-else
-                    class="btn danger ai-stop-btn"
-                    type="button"
-                    @click="aiStopGeneration"
-                  >停止</button>
-                </div>
-              </template>
-            </div>
+            <AIChatPanel
+              :active-session="aiActiveSession"
+              :messages="aiActiveMessages"
+              :input="aiChatInputText"
+              :use-context="aiUseContext"
+              :is-generating="aiIsGenerating"
+              :streaming-text="aiStreamingText"
+              :is-mobile="false"
+              empty-text="选择或新建一个对话开始生成"
+              @create-session="aiCreateSession"
+              @extract-from-chat="extractFromChat"
+              @update:input="aiChatInputText = $event"
+              @update:use-context="aiUseContext = $event"
+              @send="aiSendMessage"
+              @stop-generation="aiStopGeneration"
+            />
           </section>
 
           <!-- 标签编辑模式 -->
@@ -3534,7 +3497,6 @@ const aiShowTagReview = ref(false);
 const aiTargetWorldbook = ref('');
 const aiChatInputText = ref('');
 const aiUseContext = ref(true);
-const aiChatMessagesRef = ref<HTMLDivElement | null>(null);
 const showApiSettings = ref(false);
 const apiModelList = ref<string[]>([]);
 const apiModelLoading = ref(false);
