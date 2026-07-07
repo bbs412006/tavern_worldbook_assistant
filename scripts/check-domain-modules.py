@@ -23,6 +23,12 @@ checks = {
     'app no longer declares persisted state inline': 'interface PersistedState' not in app,
     'app no longer declares ai api config inline': 'interface AIApiConfig' not in app,
     'app no longer declares version info inline': 'interface VersionInfo' not in app,
+    'persisted state module exists': (root / 'src/worldbook_assistant_build/domain/persistedState.ts').exists(),
+    'persisted state exports defaults': 'export function createDefaultPersistedState' in ((root / 'src/worldbook_assistant_build/domain/persistedState.ts').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/domain/persistedState.ts').exists() else ''),
+    'persisted state exports normalizer': 'export function normalizePersistedState' in ((root / 'src/worldbook_assistant_build/domain/persistedState.ts').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/domain/persistedState.ts').exists() else ''),
+    'app imports persisted state helpers': "from './domain/persistedState'" in app,
+    'app no longer declares persisted state default inline': 'function createDefaultPersistedState' not in app,
+    'app no longer declares persisted state normalizer inline': 'function normalizePersistedState' not in app,
 }
 
 for name, ok in checks.items():
