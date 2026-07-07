@@ -79,6 +79,8 @@ checks = {
     'app uses ai chat panel for mobile and desktop': app.count('<AIChatPanel') >= 2,
     'ai chat panel supports streaming state': 'streamingText' in (root / 'src/worldbook_assistant_build/components/AIChatPanel.vue').read_text(encoding='utf-8'),
     'ai chat panel can hide empty actions': 'showEmptyActions' in (root / 'src/worldbook_assistant_build/components/AIChatPanel.vue').read_text(encoding='utf-8'),
+    'tag create panel component exists': (root / 'src/worldbook_assistant_build/components/TagCreatePanel.vue').exists(),
+    'app uses tag create panel component': app.count('<TagCreatePanel') >= 2,
 }
 
 for name, ok in checks.items():

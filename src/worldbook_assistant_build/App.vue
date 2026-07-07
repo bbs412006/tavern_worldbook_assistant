@@ -774,28 +774,16 @@
           <div v-show="mobileTab === 'tags'" class="mobile-pane">
             <section class="tag-editor-panel mobile-tag-editor">
               <div class="tag-editor-title">🏷️ 标签管理</div>
-              <div class="tag-create-panel">
-                <div class="tag-create-row">
-                  <input
-                    v-model="tagNewName"
-                    type="text"
-                    class="text-input"
-                    placeholder="新标签名称"
-                    @keydown.enter.prevent="tagCreate"
-                  />
-                  <button class="btn" type="button" @click="tagCreate">创建</button>
-                  <button class="btn danger" type="button" @click="tagResetAll" :disabled="!tagDefinitions.length">清除全部</button>
-                </div>
-                <label class="field tag-parent-field">
-                  <span>父标签（可选）</span>
-                  <select v-model="tagNewParentId" class="text-input">
-                    <option value="">根级</option>
-                    <option v-for="option in tagAssignOptions" :key="`new-parent-mobile-${option.id}`" :value="option.id">
-                      {{ option.path }}
-                    </option>
-                  </select>
-                </label>
-              </div>
+              <TagCreatePanel
+                :name="tagNewName"
+                :parent-id="tagNewParentId"
+                :parent-options="tagAssignOptions"
+                :has-tags="Boolean(tagDefinitions.length)"
+                @update:name="tagNewName = $event"
+                @update:parent-id="tagNewParentId = $event"
+                @create="tagCreate"
+                @reset-all="tagResetAll"
+              />
 
               <div v-if="tagDefinitions.length" class="tag-editor-tree-wrap">
                 <div class="tag-editor-subtitle">标签树</div>
@@ -1782,25 +1770,18 @@
           <!-- 标签编辑模式 -->
           <section v-if="tagEditorMode" class="tag-editor-panel" style="padding:16px;">
             <div class="tag-editor-title">🏷️ 标签管理</div>
-            <div class="tag-create-panel desktop">
-              <div class="tag-create-row">
-                <input
-                  v-model="tagNewName"
-                  type="text"
-                  class="text-input"
-                  placeholder="新标签名称"
-                  @keydown.enter.prevent="tagCreate"
-                />
-                <select v-model="tagNewParentId" class="text-input tag-parent-select">
-                  <option value="">根级</option>
-                  <option v-for="option in tagAssignOptions" :key="`new-parent-desktop-${option.id}`" :value="option.id">
-                    {{ option.path }}
-                  </option>
-                </select>
-                <button class="btn" type="button" @click="tagCreate">创建</button>
-                <button class="btn danger" type="button" @click="tagResetAll" :disabled="!tagDefinitions.length">清除全部</button>
-              </div>
-            </div>
+            <TagCreatePanel
+              :name="tagNewName"
+              :parent-id="tagNewParentId"
+              :parent-options="tagAssignOptions"
+              :has-tags="Boolean(tagDefinitions.length)"
+              desktop
+              show-parent-select
+              @update:name="tagNewName = $event"
+              @update:parent-id="tagNewParentId = $event"
+              @create="tagCreate"
+              @reset-all="tagResetAll"
+            />
             <div v-if="tagDefinitions.length" class="tag-editor-layout">
               <div class="tag-editor-tree-wrap">
                 <div class="tag-editor-subtitle">标签树</div>
@@ -3230,6 +3211,7 @@ import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
+import TagCreatePanel from './components/TagCreatePanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import AIConfigModal from './components/AIConfigModal.vue';
 import { APP_VERSION } from './domain/version';
