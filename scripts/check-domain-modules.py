@@ -8,6 +8,8 @@ types_path = root / 'src/worldbook_assistant_build/domain/types.ts'
 types = types_path.read_text(encoding='utf-8') if types_path.exists() else ''
 persisted_composable_path = root / 'src/worldbook_assistant_build/composables/usePersistedState.ts'
 persisted_composable = persisted_composable_path.read_text(encoding='utf-8') if persisted_composable_path.exists() else ''
+ai_config_path = root / 'src/worldbook_assistant_build/domain/aiConfig.ts'
+ai_config = ai_config_path.read_text(encoding='utf-8') if ai_config_path.exists() else ''
 
 checks = {
     'ui constants module exists': ui_constants_path.exists(),
@@ -36,6 +38,11 @@ checks = {
     'persisted state composable owns variable bridge': 'readPersistedState' in persisted_composable and 'writePersistedState' in persisted_composable and 'updatePersistedState' in persisted_composable,
     'app imports persisted state composable': "from './composables/usePersistedState'" in app and 'usePersistedState' in app,
     'app no longer declares persisted state bridge inline': 'function readPersistedState' not in app and 'function writePersistedState' not in app and 'function updatePersistedState' not in app,
+    'ai config domain module exists': ai_config_path.exists(),
+    'ai config domain exports prompt builder': 'export function buildConfigSystemPrompt' in ai_config,
+    'ai config domain exports json extractor': 'export function extractJsonArray' in ai_config,
+    'app imports ai config domain helpers': "from './domain/aiConfig'" in app and 'buildConfigSystemPrompt' in app and 'extractJsonArray' in app,
+    'app no longer declares ai config pure helpers inline': 'function extractJsonArray' not in app,
 }
 
 for name, ok in checks.items():

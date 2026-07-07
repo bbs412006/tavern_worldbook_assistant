@@ -3414,6 +3414,7 @@ import {
 import { getHostWindow, resolveModalTarget } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
+import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 
 const FOCUS_FALLBACK_PRIORITY: FocusHeroKey[] = [
   'focus_toggle',
@@ -6298,54 +6299,6 @@ const STRATEGY_TYPE_LABELS: Record<string, string> = {
   vectorized: '向量化',
 };
 
-function buildConfigSystemPrompt(entries: WorldbookEntry[], forceDefault = false): string {
-  if (!forceDefault && aiConfigCustomPrompt.value.trim()) {
-    return aiConfigCustomPrompt.value;
-  }
-  const names = [...new Set(entries.map(e => e.name))].map(n => `"${n}"`).join(', ');
-
-  return `你是世界书条目配置助手。根据用户的自然语言指令，输出对应的JSON配置。
-
-## 可用条目
-${names || '无'}
-
-## JSON Schema
-每个配置对象的可用字段如下（只包含需要修改的字段，name必填）：
-{
-  "name": "str! 必须精确匹配上方条目名",
-  "new_name": "str 重命名条目",
-  "enabled": "bool",
-  "strategy_type": "constant(蓝灯常驻) | selective(绿灯关键词)",
-  "keys": ["str 主要关键词"],
-  "keys_secondary": ["str 次要关键词"],
-  "keys_secondary_logic": "and_any | and_all | not_all | not_any",
-  "scan_depth": "int | 'same_as_global'",
-  "position_type": "before_character_definition(角色定义之前) | after_character_definition(角色定义之后) | before_example_messages(示例消息前) | after_example_messages(示例消息后) | before_author_note(作者注释之前) | after_author_note(作者注释之后) | at_depth(指定深度)",
-  "position_order": "int 排序顺序",
-  "position_depth": "int 深度(at_depth时)",
-  "position_role": "system | assistant | user",
-  "prevent_incoming": "bool 不可递归",
-  "prevent_outgoing": "bool 防止进一步递归",
-  "probability": "int 0-100",
-  "sticky": "int|null 黏性",
-  "cooldown": "int|null 冷却"
-}
-
-## 思考步骤（内部思考，不要输出思考过程，直接输出结果）
-1. 识别用户提到了哪些条目（精确匹配"可用条目"中的名称）
-2. 识别每个条目需要修改什么设置（蓝灯/绿灯、位置、顺序、递归等）
-3. 如果用户给条目起了新名字，使用new_name字段
-4. 只输出有变更的字段，不要输出未提及的字段
-5. 注意：同名条目只需写一次，修改会自动应用到所有同名条目
-
-## 输出格式
-将结果包裹在 <worldbook_config></worldbook_config> 中，内容为纯JSON数组，无注释无markdown。
-
-<worldbook_config>
-[{"name":"现有条目名","new_name":"新名字","strategy_type":"constant","position_type":"before_character_definition","position_order":1,"prevent_incoming":true,"prevent_outgoing":true}]
-</worldbook_config>`;
-}
-
 async function loadDefaultConfigPrompt(): Promise<void> {
   const targetName = aiConfigTargetWorldbook.value;
   if (!targetName) {
@@ -6354,7 +6307,7 @@ async function loadDefaultConfigPrompt(): Promise<void> {
   }
   try {
     const entries = await getWorldbook(targetName);
-    aiConfigCustomPrompt.value = buildConfigSystemPrompt(entries, true);
+    aiConfigCustomPrompt.value = buildConfigSystemPrompt(entries, aiConfigCustomPrompt.value, true);
   } catch (e) {
     toastr.error('加载失败');
   }
@@ -6372,7 +6325,7 @@ async function aiConfigGenerate(): Promise<void> {
   try {
     const existingEntries = await getWorldbook(targetName);
 
-    const systemPrompt = buildConfigSystemPrompt(existingEntries);
+    const systemPrompt = buildConfigSystemPrompt(existingEntries, aiConfigCustomPrompt.value);
 
     const result = await generateRaw({
       user_input: input,
@@ -6384,43 +6337,13 @@ async function aiConfigGenerate(): Promise<void> {
       ...buildCustomApiForGenerate(),
     });
 
-    // Strip AI thinking/reasoning blocks that may contain false tag matches
-    const cleaned = result
-      .replace(/<(?:thinking|Think)>[\s\S]*?<\/(?:thinking|Think)>/gi, '')
-      .replace(/<!--[\s\S]*?-->/g, '');
-
-    // Parse <worldbook_config> tag — use lastIndexOf to find the LAST tag pair
-    let jsonStr = '';
-    const startTag = '<worldbook_config>';
-    const endTag = '</worldbook_config>';
-    const lastStart = cleaned.lastIndexOf(startTag);
-    const lastEnd = cleaned.lastIndexOf(endTag);
-    if (lastStart !== -1 && lastEnd !== -1 && lastEnd > lastStart) {
-      jsonStr = cleaned.substring(lastStart + startTag.length, lastEnd).trim();
-    } else {
-      // Fallback 1: look for JSON array inside markdown code block
-      const codeBlockMatch = cleaned.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
-      if (codeBlockMatch) {
-        jsonStr = codeBlockMatch[1];
-      } else {
-        // Fallback 2: find a JSON array that contains "name"
-        const arrayMatch = cleaned.match(/\[\s*\{[\s\S]*?"name"[\s\S]*?\}\s*\]/);
-        if (arrayMatch) {
-          jsonStr = arrayMatch[0];
-        } else {
-          console.error('[AI Config] No JSON found in response:\n', result);
-          toastr.error(`① AI 未返回有效 JSON。AI 响应长度: ${result.length} 字符。请检查 API 设置或重试`);
-          return;
-        }
-      }
+    const extracted = extractJsonArray(result);
+    if (!extracted.ok) {
+      console.error('[AI Config] No JSON found in response:\n', result);
+      toastr.error(`① AI 未返回有效 JSON。AI 响应长度: ${result.length} 字符。请检查 API 设置或重试`);
+      return;
     }
-    // Clean up common AI formatting issues
-    jsonStr = jsonStr
-      .replace(/```(?:json)?\s*/g, '')  // strip markdown code fences
-      .replace(/```\s*/g, '')
-      .replace(/\/\/.*$/gm, '')          // strip single-line comments
-      .replace(/,\s*([}\]])/g, '$1')     // strip trailing commas
-      .trim();
+    const jsonStr = extracted.json;
     let configs: any[];
     try {
       configs = JSON.parse(jsonStr);
