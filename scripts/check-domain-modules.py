@@ -6,6 +6,8 @@ ui_constants_path = root / 'src/worldbook_assistant_build/domain/uiConstants.ts'
 ui_constants = ui_constants_path.read_text(encoding='utf-8') if ui_constants_path.exists() else ''
 types_path = root / 'src/worldbook_assistant_build/domain/types.ts'
 types = types_path.read_text(encoding='utf-8') if types_path.exists() else ''
+persisted_composable_path = root / 'src/worldbook_assistant_build/composables/usePersistedState.ts'
+persisted_composable = persisted_composable_path.read_text(encoding='utf-8') if persisted_composable_path.exists() else ''
 
 checks = {
     'ui constants module exists': ui_constants_path.exists(),
@@ -29,6 +31,11 @@ checks = {
     'app imports persisted state helpers': "from './domain/persistedState'" in app,
     'app no longer declares persisted state default inline': 'function createDefaultPersistedState' not in app,
     'app no longer declares persisted state normalizer inline': 'function normalizePersistedState' not in app,
+    'persisted state composable exists': persisted_composable_path.exists(),
+    'persisted state composable exports usePersistedState': 'export function usePersistedState' in persisted_composable,
+    'persisted state composable owns variable bridge': 'readPersistedState' in persisted_composable and 'writePersistedState' in persisted_composable and 'updatePersistedState' in persisted_composable,
+    'app imports persisted state composable': "from './composables/usePersistedState'" in app and 'usePersistedState' in app,
+    'app no longer declares persisted state bridge inline': 'function readPersistedState' not in app and 'function writePersistedState' not in app and 'function updatePersistedState' not in app,
 }
 
 for name, ok in checks.items():

@@ -3413,6 +3413,7 @@ import {
 } from './domain/persistedState';
 import { getHostWindow, resolveModalTarget } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
+import { usePersistedState } from './composables/usePersistedState';
 
 const FOCUS_FALLBACK_PRIORITY: FocusHeroKey[] = [
   'focus_toggle',
@@ -3758,7 +3759,12 @@ const bindings = reactive({
 });
 
 const activationLogs = ref<ActivationLog[]>([]);
-const persistedState = ref<PersistedState>(createDefaultPersistedState());
+const {
+  persistedState,
+  readPersistedState,
+  writePersistedState,
+  updatePersistedState,
+} = usePersistedState(syncSelectedGlobalPresetFromState);
 const {
   versionInfo,
   versionCheckLoading,
@@ -5966,15 +5972,10 @@ function getNextUid(entries: WorldbookEntry[]): number {
   return Math.max(...entries.map(entry => entry.uid)) + 1;
 }
 
-function readPersistedState(): PersistedState {
-  const vars = getVariables({ type: 'script', script_id: getScriptId() });
-  return normalizePersistedState(vars[STORAGE_KEY]);
-}
-
-function syncSelectedGlobalPresetFromState(): void {
-  const presets = persistedState.value.global_presets;
+function syncSelectedGlobalPresetFromState(state: PersistedState): void {
+  const presets = state.global_presets;
   const byId = new Set(presets.map(item => item.id));
-  const preferredId = persistedState.value.last_global_preset_id;
+  const preferredId = state.last_global_preset_id;
   if (preferredId && byId.has(preferredId)) {
     selectedGlobalPresetId.value = preferredId;
     return;
@@ -5983,20 +5984,6 @@ function syncSelectedGlobalPresetFromState(): void {
     return;
   }
   selectedGlobalPresetId.value = '';
-}
-
-function writePersistedState(state: PersistedState): void {
-  const vars = getVariables({ type: 'script', script_id: getScriptId() });
-  vars[STORAGE_KEY] = state;
-  replaceVariables(vars, { type: 'script', script_id: getScriptId() });
-  persistedState.value = state;
-  syncSelectedGlobalPresetFromState();
-}
-
-function updatePersistedState(mutator: (state: PersistedState) => void): void {
-  const state = readPersistedState();
-  mutator(state);
-  writePersistedState(state);
 }
 
 function applyLayoutStateFromPersisted(): void {
