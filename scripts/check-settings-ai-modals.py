@@ -5,11 +5,12 @@ settings = (root / 'src/worldbook_assistant_build/components/SettingsModal.vue')
 ai = (root / 'src/worldbook_assistant_build/components/AIConfigModal.vue').read_text(encoding='utf-8')
 css = (root / 'src/worldbook_assistant_build/components/modal-shared.css').read_text(encoding='utf-8')
 app = (root / 'src/worldbook_assistant_build/App.vue').read_text(encoding='utf-8')
+version_module = (root / 'src/worldbook_assistant_build/domain/version.ts').read_text(encoding='utf-8')
 bundle_path = root / 'dist/worldbook_assistant_build/index.js'
 bundle = bundle_path.read_text(encoding='utf-8') if bundle_path.exists() else ''
 
 checks = {
-    'app version bumped for modal visibility fix': "APP_VERSION = '1.3.4'" in app,
+    'app version bumped for modal visibility fix': "APP_VERSION = '1.3.4'" in version_module and "from './domain/version'" in app,
     'app resolves host document teleport target': 'modalTeleportTarget' in app and 'ownerDocument?.body' in app,
     'settings modal receives explicit teleport target': ':teleport-target="modalTeleportTarget"' in app,
     'ai config modal receives explicit teleport target': ':teleport-target="modalTeleportTarget"' in app,

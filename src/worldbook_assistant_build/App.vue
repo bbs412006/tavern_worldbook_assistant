@@ -3290,6 +3290,14 @@ import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import AIConfigModal from './components/AIConfigModal.vue';
+import {
+  APP_VERSION,
+  VERSION_REPO_OWNER,
+  VERSION_REPO_NAME,
+  normalizeVersionTag,
+  compareSemver,
+  buildVersionImportUrl,
+} from './domain/version';
 
 type StrategyType = WorldbookEntry['strategy']['type'];
 type SecondaryLogic = WorldbookEntry['strategy']['keys_secondary']['logic'];
@@ -3879,11 +3887,6 @@ interface MobileEntryLongPressState {
   target: HTMLElement | null;
 }
 
-const APP_VERSION = '1.3.4';
-const VERSION_REPO_OWNER = 'bbs412006';
-const VERSION_REPO_NAME = 'tavern_worldbook_assistant';
-const VERSION_BRANCH = 'ST-Manager-STscript';
-const VERSION_BUNDLE_PATH = 'dist/worldbook_assistant_build/index.js';
 const STORAGE_KEY = 'worldbook_assistant_state_v1';
 const DIRTY_STATE_KEY = '__WB_ASSISTANT_HAS_UNSAVED_CHANGES__';
 const HISTORY_LIMIT = 12;
@@ -6916,26 +6919,6 @@ function updatePersistedState(mutator: (state: PersistedState) => void): void {
   const state = readPersistedState();
   mutator(state);
   writePersistedState(state);
-}
-
-function normalizeVersionTag(value: string): string {
-  return value.trim().replace(/^v/i, '');
-}
-
-function compareSemver(left: string, right: string): number {
-  const parse = (value: string) => normalizeVersionTag(value).split('.').map(part => Number.parseInt(part, 10) || 0);
-  const leftParts = parse(left);
-  const rightParts = parse(right);
-  const length = Math.max(leftParts.length, rightParts.length, 3);
-  for (let index = 0; index < length; index += 1) {
-    const delta = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
-    if (delta !== 0) return delta;
-  }
-  return 0;
-}
-
-function buildVersionImportUrl(version = APP_VERSION): string {
-  return `https://cdn.jsdelivr.net/gh/${VERSION_REPO_OWNER}/${VERSION_REPO_NAME}@${version}/${VERSION_BUNDLE_PATH}`;
 }
 
 async function copyVersionImportUrl(): Promise<void> {
