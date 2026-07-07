@@ -10,6 +10,8 @@ persisted_composable_path = root / 'src/worldbook_assistant_build/composables/us
 persisted_composable = persisted_composable_path.read_text(encoding='utf-8') if persisted_composable_path.exists() else ''
 ai_config_path = root / 'src/worldbook_assistant_build/domain/aiConfig.ts'
 ai_config = ai_config_path.read_text(encoding='utf-8') if ai_config_path.exists() else ''
+cross_copy_path = root / 'src/worldbook_assistant_build/domain/crossCopy.ts'
+cross_copy = cross_copy_path.read_text(encoding='utf-8') if cross_copy_path.exists() else ''
 
 checks = {
     'ui constants module exists': ui_constants_path.exists(),
@@ -43,6 +45,11 @@ checks = {
     'ai config domain exports json extractor': 'export function extractJsonArray' in ai_config,
     'app imports ai config domain helpers': "from './domain/aiConfig'" in app and 'buildConfigSystemPrompt' in app and 'extractJsonArray' in app,
     'app no longer declares ai config pure helpers inline': 'function extractJsonArray' not in app,
+    'cross copy domain module exists': cross_copy_path.exists(),
+    'cross copy domain exports status labels': 'export const CROSS_COPY_STATUS_LABELS' in cross_copy and 'export const CROSS_COPY_ACTION_LABELS' in cross_copy,
+    'cross copy domain exports diff helpers': 'export function buildEntryFieldDiffRows' in cross_copy and 'export function buildCrossCopyTextDiff' in cross_copy,
+    'app imports cross copy domain helpers': "from './domain/crossCopy'" in app and 'buildCrossCopyTextDiff' in app and 'CROSS_COPY_STATUS_LABELS' in app,
+    'app no longer declares cross copy diff inline': 'function buildCrossCopyTextDiff' not in app,
 }
 
 for name, ok in checks.items():
