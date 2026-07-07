@@ -2563,6 +2563,7 @@
       :theme-options="themeOptions"
       :api-model-list="apiModelList"
       :api-model-loading="apiModelLoading"
+      :teleport-target="modalTeleportTarget"
       @close="showApiSettings = false"
       @set-fab-visible="setFabVisible"
       @toggle-floor-btns="toggleFloorBtns"
@@ -2588,6 +2589,7 @@
       :changes="aiConfigChanges"
       :preview="aiConfigPreview"
       :generating="aiConfigGenerating"
+      :teleport-target="modalTeleportTarget"
       @update:target-worldbook="aiConfigTargetWorldbook = $event"
       @update:input="aiConfigInput = $event"
       @update:custom-prompt="aiConfigCustomPrompt = $event"
@@ -3877,7 +3879,7 @@ interface MobileEntryLongPressState {
   target: HTMLElement | null;
 }
 
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.3';
 const VERSION_REPO_OWNER = 'bbs412006';
 const VERSION_REPO_NAME = 'tavern_worldbook_assistant';
 const VERSION_BRANCH = 'ST-Manager-STscript';
@@ -4026,6 +4028,7 @@ const rolePickerOpen = ref(false);
 const rolePickerRef = ref<HTMLElement | null>(null);
 const rolePickerSearchInputRef = ref<HTMLInputElement | null>(null);
 const currentTheme = ref<ThemeKey>('ocean');
+const modalTeleportTarget = computed<HTMLElement | string>(() => rootRef.value?.ownerDocument?.body ?? 'body');
 const themePickerOpen = ref(false);
 const globalWorldbookMode = ref(false);
 const aiGeneratorMode = ref(false);

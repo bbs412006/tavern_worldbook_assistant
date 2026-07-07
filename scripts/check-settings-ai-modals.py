@@ -9,9 +9,12 @@ bundle_path = root / 'dist/worldbook_assistant_build/index.js'
 bundle = bundle_path.read_text(encoding='utf-8') if bundle_path.exists() else ''
 
 checks = {
-    'app version bumped for modal visibility fix': "APP_VERSION = '1.3.2'" in app,
-    'settings modal teleports to body': '<Teleport to="body">' in settings and '设置中心' in settings,
-    'ai config modal teleports to body': '<Teleport to="body">' in ai and 'AI 配置世界书' in ai,
+    'app version bumped for modal visibility fix': "APP_VERSION = '1.3.3'" in app,
+    'app resolves host document teleport target': 'modalTeleportTarget' in app and 'ownerDocument?.body' in app,
+    'settings modal receives explicit teleport target': ':teleport-target="modalTeleportTarget"' in app,
+    'ai config modal receives explicit teleport target': ':teleport-target="modalTeleportTarget"' in app,
+    'settings modal teleports to explicit target': ':to="teleportTarget"' in settings and 'teleportTarget: HTMLElement | string' in settings and '设置中心' in settings,
+    'ai config modal teleports to explicit target': ':to="teleportTarget"' in ai and 'teleportTarget: HTMLElement | string' in ai and 'AI 配置世界书' in ai,
     'settings modal closes teleport wrapper': '</Teleport>' in settings,
     'ai config modal closes teleport wrapper': '</Teleport>' in ai,
     'shared modal css keeps overlay fixed on mobile': '@media (orientation: portrait)' in css and 'position: absolute;' not in css,

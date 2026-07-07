@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="body">
+  <Teleport :to="teleportTarget">
   <template v-if="showInput && !preview && !generating">
     <div class="ai-tag-review-overlay" @click.self="$emit('close-input')">
       <div class="ai-tag-review-modal" style="max-width:600px;">
@@ -108,6 +108,7 @@
 import './modal-shared.css';
 
 defineProps<{
+  teleportTarget: HTMLElement | string;
   showInput: boolean;
   worldbookNames: string[];
   targetWorldbook: string;

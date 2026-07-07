@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="body">
+  <Teleport :to="teleportTarget">
   <div class="ai-tag-review-overlay" @click.self="$emit('close')">
     <div class="ai-tag-review-modal" style="max-width:520px;">
       <div class="ai-tag-review-head">
@@ -194,6 +194,7 @@ function compareVersionText(left: string, right: string): number {
 }
 
 defineProps<{
+  teleportTarget: HTMLElement | string;
   persistedState: any;
   fabVisible: boolean;
   floorBtnVisible: boolean;
