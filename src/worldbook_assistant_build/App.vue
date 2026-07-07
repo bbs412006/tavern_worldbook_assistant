@@ -3418,6 +3418,7 @@ import {
   normalizeLayoutState,
   normalizeCrossCopyPersistState,
 } from './domain/persistedState';
+import { getHostWindow, resolveModalTarget } from './host/hostBridge';
 
 const FOCUS_FALLBACK_PRIORITY: FocusHeroKey[] = [
   'focus_toggle',
@@ -3495,7 +3496,7 @@ const rolePickerOpen = ref(false);
 const rolePickerRef = ref<HTMLElement | null>(null);
 const rolePickerSearchInputRef = ref<HTMLInputElement | null>(null);
 const currentTheme = ref<ThemeKey>('ocean');
-const modalTeleportTarget = computed<HTMLElement | string>(() => rootRef.value?.ownerDocument?.body ?? 'body');
+const modalTeleportTarget = computed<HTMLElement | string>(() => resolveModalTarget(rootRef.value));
 const themePickerOpen = ref(false);
 const globalWorldbookMode = ref(false);
 const aiGeneratorMode = ref(false);

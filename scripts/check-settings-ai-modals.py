@@ -6,12 +6,15 @@ ai = (root / 'src/worldbook_assistant_build/components/AIConfigModal.vue').read_
 css = (root / 'src/worldbook_assistant_build/components/modal-shared.css').read_text(encoding='utf-8')
 app = (root / 'src/worldbook_assistant_build/App.vue').read_text(encoding='utf-8')
 version_module = (root / 'src/worldbook_assistant_build/domain/version.ts').read_text(encoding='utf-8')
+index = (root / 'src/worldbook_assistant_build/index.ts').read_text(encoding='utf-8')
+host_bridge_path = root / 'src/worldbook_assistant_build/host/hostBridge.ts'
+host_bridge = host_bridge_path.read_text(encoding='utf-8') if host_bridge_path.exists() else ''
 bundle_path = root / 'dist/worldbook_assistant_build/index.js'
 bundle = bundle_path.read_text(encoding='utf-8') if bundle_path.exists() else ''
 
 checks = {
     'app version bumped for modal visibility fix': "APP_VERSION = '1.3.4'" in version_module and "from './domain/version'" in app,
-    'app resolves host document teleport target': 'modalTeleportTarget' in app and 'ownerDocument?.body' in app,
+    'app resolves host document teleport target': 'modalTeleportTarget' in app and 'resolveModalTarget(rootRef.value)' in app,
     'settings modal receives explicit teleport target': ':teleport-target="modalTeleportTarget"' in app,
     'ai config modal receives explicit teleport target': ':teleport-target="modalTeleportTarget"' in app,
     'settings modal teleports to explicit target': ':to="teleportTarget"' in settings and 'teleportTarget: HTMLElement | string' in settings and '设置中心' in settings,
@@ -23,7 +26,11 @@ checks = {
     'shared modal css keeps overlay fixed on mobile': '@media (orientation: portrait)' in css and 'position: absolute;' not in css,
     'app opens settings with boolean': 'showApiSettings = true' in app and 'v-if="showApiSettings"' in app,
     'app opens ai config with boolean': 'openAiConfigModal' in app and ':show-input="showAiConfigModal"' in app,
-    'shared modal css present': "import './modal-shared.css'" in settings and "import './modal-shared.css'" in ai,
+    'host bridge centralizes host document helpers': host_bridge_path.exists() and 'export function getHostWindow' in host_bridge and 'export function getHostDocument' in host_bridge,
+    'host bridge exports modal target resolver': 'export function resolveModalTarget' in host_bridge,
+    'index imports host bridge helpers': "from './host/hostBridge'" in index and 'getHostDocument' in index and 'getHostWindow' in index,
+    'app imports host bridge modal resolver': "from './host/hostBridge'" in app and 'resolveModalTarget' in app,
+    'shared modal css present': 'ai-tag-review-overlay' in css,
     'bundle has settings title': (not bundle) or '设置中心' in bundle,
     'bundle has ai config title': (not bundle) or 'AI 配置世界书' in bundle,
     'bundle includes teleport runtime after build': (not bundle) or 'Teleport' in bundle or 'teleport' in bundle,

@@ -1,6 +1,7 @@
 import { createApp, type App as VueApp } from 'vue';
 import { createScriptIdDiv, teleportStyle } from '@util/script';
 import WorldbookAssistantApp from './App.vue';
+import { getHostDocument, getHostWindow } from './host/hostBridge';
 
 const MENU_ID = 'wb-assistant-menu-item';
 const PANEL_ID = 'wb-assistant-panel';
@@ -37,14 +38,6 @@ let fabViewportSyncScrollHandler: (() => void) | null = null;
 let fabViewportSyncResizeHandler: (() => void) | null = null;
 let fabViewportSyncRaf: number | null = null;
 let fabVisibilitySetHandler: ((event: Event) => void) | null = null;
-
-function getHostWindow(): Window {
-  return window.parent || window;
-}
-
-function getHostDocument(): Document {
-  return getHostWindow().document;
-}
 
 function isTextEntryTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) {
