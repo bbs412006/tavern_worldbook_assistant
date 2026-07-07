@@ -3414,6 +3414,7 @@ import { getHostWindow, resolveModalTarget } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
 import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
+import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
 import {
   CROSS_COPY_ACTION_LABELS,
   CROSS_COPY_STATUS_LABELS,
@@ -6562,7 +6563,7 @@ async function aiSendMessage(): Promise<void> {
 
     // Auto-extract tags
     const ignoreSet = new Set(persistedState.value.extract_ignore_tags.map(t => t.toLowerCase()));
-    const tags = aiExtractTags(result, ignoreSet);
+    const tags = extractAiTags(result, ignoreSet);
     if (tags.length > 0) {
       aiExtractedTags.value = tags;
       aiShowTagReview.value = true;
@@ -6586,28 +6587,6 @@ function aiStopGeneration(): void {
 }
 
 // ── AI Chat: tag extraction ────────────────────────────────────────
-function aiExtractTags(text: string, ignoreTags?: Set<string>): ExtractedTag[] {
-  const regex = /<([^/<>\s]+)>([\s\S]*?)<\/\1>/g;
-  const results: ExtractedTag[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(text)) !== null) {
-    const tagName = match[1];
-    const innerContent = match[2];
-    if (ignoreTags && ignoreTags.has(tagName.toLowerCase())) {
-      // Tag is ignored — skip it, but recursively scan its inner content
-      const nested = aiExtractTags(innerContent, ignoreTags);
-      results.push(...nested);
-    } else {
-      results.push({
-        tag: tagName,
-        content: innerContent.trim(),
-        selected: true,
-      });
-    }
-  }
-  return results;
-}
-
 function updateIgnoreTags(raw: string): void {
   const tags = raw
     .split(/[,\n]+/)
@@ -6628,45 +6607,14 @@ function resetIgnoreTags(): void {
 async function markDuplicatesInTags(): Promise<void> {
   const targetName = aiTargetWorldbook.value;
   if (!targetName || aiExtractedTags.value.length === 0) {
-    for (const tag of aiExtractedTags.value) {
-      tag.duplicate = false;
-      tag.updated = false;
-    }
+    aiExtractedTags.value = aiExtractedTags.value.map(tag => ({ ...tag, duplicate: false, updated: false }));
     return;
   }
   try {
     const existing = await getWorldbook(targetName);
-    // Build a map: lowercase name → normalized content
-    const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
-    const existingMap = new Map<string, string>();
-    for (const e of existing) {
-      existingMap.set(e.name.toLowerCase(), norm(e.content));
-    }
-    for (const tag of aiExtractedTags.value) {
-      const key = tag.tag.toLowerCase();
-      const existingNorm = existingMap.get(key);
-      const tagNorm = norm(tag.content);
-      if (existingNorm === undefined) {
-        // Not in worldbook
-        tag.duplicate = false;
-        tag.updated = false;
-      } else if (existingNorm === tagNorm) {
-        // Same name + same content (after normalization) → true duplicate
-        tag.duplicate = true;
-        tag.updated = false;
-        tag.selected = false;
-      } else {
-        // Same name + different content → updated
-        tag.duplicate = false;
-        tag.updated = true;
-        // Keep selected — user likely wants the new version
-      }
-    }
+    aiExtractedTags.value = markExtractedTagDuplicates(aiExtractedTags.value, existing);
   } catch {
-    for (const tag of aiExtractedTags.value) {
-      tag.duplicate = false;
-      tag.updated = false;
-    }
+    aiExtractedTags.value = aiExtractedTags.value.map(tag => ({ ...tag, duplicate: false, updated: false }));
   }
 }
 
@@ -6681,7 +6629,7 @@ async function extractFromChat(): Promise<void> {
     const ignoreSet = new Set(persistedState.value.extract_ignore_tags.map(t => t.toLowerCase()));
     const allTags: ExtractedTag[] = [];
     for (const msg of messages) {
-      const tags = aiExtractTags(msg.message || '', ignoreSet);
+      const tags = extractAiTags(msg.message || '', ignoreSet);
       allTags.push(...tags);
     }
 
@@ -6690,22 +6638,7 @@ async function extractFromChat(): Promise<void> {
       return;
     }
 
-    // Dedup by tag name: keep the LAST occurrence (most recent message wins)
-    const tagNameMap = new Map<string, ExtractedTag>();
-    for (const t of allTags) {
-      tagNameMap.set(t.tag.toLowerCase(), t);
-    }
-    const byName = [...tagNameMap.values()];
-
-    // Also dedup by normalized content (different tag name, same content)
-    const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
-    const seenContent = new Set<string>();
-    const deduped = byName.filter(t => {
-      const contentKey = norm(t.content);
-      if (seenContent.has(contentKey)) return false;
-      seenContent.add(contentKey);
-      return true;
-    });
+    const deduped = dedupeExtractedTags(allTags);
 
     aiExtractedTags.value = deduped;
     aiTargetWorldbook.value = selectedWorldbookName.value || '';

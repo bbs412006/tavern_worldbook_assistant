@@ -12,6 +12,8 @@ ai_config_path = root / 'src/worldbook_assistant_build/domain/aiConfig.ts'
 ai_config = ai_config_path.read_text(encoding='utf-8') if ai_config_path.exists() else ''
 cross_copy_path = root / 'src/worldbook_assistant_build/domain/crossCopy.ts'
 cross_copy = cross_copy_path.read_text(encoding='utf-8') if cross_copy_path.exists() else ''
+ai_tags_path = root / 'src/worldbook_assistant_build/domain/aiTags.ts'
+ai_tags = ai_tags_path.read_text(encoding='utf-8') if ai_tags_path.exists() else ''
 
 checks = {
     'ui constants module exists': ui_constants_path.exists(),
@@ -50,6 +52,11 @@ checks = {
     'cross copy domain exports diff helpers': 'export function buildEntryFieldDiffRows' in cross_copy and 'export function buildCrossCopyTextDiff' in cross_copy,
     'app imports cross copy domain helpers': "from './domain/crossCopy'" in app and 'buildCrossCopyTextDiff' in app and 'CROSS_COPY_STATUS_LABELS' in app,
     'app no longer declares cross copy diff inline': 'function buildCrossCopyTextDiff' not in app,
+    'ai tags domain module exists': ai_tags_path.exists(),
+    'ai tags domain exports extraction': 'export function extractAiTags' in ai_tags,
+    'ai tags domain exports dedupe': 'export function dedupeExtractedTags' in ai_tags,
+    'app imports ai tag helpers': "from './domain/aiTags'" in app and 'extractAiTags' in app and 'dedupeExtractedTags' in app,
+    'app no longer declares ai tag extractor inline': 'function aiExtractTags' not in app,
 }
 
 for name, ok in checks.items():
