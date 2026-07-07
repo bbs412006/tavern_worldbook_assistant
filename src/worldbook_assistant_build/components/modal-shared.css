@@ -134,7 +134,7 @@
 
 @media (orientation: portrait) {
   .ai-tag-review-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
     padding: 8px;
     z-index: 10350;
