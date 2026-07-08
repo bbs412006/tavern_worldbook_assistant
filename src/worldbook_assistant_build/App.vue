@@ -800,37 +800,20 @@
                 @delete="tagDelete"
               />
 
-              <div v-if="tagDefinitions.length" class="tag-assign-panel">
-                <div class="tag-editor-subtitle">世界书分配</div>
-                <div class="tag-assign-controls">
-                  <label class="field">
-                    <span>当前分配标签</span>
-                    <select v-model="tagAssignTargetId" class="text-input">
-                      <option value="">请选择标签</option>
-                      <option v-for="option in tagAssignOptions" :key="`assign-mobile-${option.id}`" :value="option.id">
-                        {{ option.path }}
-                      </option>
-                    </select>
-                  </label>
-                  <input v-model="tagAssignSearch" type="text" class="text-input" placeholder="搜索世界书..." />
-                </div>
-                <div class="tag-assign-list compact">
-                  <button
-                    v-for="name in tagAssignWorldbooks"
-                    :key="`assign-mobile-wb-${name}`"
-                    class="tag-assign-row toggle"
-                    :class="{ active: tagAssignTargetId ? (tagAssignments[name] ?? []).includes(tagAssignTargetId) : false }"
-                    type="button"
-                    :disabled="!tagAssignTargetId"
-                    @click="tagToggleAssignmentForSelectedTag(name)"
-                  >
-                    <span class="tag-assign-name" :title="name">{{ name }}</span>
-                    <span class="tag-assign-state">{{ tagAssignTargetId && (tagAssignments[name] ?? []).includes(tagAssignTargetId) ? '已分配' : '未分配' }}</span>
-                    <span class="tag-assign-paths">{{ getWorldbookTagPathSummary(name) }}</span>
-                  </button>
-                  <div v-if="!tagAssignWorldbooks.length" class="empty-note">没有匹配的世界书</div>
-                </div>
-              </div>
+              <TagAssignmentPanel
+                v-if="tagDefinitions.length"
+                :target-id="tagAssignTargetId"
+                :search="tagAssignSearch"
+                :options="tagAssignOptions"
+                :worldbooks="tagAssignWorldbooks"
+                :assignments="tagAssignments"
+                :path-summary="getWorldbookTagPathSummary"
+                id-prefix="mobile"
+                compact
+                @update:target-id="tagAssignTargetId = $event"
+                @update:search="tagAssignSearch = $event"
+                @toggle="tagToggleAssignmentForSelectedTag"
+              />
 
               <div v-else class="empty-note" style="margin-top:16px;">暂无标签，请先创建</div>
             </section>
@@ -1769,40 +1752,18 @@
                 @set-color="tagSetColor"
                 @delete="tagDelete"
               />
-              <div class="tag-assign-panel">
-                <div class="tag-editor-subtitle">世界书分配</div>
-                <div class="tag-assign-controls">
-                  <label class="field">
-                    <span>当前分配标签</span>
-                    <select v-model="tagAssignTargetId" class="text-input">
-                      <option value="">请选择标签</option>
-                      <option v-for="option in tagAssignOptions" :key="`assign-desktop-${option.id}`" :value="option.id">
-                        {{ option.path }}
-                      </option>
-                    </select>
-                  </label>
-                  <label class="field">
-                    <span>搜索世界书</span>
-                    <input v-model="tagAssignSearch" type="text" class="text-input" placeholder="搜索世界书..." />
-                  </label>
-                </div>
-                <div class="tag-assign-list">
-                  <button
-                    v-for="name in tagAssignWorldbooks"
-                    :key="`assign-desktop-wb-${name}`"
-                    class="tag-assign-row toggle"
-                    :class="{ active: tagAssignTargetId ? (tagAssignments[name] ?? []).includes(tagAssignTargetId) : false }"
-                    type="button"
-                    :disabled="!tagAssignTargetId"
-                    @click="tagToggleAssignmentForSelectedTag(name)"
-                  >
-                    <span class="tag-assign-name" :title="name">{{ name }}</span>
-                    <span class="tag-assign-state">{{ tagAssignTargetId && (tagAssignments[name] ?? []).includes(tagAssignTargetId) ? '已分配' : '未分配' }}</span>
-                    <span class="tag-assign-paths">{{ getWorldbookTagPathSummary(name) }}</span>
-                  </button>
-                  <div v-if="!tagAssignWorldbooks.length" class="empty-note">没有匹配的世界书</div>
-                </div>
-              </div>
+              <TagAssignmentPanel
+                :target-id="tagAssignTargetId"
+                :search="tagAssignSearch"
+                :options="tagAssignOptions"
+                :worldbooks="tagAssignWorldbooks"
+                :assignments="tagAssignments"
+                :path-summary="getWorldbookTagPathSummary"
+                id-prefix="desktop"
+                @update:target-id="tagAssignTargetId = $event"
+                @update:search="tagAssignSearch = $event"
+                @toggle="tagToggleAssignmentForSelectedTag"
+              />
             </div>
             <div v-else class="empty-note" style="margin-top:20px;">暂无标签，请先创建</div>
           </section>
@@ -3157,6 +3118,7 @@ import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
 import TagCreatePanel from './components/TagCreatePanel.vue';
 import TagTreePanel from './components/TagTreePanel.vue';
+import TagAssignmentPanel from './components/TagAssignmentPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import AIConfigModal from './components/AIConfigModal.vue';
 import { APP_VERSION } from './domain/version';

@@ -87,6 +87,8 @@ checks = {
     'tag tree panel component exists': (root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').exists(),
     'tag tree panel uses tag tree item component': '<TagTreeItem' in ((root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').exists() else ''),
     'app uses tag tree panel component': app.count('<TagTreePanel') >= 2,
+    'tag assignment panel component exists': (root / 'src/worldbook_assistant_build/components/TagAssignmentPanel.vue').exists(),
+    'app uses tag assignment panel component': app.count('<TagAssignmentPanel') >= 2,
 }
 
 for name, ok in checks.items():
