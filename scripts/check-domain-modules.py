@@ -109,6 +109,9 @@ checks = {
     'cross copy desktop grid component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyDesktopGrid.vue').exists(),
     'app uses cross copy desktop grid component': '<CrossCopyDesktopGrid' in app,
     'cross copy desktop grid exposes pane slots': all(token in ((root / 'src/worldbook_assistant_build/components/CrossCopyDesktopGrid.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/CrossCopyDesktopGrid.vue').exists() else '') for token in ['name="source"', 'name="action"']),
+    'cross copy mobile stages component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyMobileStages.vue').exists(),
+    'app uses cross copy mobile stages component': '<CrossCopyMobileStages' in app,
+    'cross copy mobile stages exposes stage slots': all(token in ((root / 'src/worldbook_assistant_build/components/CrossCopyMobileStages.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/CrossCopyMobileStages.vue').exists() else '') for token in ['name="controls"', 'name="source"', 'name="action"']),
 }
 
 for name, ok in checks.items():

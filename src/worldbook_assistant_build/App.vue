@@ -568,8 +568,8 @@
               @next="goToNextCrossCopyMobileStep"
               @apply="applyCrossCopySelection"
             >
-              <div class="cross-copy-mobile-stage">
-                <section v-show="crossCopyMobileStep === 1" class="cross-copy-mobile-stage-panel">
+              <CrossCopyMobileStages :step="crossCopyMobileStep">
+                <template #controls>
                   <CrossCopyControls
                     :worldbook-names="worldbookNames"
                     :source-worldbook="crossCopySourceWorldbook"
@@ -594,9 +594,9 @@
                     @refresh="refreshCrossCopyComparison"
                     @toggle-collapsed="toggleCrossCopyControlsCollapsed"
                   />
-                </section>
+                </template>
 
-                <section v-show="crossCopyMobileStep === 2" class="cross-copy-mobile-stage-panel">
+                <template #source>
                   <CrossCopySourceList
                     :rows="crossCopySourceRowsFiltered"
                     :total-count="crossCopyRows.length"
@@ -610,9 +610,9 @@
                     @select-all="setCrossCopySelectionForAll"
                     @set-selected="setCrossCopyRowSelected"
                   />
-                </section>
+                </template>
 
-                <section v-show="crossCopyMobileStep === 3" class="cross-copy-mobile-stage-panel">
+                <template #action>
                   <CrossCopyActionRows
                     :rows="crossCopyRowsFiltered"
                     :selected-count="crossCopySelectedCount"
@@ -649,8 +649,8 @@
                       />
                     </template>
                   </CrossCopyActionRows>
-                </section>
-              </div>
+                </template>
+              </CrossCopyMobileStages>
 
             </CrossCopyMobileWorkspace>
           </div>
@@ -2895,6 +2895,7 @@ import CrossCopyBulkActions from './components/CrossCopyBulkActions.vue';
 import CrossCopyMobileWorkspace from './components/CrossCopyMobileWorkspace.vue';
 import CrossCopyDesktopWorkspace from './components/CrossCopyDesktopWorkspace.vue';
 import CrossCopyDesktopGrid from './components/CrossCopyDesktopGrid.vue';
+import CrossCopyMobileStages from './components/CrossCopyMobileStages.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
