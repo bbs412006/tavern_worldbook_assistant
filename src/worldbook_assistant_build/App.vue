@@ -553,7 +553,8 @@
           <!-- Tab: 复制 -->
           <Transition name="mobile-tab">
           <div v-show="mobileTab === 'copy'" class="mobile-pane">
-            <CrossCopyMobileWorkspace
+            <CrossCopyPanel
+              variant="mobile"
               :compared-text="crossCopyWorkspaceComparedText"
               :source-target-invalid="crossCopySourceTargetInvalid"
               :last-result-summary="crossCopyLastResultSummary"
@@ -652,7 +653,7 @@
                 </template>
               </CrossCopyMobileStages>
 
-            </CrossCopyMobileWorkspace>
+            </CrossCopyPanel>
           </div>
           </Transition>
 
@@ -1643,12 +1644,15 @@
             @toggle-assignment="tagToggleAssignmentForSelectedTag"
           />
 
-          <CrossCopyDesktopWorkspace
+          <CrossCopyPanel
             v-if="crossCopyMode"
+            variant="desktop"
             :workspace-summary="crossCopyWorkspaceSummary"
             :compared-text="crossCopyWorkspaceComparedText"
             :controls-collapsed="crossCopyControlsCollapsed"
             :cine-locked="isAnyCineLocked"
+            :apply-loading="crossCopyApplyLoading"
+            :selected-count="crossCopySelectedCount"
             @toggle-controls-collapsed="toggleCrossCopyControlsCollapsed"
             @exit="toggleCrossCopyMode"
           >
@@ -1734,7 +1738,7 @@
               @apply-bulk-action="applyCrossCopyBulkAction"
               @apply-selection="applyCrossCopySelection"
             />
-          </CrossCopyDesktopWorkspace>
+          </CrossCopyPanel>
 
           <section v-show="!aiGeneratorMode && !tagEditorMode && !crossCopyMode" ref="mainLayoutRef" class="wb-main-layout" :class="{ 'focus-mode': isDesktopFocusMode, 'global-mode-visible': globalWorldbookMode }" :style="mainLayoutStyle">
             <aside v-show="!showMobileEditor" class="wb-entry-list" :class="{ focus: isDesktopFocusMode }">
@@ -2892,8 +2896,6 @@ import CrossCopyControls from './components/CrossCopyControls.vue';
 import CrossCopySourceList from './components/CrossCopySourceList.vue';
 import CrossCopyActionRows from './components/CrossCopyActionRows.vue';
 import CrossCopyBulkActions from './components/CrossCopyBulkActions.vue';
-import CrossCopyMobileWorkspace from './components/CrossCopyMobileWorkspace.vue';
-import CrossCopyDesktopWorkspace from './components/CrossCopyDesktopWorkspace.vue';
 import CrossCopyDesktopGrid from './components/CrossCopyDesktopGrid.vue';
 import CrossCopyMobileStages from './components/CrossCopyMobileStages.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';

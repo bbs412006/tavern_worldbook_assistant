@@ -1,63 +1,73 @@
 <template>
-  <section class="cross-copy-panel" :class="{ mobile: isMobile }">
-    <div class="cross-copy-head">
-      <div class="cross-copy-head-main">
-        <strong>📚 跨世界书复制</strong>
-        <span>{{ comparedText }}</span>
-      </div>
-    </div>
+  <CrossCopyMobileWorkspace
+    v-if="variant === 'mobile'"
+    :compared-text="comparedText"
+    :source-target-invalid="sourceTargetInvalid"
+    :last-result-summary="lastResultSummary"
+    :step="step"
+    :can-go-step2="canGoStep2"
+    :can-go-step3="canGoStep3"
+    :next-disabled="nextDisabled"
+    :apply-loading="applyLoading"
+    :selected-count="selectedCount"
+    @go-step="$emit('go-step', $event)"
+    @previous="$emit('previous')"
+    @next="$emit('next')"
+    @apply="$emit('apply')"
+  >
+    <slot></slot>
+  </CrossCopyMobileWorkspace>
 
-    <div class="cross-copy-controls-wrap">
-      <div class="cross-copy-controls" :class="{ 'cross-copy-controls-primary': !isMobile }">
-        <label class="field">
-          <span>来源世界书</span>
-          <select v-model="sourceWorldbook" class="text-input">
-            <option value="">请选择来源世界书</option>
-            <option v-for="name in worldbookNames" :key="'src-' + name" :value="name">{{ name }}</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>目标世界书</span>
-          <select v-model="targetWorldbook" class="text-input">
-            <option value="">请选择目标世界书</option>
-            <option v-for="name in worldbookNames" :key="'tgt-' + name" :value="name">{{ name }}</option>
-          </select>
-        </label>
-      </div>
-    </div>
-
-    <div class="cross-copy-grid" :class="{ 'mobile': isMobile }">
-      <div class="cross-copy-left">
-        <div class="cross-copy-list-head">
-          <strong>来源条目</strong>
-          <span>{{ rows.length }} 条</span>
-        </div>
-      </div>
-      <div class="cross-copy-right">
-        <div class="cross-copy-list-head">
-          <strong>对比与动作</strong>
-        </div>
-      </div>
-    </div>
-  </section>
+  <CrossCopyDesktopWorkspace
+    v-else
+    :workspace-summary="workspaceSummary"
+    :compared-text="comparedText"
+    :controls-collapsed="controlsCollapsed"
+    :cine-locked="cineLocked"
+    @toggle-controls-collapsed="$emit('toggle-controls-collapsed')"
+    @exit="$emit('exit')"
+  >
+    <slot></slot>
+  </CrossCopyDesktopWorkspace>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import type { CrossCopyMobileStep } from '../domain/types';
+import CrossCopyDesktopWorkspace from './CrossCopyDesktopWorkspace.vue';
+import CrossCopyMobileWorkspace from './CrossCopyMobileWorkspace.vue';
 
-const props = defineProps<{
-  worldbookNames: string[];
-  isMobile: boolean;
-}>();
-
-const sourceWorldbook = ref('');
-const targetWorldbook = ref('');
-const rows = ref<any[]>([]);
-
-const comparedText = computed(() => {
-  if (!sourceWorldbook.value && !targetWorldbook.value) return '';
-  if (sourceWorldbook.value === targetWorldbook.value) return '⚠️ 来源和目标相同';
-  if (sourceWorldbook.value && targetWorldbook.value) return '已配置';
-  return '请选择来源和目标';
+withDefaults(defineProps<{
+  variant: 'mobile' | 'desktop';
+  comparedText: string;
+  sourceTargetInvalid?: boolean;
+  lastResultSummary?: string;
+  step?: CrossCopyMobileStep;
+  canGoStep2?: boolean;
+  canGoStep3?: boolean;
+  nextDisabled?: boolean;
+  applyLoading: boolean;
+  selectedCount: number;
+  workspaceSummary?: string;
+  controlsCollapsed?: boolean;
+  cineLocked?: boolean;
+}>(), {
+  sourceTargetInvalid: false,
+  lastResultSummary: '',
+  step: 1,
+  canGoStep2: false,
+  canGoStep3: false,
+  nextDisabled: false,
+  workspaceSummary: '',
+  controlsCollapsed: false,
+  cineLocked: false,
 });
+
+defineEmits<{
+  'go-step': [step: CrossCopyMobileStep];
+  previous: [];
+  next: [];
+  apply: [];
+  'toggle-controls-collapsed': [];
+  exit: [];
+}>();
 </script>
