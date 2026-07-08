@@ -106,6 +106,9 @@ checks = {
     'cross copy desktop workspace component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyDesktopWorkspace.vue').exists(),
     'app uses cross copy desktop workspace component': '<CrossCopyDesktopWorkspace' in app,
     'cross copy desktop workspace owns header': 'cross-copy-head-main' in ((root / 'src/worldbook_assistant_build/components/CrossCopyDesktopWorkspace.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/CrossCopyDesktopWorkspace.vue').exists() else ''),
+    'cross copy desktop grid component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyDesktopGrid.vue').exists(),
+    'app uses cross copy desktop grid component': '<CrossCopyDesktopGrid' in app,
+    'cross copy desktop grid exposes pane slots': all(token in ((root / 'src/worldbook_assistant_build/components/CrossCopyDesktopGrid.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/CrossCopyDesktopGrid.vue').exists() else '') for token in ['name="source"', 'name="action"']),
 }
 
 for name, ok in checks.items():

@@ -1677,54 +1677,49 @@
               @toggle-collapsed="toggleCrossCopyControlsCollapsed"
             />
 
-            <div
-              ref="crossCopyGridRef"
-              class="cross-copy-grid"
-              :class="{ 'single-column': crossCopyDesktopSingleColumn }"
-              :style="crossCopyGridStyle"
+            <CrossCopyDesktopGrid
+              :single-column="crossCopyDesktopSingleColumn"
+              :grid-style="crossCopyGridStyle"
+              :dragging="Boolean(crossCopyPaneResizeState)"
+              @start-resize="startCrossCopyPaneResize"
             >
-              <CrossCopySourceList
-                :rows="crossCopySourceRowsFiltered"
-                :total-count="crossCopyRows.length"
-                :search-text="crossCopySearchText"
-                :apply-loading="crossCopyApplyLoading"
-                id-prefix="d"
-                :status-badge-class="getCrossCopyStatusBadgeClass"
-                @update:search-text="crossCopySearchText = $event"
-                @select-filtered="setCrossCopySelectionForFiltered"
-                @select-all="setCrossCopySelectionForAll"
-                @set-selected="setCrossCopyRowSelected"
-              />
+              <template #source>
+                <CrossCopySourceList
+                  :rows="crossCopySourceRowsFiltered"
+                  :total-count="crossCopyRows.length"
+                  :search-text="crossCopySearchText"
+                  :apply-loading="crossCopyApplyLoading"
+                  id-prefix="d"
+                  :status-badge-class="getCrossCopyStatusBadgeClass"
+                  @update:search-text="crossCopySearchText = $event"
+                  @select-filtered="setCrossCopySelectionForFiltered"
+                  @select-all="setCrossCopySelectionForAll"
+                  @set-selected="setCrossCopyRowSelected"
+                />
+              </template>
 
-              <div
-                v-if="!crossCopyDesktopSingleColumn"
-                class="cross-copy-splitter"
-                :class="{ dragging: Boolean(crossCopyPaneResizeState) }"
-                @pointerdown="startCrossCopyPaneResize"
-              >
-                <span>⋮</span>
-              </div>
-
-              <CrossCopyActionRows
-                :rows="crossCopyRowsFiltered"
-                :selected-count="crossCopySelectedCount"
-                :status-filter="crossCopyStatusFilter"
-                :status-priority="CROSS_COPY_STATUS_PRIORITY"
-                :status-counts="crossCopyStatusCounts"
-                :apply-loading="crossCopyApplyLoading"
-                id-prefix="d"
-                :status-label="getCrossCopyStatusLabel"
-                :action-label="getCrossCopyActionLabel"
-                :status-badge-class="getCrossCopyStatusBadgeClass"
-                :row-diff-summary="getCrossCopyRowDiffSummary"
-                @update:status-filter="crossCopyStatusFilter = $event"
-                @set-selected="setCrossCopyRowSelected"
-                @set-action="setCrossCopyRowAction"
-                @set-rename-name="setCrossCopyRowRenameName"
-                @rename-blur="handleCrossCopyRowRenameBlur"
-                @open-detail="openCrossCopyDiffById"
-              />
-            </div>
+              <template #action>
+                <CrossCopyActionRows
+                  :rows="crossCopyRowsFiltered"
+                  :selected-count="crossCopySelectedCount"
+                  :status-filter="crossCopyStatusFilter"
+                  :status-priority="CROSS_COPY_STATUS_PRIORITY"
+                  :status-counts="crossCopyStatusCounts"
+                  :apply-loading="crossCopyApplyLoading"
+                  id-prefix="d"
+                  :status-label="getCrossCopyStatusLabel"
+                  :action-label="getCrossCopyActionLabel"
+                  :status-badge-class="getCrossCopyStatusBadgeClass"
+                  :row-diff-summary="getCrossCopyRowDiffSummary"
+                  @update:status-filter="crossCopyStatusFilter = $event"
+                  @set-selected="setCrossCopyRowSelected"
+                  @set-action="setCrossCopyRowAction"
+                  @set-rename-name="setCrossCopyRowRenameName"
+                  @rename-blur="handleCrossCopyRowRenameBlur"
+                  @open-detail="openCrossCopyDiffById"
+                />
+              </template>
+            </CrossCopyDesktopGrid>
 
             <CrossCopyBulkActions
               :has-rows="Boolean(crossCopyRows.length)"
@@ -2899,6 +2894,7 @@ import CrossCopyActionRows from './components/CrossCopyActionRows.vue';
 import CrossCopyBulkActions from './components/CrossCopyBulkActions.vue';
 import CrossCopyMobileWorkspace from './components/CrossCopyMobileWorkspace.vue';
 import CrossCopyDesktopWorkspace from './components/CrossCopyDesktopWorkspace.vue';
+import CrossCopyDesktopGrid from './components/CrossCopyDesktopGrid.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
@@ -3225,7 +3221,7 @@ const crossCopyCompareSummary = ref('');
 const crossCopyLastResultSummary = ref('');
 const crossCopyLastComparedAt = ref<number>(0);
 const crossCopyPaneResizeState = ref<CrossCopyPaneResizeState | null>(null);
-const crossCopyGridRef = ref<HTMLElement | null>(null);
+const crossCopyGridElement = ref<HTMLElement | null>(null);
 const crossCopyMobileStep = ref<CrossCopyMobileStep>(1);
 
 const AI_CHAT_SESSION_LIMIT = 50;
@@ -6605,7 +6601,7 @@ function goToNextCrossCopyMobileStep(): void {
   goToCrossCopyMobileStep(next);
 }
 
-function startCrossCopyPaneResize(event: PointerEvent): void {
+function startCrossCopyPaneResize(event: PointerEvent, gridElement: HTMLElement | null): void {
   if (isAnyCineLocked.value) {
     return;
   }
@@ -6615,6 +6611,7 @@ function startCrossCopyPaneResize(event: PointerEvent): void {
   if (event.pointerType === 'mouse' && event.button !== 0) {
     return;
   }
+  crossCopyGridElement.value = gridElement;
   const trigger = event.currentTarget as HTMLElement | null;
   const hostDoc = trigger?.ownerDocument ?? document;
   const hostWin = hostDoc.defaultView ?? window;
@@ -6636,7 +6633,7 @@ function onCrossCopyPaneResizeMove(event: PointerEvent): void {
   if (!state || state.pointerId !== event.pointerId) {
     return;
   }
-  const rect = crossCopyGridRef.value?.getBoundingClientRect();
+  const rect = crossCopyGridElement.value?.getBoundingClientRect();
   if (!rect) {
     return;
   }
@@ -6659,6 +6656,7 @@ function stopCrossCopyPaneResize(): void {
   state.doc.removeEventListener('pointercancel', stopCrossCopyPaneResize);
   state.win.removeEventListener('blur', stopCrossCopyPaneResize);
   crossCopyPaneResizeState.value = null;
+  crossCopyGridElement.value = null;
   crossCopyDesktopLeftWidth.value = crossCopyDesktopLeftWidthClamped.value;
   persistCrossCopyState();
 }
