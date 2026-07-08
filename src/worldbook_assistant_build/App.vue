@@ -3025,6 +3025,7 @@ import { getHostWindow, resolveModalTarget } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
 import { useCrossCopyResize } from './composables/useCrossCopyResize';
+import { useCrossCopyMobileSteps } from './composables/useCrossCopyMobileSteps';
 import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
 import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
@@ -3219,7 +3220,6 @@ const crossCopyBulkAction = ref<CrossCopyAction>('skip');
 const crossCopyCompareSummary = ref('');
 const crossCopyLastResultSummary = ref('');
 const crossCopyLastComparedAt = ref<number>(0);
-const crossCopyMobileStep = ref<CrossCopyMobileStep>(1);
 
 const AI_CHAT_SESSION_LIMIT = 50;
 const AI_CHAT_MESSAGE_LIMIT = 200;
@@ -3988,16 +3988,21 @@ const {
   persistState: persistCrossCopyState,
 });
 
-const crossCopyMobileCanGoStep2 = computed(() => crossCopyHasCompared.value && crossCopyRows.value.length > 0);
-const crossCopyMobileCanGoStep3 = computed(() => crossCopyMobileCanGoStep2.value);
-const crossCopyMobileNextDisabled = computed(() => {
-  if (crossCopyMobileStep.value === 1) {
-    return !crossCopyMobileCanGoStep2.value || crossCopyCompareLoading.value;
-  }
-  if (crossCopyMobileStep.value === 2) {
-    return !crossCopyMobileCanGoStep3.value;
-  }
-  return !crossCopyCanApply.value;
+const {
+  step: crossCopyMobileStep,
+  canGoStep2: crossCopyMobileCanGoStep2,
+  canGoStep3: crossCopyMobileCanGoStep3,
+  nextDisabled: crossCopyMobileNextDisabled,
+  goToStep: goToCrossCopyMobileStep,
+  goToPreviousStep: goToPreviousCrossCopyMobileStep,
+  goToNextStep: goToNextCrossCopyMobileStep,
+  resetStep: resetCrossCopyMobileStep,
+} = useCrossCopyMobileSteps({
+  hasCompared: crossCopyHasCompared,
+  rowCount: computed(() => crossCopyRows.value.length),
+  compareLoading: crossCopyCompareLoading,
+  canApply: crossCopyCanApply,
+  notifyBlocked: () => toastr.info('请先完成比较，再继续下一步'),
 });
 
 const crossCopyDiffRow = computed(() => {
@@ -4877,7 +4882,7 @@ watch([crossCopyControlsCollapsed, crossCopyWorkspaceToolsExpanded], () => {
 
 watch(crossCopyHasCompared, hasCompared => {
   if (!hasCompared && crossCopyMobileStep.value > 1) {
-    crossCopyMobileStep.value = 1;
+    resetCrossCopyMobileStep();
   }
 });
 
@@ -4891,7 +4896,7 @@ watch(crossCopyMode, enabled => {
   if (!enabled) {
     stopCrossCopyPaneResize();
     resetCrossCopyCompare();
-    crossCopyMobileStep.value = 1;
+    resetCrossCopyMobileStep();
   }
 });
 
@@ -4909,7 +4914,7 @@ watch(mobileTab, tab => {
   aiGeneratorMode.value = false;
   tagEditorMode.value = false;
   normalizeCrossCopyWorldbookSelection();
-  crossCopyMobileStep.value = 1;
+  resetCrossCopyMobileStep();
 });
 
 watch(worldbookPickerOpen, opened => {
@@ -6568,42 +6573,11 @@ function toggleCrossCopyControlsCollapsed(): void {
   crossCopyControlsCollapsed.value = !crossCopyControlsCollapsed.value;
 }
 
-function canEnterCrossCopyMobileStep(step: CrossCopyMobileStep): boolean {
-  if (step <= 1) {
-    return true;
-  }
-  if (step === 2) {
-    return crossCopyMobileCanGoStep2.value;
-  }
-  return crossCopyMobileCanGoStep3.value;
-}
-
-function goToCrossCopyMobileStep(step: CrossCopyMobileStep): void {
-  if (step === crossCopyMobileStep.value) {
-    return;
-  }
-  if (!canEnterCrossCopyMobileStep(step)) {
-    toastr.info('请先完成比较，再继续下一步');
-    return;
-  }
-  crossCopyMobileStep.value = step;
-}
-
-function goToPreviousCrossCopyMobileStep(): void {
-  const prev = clampNumber(crossCopyMobileStep.value - 1, 1, 3) as CrossCopyMobileStep;
-  crossCopyMobileStep.value = prev;
-}
-
-function goToNextCrossCopyMobileStep(): void {
-  const next = clampNumber(crossCopyMobileStep.value + 1, 1, 3) as CrossCopyMobileStep;
-  goToCrossCopyMobileStep(next);
-}
-
 function setCrossCopyModeActive(next: boolean): void {
   if (!next) {
     closeCrossCopyDiff();
     stopCrossCopyPaneResize();
-    crossCopyMobileStep.value = 1;
+    resetCrossCopyMobileStep();
   }
   crossCopyMode.value = next;
   if (next) {
@@ -6611,7 +6585,7 @@ function setCrossCopyModeActive(next: boolean): void {
     aiGeneratorMode.value = false;
     tagEditorMode.value = false;
     globalWorldbookMode.value = false;
-    crossCopyMobileStep.value = 1;
+    resetCrossCopyMobileStep();
     closeFocusWorldbookMenu();
     closeFocusToolsBand();
     normalizeCrossCopyWorldbookSelection();

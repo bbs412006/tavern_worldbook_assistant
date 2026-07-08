@@ -116,6 +116,9 @@ checks = {
     'cross copy resize composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopyResize.ts').exists(),
     'app imports cross copy resize composable': "from './composables/useCrossCopyResize'" in app and 'useCrossCopyResize' in app,
     'app no longer declares cross copy resize handlers inline': 'function startCrossCopyPaneResize' not in app and 'function onCrossCopyPaneResizeMove' not in app and 'function stopCrossCopyPaneResize' not in app,
+    'cross copy mobile steps composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopyMobileSteps.ts').exists(),
+    'app imports cross copy mobile steps composable': "from './composables/useCrossCopyMobileSteps'" in app and 'useCrossCopyMobileSteps' in app,
+    'app no longer declares cross copy mobile step handlers inline': 'function canEnterCrossCopyMobileStep' not in app and 'function goToCrossCopyMobileStep' not in app and 'function goToPreviousCrossCopyMobileStep' not in app and 'function goToNextCrossCopyMobileStep' not in app,
 }
 
 for name, ok in checks.items():
