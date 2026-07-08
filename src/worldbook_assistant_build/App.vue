@@ -649,21 +649,19 @@
                     @open-detail="openCrossCopyDiffById"
                   >
                     <template #bulk>
-                      <div class="cross-copy-mobile-bulk">
-                        <button class="btn mini" type="button" :disabled="!crossCopyRows.length" @click="setCrossCopySelectionForAll(false)">全不选</button>
-                        <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('same_name_changed', 'overwrite')">同名更新→覆盖</button>
-                        <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('duplicate_exact', 'skip')">同名同内容→跳过</button>
-                        <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('content_duplicate_other_name', 'skip')">异名同内容→跳过</button>
-                        <div class="cross-copy-bulk-box">
-                          <select v-model="crossCopyBulkAction" class="text-input">
-                            <option value="skip">{{ getCrossCopyActionLabel('skip') }}</option>
-                            <option value="overwrite">{{ getCrossCopyActionLabel('overwrite') }}</option>
-                            <option value="create">{{ getCrossCopyActionLabel('create') }}</option>
-                            <option value="rename_create">{{ getCrossCopyActionLabel('rename_create') }}</option>
-                          </select>
-                          <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyBulkAction()">应用到已选</button>
-                        </div>
-                      </div>
+                      <CrossCopyBulkActions
+                        :has-rows="Boolean(crossCopyRows.length)"
+                        :selected-count="crossCopySelectedCount"
+                        :bulk-action="crossCopyBulkAction"
+                        :can-apply="crossCopyCanApply"
+                        :apply-loading="crossCopyApplyLoading"
+                        mobile
+                        :action-label="getCrossCopyActionLabel"
+                        @select-all="setCrossCopySelectionForAll"
+                        @apply-status-action="applyCrossCopyActionByStatus"
+                        @update:bulk-action="crossCopyBulkAction = $event"
+                        @apply-bulk-action="applyCrossCopyBulkAction"
+                      />
                     </template>
                   </CrossCopyActionRows>
                 </section>
@@ -1785,24 +1783,19 @@
               />
             </div>
 
-            <div class="cross-copy-actions">
-              <button class="btn mini" type="button" :disabled="!crossCopyRows.length" @click="setCrossCopySelectionForAll(false)">全不选</button>
-              <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('same_name_changed', 'overwrite')">同名更新→覆盖</button>
-              <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('duplicate_exact', 'skip')">同名同内容→跳过</button>
-              <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('content_duplicate_other_name', 'skip')">异名同内容→跳过</button>
-              <div class="cross-copy-bulk-box">
-                <select v-model="crossCopyBulkAction" class="text-input">
-                  <option value="skip">{{ getCrossCopyActionLabel('skip') }}</option>
-                  <option value="overwrite">{{ getCrossCopyActionLabel('overwrite') }}</option>
-                  <option value="create">{{ getCrossCopyActionLabel('create') }}</option>
-                  <option value="rename_create">{{ getCrossCopyActionLabel('rename_create') }}</option>
-                </select>
-                <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyBulkAction()">应用到已选</button>
-              </div>
-              <button class="btn primary" type="button" :disabled="!crossCopyCanApply" @click="applyCrossCopySelection">
-                {{ crossCopyApplyLoading ? '执行中...' : `执行复制（${crossCopySelectedCount}）` }}
-              </button>
-            </div>
+            <CrossCopyBulkActions
+              :has-rows="Boolean(crossCopyRows.length)"
+              :selected-count="crossCopySelectedCount"
+              :bulk-action="crossCopyBulkAction"
+              :can-apply="crossCopyCanApply"
+              :apply-loading="crossCopyApplyLoading"
+              :action-label="getCrossCopyActionLabel"
+              @select-all="setCrossCopySelectionForAll"
+              @apply-status-action="applyCrossCopyActionByStatus"
+              @update:bulk-action="crossCopyBulkAction = $event"
+              @apply-bulk-action="applyCrossCopyBulkAction"
+              @apply-selection="applyCrossCopySelection"
+            />
           </section>
 
           <section v-show="!aiGeneratorMode && !tagEditorMode && !crossCopyMode" ref="mainLayoutRef" class="wb-main-layout" :class="{ 'focus-mode': isDesktopFocusMode, 'global-mode-visible': globalWorldbookMode }" :style="mainLayoutStyle">
@@ -2960,6 +2953,7 @@ import CrossCopyPanel from './components/CrossCopyPanel.vue';
 import CrossCopyControls from './components/CrossCopyControls.vue';
 import CrossCopySourceList from './components/CrossCopySourceList.vue';
 import CrossCopyActionRows from './components/CrossCopyActionRows.vue';
+import CrossCopyBulkActions from './components/CrossCopyBulkActions.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';

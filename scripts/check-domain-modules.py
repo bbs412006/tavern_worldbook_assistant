@@ -97,6 +97,8 @@ checks = {
     'app uses cross copy source list component': app.count('<CrossCopySourceList') >= 2,
     'cross copy action rows component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyActionRows.vue').exists(),
     'app uses cross copy action rows component': app.count('<CrossCopyActionRows') >= 2,
+    'cross copy bulk actions component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyBulkActions.vue').exists(),
+    'app uses cross copy bulk actions component': app.count('<CrossCopyBulkActions') >= 2,
 }
 
 for name, ok in checks.items():
