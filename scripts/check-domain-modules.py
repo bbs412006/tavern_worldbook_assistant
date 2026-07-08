@@ -81,6 +81,8 @@ checks = {
     'ai chat panel can hide empty actions': 'showEmptyActions' in (root / 'src/worldbook_assistant_build/components/AIChatPanel.vue').read_text(encoding='utf-8'),
     'tag create panel component exists': (root / 'src/worldbook_assistant_build/components/TagCreatePanel.vue').exists(),
     'app uses tag create panel component': app.count('<TagCreatePanel') >= 2,
+    'tag color picker component exists': (root / 'src/worldbook_assistant_build/components/TagColorPicker.vue').exists(),
+    'app uses tag color picker component': app.count('<TagColorPicker') >= 2,
 }
 
 for name, ok in checks.items():

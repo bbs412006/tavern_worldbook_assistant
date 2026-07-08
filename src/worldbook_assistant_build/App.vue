@@ -812,17 +812,12 @@
                         {{ option.path }}
                       </option>
                     </select>
-                    <div class="tag-color-picker">
-                      <button
-                        v-for="c in TAG_COLORS"
-                        :key="`mobile-color-${row.id}-${c}`"
-                        class="tag-color-dot"
-                        :class="{ active: row.color === c }"
-                        :style="{ background: c }"
-                        type="button"
-                        @click="tagSetColor(row.id, c)"
-                      ></button>
-                    </div>
+                    <TagColorPicker
+                      :value="row.color"
+                      :colors="TAG_COLORS"
+                      :id-prefix="`mobile-color-${row.id}`"
+                      @select="tagSetColor(row.id, $event)"
+                    />
                     <button class="tag-delete-btn" type="button" @click="tagDelete(row.id)">×</button>
                   </div>
                 </div>
@@ -1810,17 +1805,12 @@
                         {{ option.path }}
                       </option>
                     </select>
-                    <div class="tag-color-picker">
-                      <button
-                        v-for="c in TAG_COLORS"
-                        :key="`desktop-color-${row.id}-${c}`"
-                        class="tag-color-dot"
-                        :class="{ active: row.color === c }"
-                        :style="{ background: c }"
-                        type="button"
-                        @click="tagSetColor(row.id, c)"
-                      ></button>
-                    </div>
+                    <TagColorPicker
+                      :value="row.color"
+                      :colors="TAG_COLORS"
+                      :id-prefix="`desktop-color-${row.id}`"
+                      @select="tagSetColor(row.id, $event)"
+                    />
                     <button class="tag-delete-btn" type="button" @click="tagDelete(row.id)">×</button>
                   </div>
                 </TransitionGroup>
@@ -3212,6 +3202,7 @@ import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
 import TagCreatePanel from './components/TagCreatePanel.vue';
+import TagColorPicker from './components/TagColorPicker.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import AIConfigModal from './components/AIConfigModal.vue';
 import { APP_VERSION } from './domain/version';
