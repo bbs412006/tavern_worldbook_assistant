@@ -80,15 +80,17 @@ checks = {
     'ai chat panel supports streaming state': 'streamingText' in (root / 'src/worldbook_assistant_build/components/AIChatPanel.vue').read_text(encoding='utf-8'),
     'ai chat panel can hide empty actions': 'showEmptyActions' in (root / 'src/worldbook_assistant_build/components/AIChatPanel.vue').read_text(encoding='utf-8'),
     'tag create panel component exists': (root / 'src/worldbook_assistant_build/components/TagCreatePanel.vue').exists(),
-    'app uses tag create panel component': app.count('<TagCreatePanel') >= 2,
+    'tag editor panel uses tag create panel component': '<TagCreatePanel' in ((root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').exists() else ''),
     'tag color picker component exists': (root / 'src/worldbook_assistant_build/components/TagColorPicker.vue').exists(),
     'tag tree item uses tag color picker component': '<TagColorPicker' in ((root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').exists() else ''),
     'tag tree item component exists': (root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').exists(),
     'tag tree panel component exists': (root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').exists(),
     'tag tree panel uses tag tree item component': '<TagTreeItem' in ((root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').exists() else ''),
-    'app uses tag tree panel component': app.count('<TagTreePanel') >= 2,
     'tag assignment panel component exists': (root / 'src/worldbook_assistant_build/components/TagAssignmentPanel.vue').exists(),
-    'app uses tag assignment panel component': app.count('<TagAssignmentPanel') >= 2,
+    'app uses tag assignment panel component': app.count('<TagAssignmentPanel') >= 2 or '<TagAssignmentPanel' in ((root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').exists() else ''),
+    'tag editor panel component exists': (root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').exists(),
+    'tag editor panel composes tag panels': all(token in ((root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').exists() else '') for token in ['<TagCreatePanel', '<TagTreePanel', '<TagAssignmentPanel']),
+    'app uses tag editor panel component': app.count('<TagEditorPanel') >= 2,
 }
 
 for name, ok in checks.items():

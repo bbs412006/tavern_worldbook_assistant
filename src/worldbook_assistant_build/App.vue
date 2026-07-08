@@ -772,51 +772,33 @@
           <!-- Tab: 标签 -->
           <Transition name="mobile-tab">
           <div v-show="mobileTab === 'tags'" class="mobile-pane">
-            <section class="tag-editor-panel mobile-tag-editor">
-              <div class="tag-editor-title">🏷️ 标签管理</div>
-              <TagCreatePanel
-                :name="tagNewName"
-                :parent-id="tagNewParentId"
-                :parent-options="tagAssignOptions"
-                :has-tags="Boolean(tagDefinitions.length)"
-                @update:name="tagNewName = $event"
-                @update:parent-id="tagNewParentId = $event"
-                @create="tagCreate"
-                @reset-all="tagResetAll"
-              />
-
-              <TagTreePanel
-                v-if="tagDefinitions.length"
-                :rows="tagManagementRows"
-                :parent-options="tagAssignOptions"
-                :colors="TAG_COLORS"
-                id-prefix="mobile"
-                :name-of="getTagDefinitionName"
-                :parent-id-of="getTagDefinitionParentId"
-                :disabled-parent-ids="getTagDisabledParentIds"
-                @rename="tagRename"
-                @set-parent="tagSetParent"
-                @set-color="tagSetColor"
-                @delete="tagDelete"
-              />
-
-              <TagAssignmentPanel
-                v-if="tagDefinitions.length"
-                :target-id="tagAssignTargetId"
-                :search="tagAssignSearch"
-                :options="tagAssignOptions"
-                :worldbooks="tagAssignWorldbooks"
-                :assignments="tagAssignments"
-                :path-summary="getWorldbookTagPathSummary"
-                id-prefix="mobile"
-                compact
-                @update:target-id="tagAssignTargetId = $event"
-                @update:search="tagAssignSearch = $event"
-                @toggle="tagToggleAssignmentForSelectedTag"
-              />
-
-              <div v-else class="empty-note" style="margin-top:16px;">暂无标签，请先创建</div>
-            </section>
+            <TagEditorPanel
+              mobile
+              :rows="tagManagementRows"
+              :new-name="tagNewName"
+              :new-parent-id="tagNewParentId"
+              :assign-target-id="tagAssignTargetId"
+              :assign-search="tagAssignSearch"
+              :assign-options="tagAssignOptions"
+              :assign-worldbooks="tagAssignWorldbooks"
+              :assignments="tagAssignments"
+              :colors="TAG_COLORS"
+              :name-of="getTagDefinitionName"
+              :parent-id-of="getTagDefinitionParentId"
+              :disabled-parent-ids="getTagDisabledParentIds"
+              :path-summary="getWorldbookTagPathSummary"
+              @update:new-name="tagNewName = $event"
+              @update:new-parent-id="tagNewParentId = $event"
+              @update:assign-target-id="tagAssignTargetId = $event"
+              @update:assign-search="tagAssignSearch = $event"
+              @create="tagCreate"
+              @reset-all="tagResetAll"
+              @rename="tagRename"
+              @set-parent="tagSetParent"
+              @set-color="tagSetColor"
+              @delete-tag="tagDelete"
+              @toggle-assignment="tagToggleAssignmentForSelectedTag"
+            />
           </div>
           </Transition>
 
@@ -1723,50 +1705,34 @@
           </section>
 
           <!-- 标签编辑模式 -->
-          <section v-if="tagEditorMode" class="tag-editor-panel" style="padding:16px;">
-            <div class="tag-editor-title">🏷️ 标签管理</div>
-            <TagCreatePanel
-              :name="tagNewName"
-              :parent-id="tagNewParentId"
-              :parent-options="tagAssignOptions"
-              :has-tags="Boolean(tagDefinitions.length)"
-              desktop
-              show-parent-select
-              @update:name="tagNewName = $event"
-              @update:parent-id="tagNewParentId = $event"
-              @create="tagCreate"
-              @reset-all="tagResetAll"
-            />
-            <div v-if="tagDefinitions.length" class="tag-editor-layout">
-              <TagTreePanel
-                :rows="tagManagementRows"
-                :parent-options="tagAssignOptions"
-                :colors="TAG_COLORS"
-                id-prefix="desktop"
-                animated
-                :name-of="getTagDefinitionName"
-                :parent-id-of="getTagDefinitionParentId"
-                :disabled-parent-ids="getTagDisabledParentIds"
-                @rename="tagRename"
-                @set-parent="tagSetParent"
-                @set-color="tagSetColor"
-                @delete="tagDelete"
-              />
-              <TagAssignmentPanel
-                :target-id="tagAssignTargetId"
-                :search="tagAssignSearch"
-                :options="tagAssignOptions"
-                :worldbooks="tagAssignWorldbooks"
-                :assignments="tagAssignments"
-                :path-summary="getWorldbookTagPathSummary"
-                id-prefix="desktop"
-                @update:target-id="tagAssignTargetId = $event"
-                @update:search="tagAssignSearch = $event"
-                @toggle="tagToggleAssignmentForSelectedTag"
-              />
-            </div>
-            <div v-else class="empty-note" style="margin-top:20px;">暂无标签，请先创建</div>
-          </section>
+          <TagEditorPanel
+            v-if="tagEditorMode"
+            desktop
+            :rows="tagManagementRows"
+            :new-name="tagNewName"
+            :new-parent-id="tagNewParentId"
+            :assign-target-id="tagAssignTargetId"
+            :assign-search="tagAssignSearch"
+            :assign-options="tagAssignOptions"
+            :assign-worldbooks="tagAssignWorldbooks"
+            :assignments="tagAssignments"
+            :colors="TAG_COLORS"
+            :name-of="getTagDefinitionName"
+            :parent-id-of="getTagDefinitionParentId"
+            :disabled-parent-ids="getTagDisabledParentIds"
+            :path-summary="getWorldbookTagPathSummary"
+            @update:new-name="tagNewName = $event"
+            @update:new-parent-id="tagNewParentId = $event"
+            @update:assign-target-id="tagAssignTargetId = $event"
+            @update:assign-search="tagAssignSearch = $event"
+            @create="tagCreate"
+            @reset-all="tagResetAll"
+            @rename="tagRename"
+            @set-parent="tagSetParent"
+            @set-color="tagSetColor"
+            @delete-tag="tagDelete"
+            @toggle-assignment="tagToggleAssignmentForSelectedTag"
+          />
 
           <section v-if="crossCopyMode" class="cross-copy-panel desktop">
             <div class="cross-copy-head">
@@ -3116,9 +3082,7 @@ import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
-import TagCreatePanel from './components/TagCreatePanel.vue';
-import TagTreePanel from './components/TagTreePanel.vue';
-import TagAssignmentPanel from './components/TagAssignmentPanel.vue';
+import TagEditorPanel from './components/TagEditorPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import AIConfigModal from './components/AIConfigModal.vue';
 import { APP_VERSION } from './domain/version';
