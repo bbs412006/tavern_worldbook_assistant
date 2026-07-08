@@ -82,7 +82,9 @@ checks = {
     'tag create panel component exists': (root / 'src/worldbook_assistant_build/components/TagCreatePanel.vue').exists(),
     'app uses tag create panel component': app.count('<TagCreatePanel') >= 2,
     'tag color picker component exists': (root / 'src/worldbook_assistant_build/components/TagColorPicker.vue').exists(),
-    'app uses tag color picker component': app.count('<TagColorPicker') >= 2,
+    'tag tree item uses tag color picker component': '<TagColorPicker' in ((root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').exists() else ''),
+    'tag tree item component exists': (root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').exists(),
+    'app uses tag tree item component': app.count('<TagTreeItem') >= 2,
 }
 
 for name, ok in checks.items():

@@ -788,38 +788,21 @@
               <div v-if="tagDefinitions.length" class="tag-editor-tree-wrap">
                 <div class="tag-editor-subtitle">标签树</div>
                 <div class="tag-editor-tree-list">
-                  <div v-for="row in tagManagementRows" :key="`tag-mobile-row-${row.id}`" class="tag-editor-tree-item" :style="{ '--tag-color': row.color, '--depth': row.depth }">
-                    <span class="tag-editor-indent"></span>
-                    <span class="tag-editor-dot" :style="{ background: row.color }"></span>
-                    <input
-                      :value="tagDefinitionMap.get(row.id)?.name ?? ''"
-                      class="tag-editor-name-input"
-                      @blur="tagRename(row.id, ($event.target as HTMLInputElement).value)"
-                      @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
-                    />
-                    <select
-                      class="text-input tag-parent-select"
-                      :value="tagDefinitionMap.get(row.id)?.parent_id ?? ''"
-                      @change="tagSetParent(row.id, ($event.target as HTMLSelectElement).value || null)"
-                    >
-                      <option value="">根级</option>
-                      <option
-                        v-for="option in tagAssignOptions"
-                        :key="`tag-parent-mobile-${row.id}-${option.id}`"
-                        :value="option.id"
-                        :disabled="isTagParentOptionDisabled(row.id, option.id)"
-                      >
-                        {{ option.path }}
-                      </option>
-                    </select>
-                    <TagColorPicker
-                      :value="row.color"
-                      :colors="TAG_COLORS"
-                      :id-prefix="`mobile-color-${row.id}`"
-                      @select="tagSetColor(row.id, $event)"
-                    />
-                    <button class="tag-delete-btn" type="button" @click="tagDelete(row.id)">×</button>
-                  </div>
+                  <TagTreeItem
+                    v-for="row in tagManagementRows"
+                    :key="`tag-mobile-row-${row.id}`"
+                    :row="row"
+                    :name="tagDefinitionMap.get(row.id)?.name ?? ''"
+                    :parent-id="tagDefinitionMap.get(row.id)?.parent_id ?? null"
+                    :parent-options="tagAssignOptions"
+                    :disabled-parent-ids="getTagDisabledParentIds(row.id)"
+                    :colors="TAG_COLORS"
+                    :id-prefix="'mobile'"
+                    @rename="tagRename(row.id, $event)"
+                    @set-parent="tagSetParent(row.id, $event)"
+                    @set-color="tagSetColor(row.id, $event)"
+                    @delete="tagDelete(row.id)"
+                  />
                 </div>
               </div>
 
@@ -1781,38 +1764,21 @@
               <div class="tag-editor-tree-wrap">
                 <div class="tag-editor-subtitle">标签树</div>
                 <TransitionGroup name="list" tag="div" class="tag-editor-tree-list">
-                  <div v-for="row in tagManagementRows" :key="`tag-desktop-row-${row.id}`" class="tag-editor-tree-item" :style="{ '--tag-color': row.color, '--depth': row.depth }">
-                    <span class="tag-editor-indent"></span>
-                    <span class="tag-editor-dot" :style="{ background: row.color }"></span>
-                    <input
-                      :value="tagDefinitionMap.get(row.id)?.name ?? ''"
-                      class="tag-editor-name-input"
-                      @blur="tagRename(row.id, ($event.target as HTMLInputElement).value)"
-                      @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
-                    />
-                    <select
-                      class="text-input tag-parent-select"
-                      :value="tagDefinitionMap.get(row.id)?.parent_id ?? ''"
-                      @change="tagSetParent(row.id, ($event.target as HTMLSelectElement).value || null)"
-                    >
-                      <option value="">根级</option>
-                      <option
-                        v-for="option in tagAssignOptions"
-                        :key="`tag-parent-desktop-${row.id}-${option.id}`"
-                        :value="option.id"
-                        :disabled="isTagParentOptionDisabled(row.id, option.id)"
-                      >
-                        {{ option.path }}
-                      </option>
-                    </select>
-                    <TagColorPicker
-                      :value="row.color"
-                      :colors="TAG_COLORS"
-                      :id-prefix="`desktop-color-${row.id}`"
-                      @select="tagSetColor(row.id, $event)"
-                    />
-                    <button class="tag-delete-btn" type="button" @click="tagDelete(row.id)">×</button>
-                  </div>
+                  <TagTreeItem
+                    v-for="row in tagManagementRows"
+                    :key="`tag-desktop-row-${row.id}`"
+                    :row="row"
+                    :name="tagDefinitionMap.get(row.id)?.name ?? ''"
+                    :parent-id="tagDefinitionMap.get(row.id)?.parent_id ?? null"
+                    :parent-options="tagAssignOptions"
+                    :disabled-parent-ids="getTagDisabledParentIds(row.id)"
+                    :colors="TAG_COLORS"
+                    :id-prefix="'desktop'"
+                    @rename="tagRename(row.id, $event)"
+                    @set-parent="tagSetParent(row.id, $event)"
+                    @set-color="tagSetColor(row.id, $event)"
+                    @delete="tagDelete(row.id)"
+                  />
                 </TransitionGroup>
               </div>
               <div class="tag-assign-panel">
@@ -3202,7 +3168,7 @@ import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
 import TagCreatePanel from './components/TagCreatePanel.vue';
-import TagColorPicker from './components/TagColorPicker.vue';
+import TagTreeItem from './components/TagTreeItem.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import AIConfigModal from './components/AIConfigModal.vue';
 import { APP_VERSION } from './domain/version';
@@ -6650,6 +6616,10 @@ function isTagParentOptionDisabled(tagId: string, parentId: string): boolean {
     return true;
   }
   return isTagDescendantOf(tagDefinitionMap.value, parentId, tagId);
+}
+
+function getTagDisabledParentIds(tagId: string): Set<string> {
+  return new Set(tagAssignOptions.value.filter(option => isTagParentOptionDisabled(tagId, option.id)).map(option => option.id));
 }
 
 function setTagDeleteParentMode(modeRaw: string): void {
