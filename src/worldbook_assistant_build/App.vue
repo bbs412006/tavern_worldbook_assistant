@@ -558,29 +558,18 @@
                 <strong>📚 跨世界书复制</strong>
                 <span>{{ crossCopyWorkspaceComparedText }}</span>
               </div>
-              <div class="cross-copy-mobile-stepper">
-                <button class="cross-copy-mobile-step" type="button" :class="{ active: crossCopyMobileStep === 1 }" @click="goToCrossCopyMobileStep(1)">
-                  1 配置
-                </button>
-                <button
-                  class="cross-copy-mobile-step"
-                  type="button"
-                  :class="{ active: crossCopyMobileStep === 2 }"
-                  :disabled="!crossCopyMobileCanGoStep2 && crossCopyMobileStep !== 2"
-                  @click="goToCrossCopyMobileStep(2)"
-                >
-                  2 选择
-                </button>
-                <button
-                  class="cross-copy-mobile-step"
-                  type="button"
-                  :class="{ active: crossCopyMobileStep === 3 }"
-                  :disabled="!crossCopyMobileCanGoStep3 && crossCopyMobileStep !== 3"
-                  @click="goToCrossCopyMobileStep(3)"
-                >
-                  3 执行
-                </button>
-              </div>
+              <CrossCopyMobileStepper
+                :step="crossCopyMobileStep"
+                :can-go-step2="crossCopyMobileCanGoStep2"
+                :can-go-step3="crossCopyMobileCanGoStep3"
+                :next-disabled="crossCopyMobileNextDisabled"
+                :apply-loading="crossCopyApplyLoading"
+                :selected-count="crossCopySelectedCount"
+                @go-step="goToCrossCopyMobileStep"
+                @previous="goToPreviousCrossCopyMobileStep"
+                @next="goToNextCrossCopyMobileStep"
+                @apply="applyCrossCopySelection"
+              >
               <div v-if="crossCopySourceTargetInvalid" class="cross-copy-inline-tip warning">来源和目标不能相同。</div>
               <div v-if="crossCopyLastResultSummary" class="cross-copy-inline-tip success">{{ crossCopyLastResultSummary }}</div>
               <div class="cross-copy-mobile-stage">
@@ -667,27 +656,7 @@
                 </section>
               </div>
 
-              <div class="cross-copy-mobile-nav">
-                <button class="btn mini" type="button" :disabled="crossCopyMobileStep === 1" @click="goToPreviousCrossCopyMobileStep">上一步</button>
-                <button
-                  v-if="crossCopyMobileStep < 3"
-                  class="btn mini primary"
-                  type="button"
-                  :disabled="crossCopyMobileNextDisabled"
-                  @click="goToNextCrossCopyMobileStep"
-                >
-                  下一步
-                </button>
-                <button
-                  v-else
-                  class="btn primary"
-                  type="button"
-                  :disabled="crossCopyMobileNextDisabled"
-                  @click="applyCrossCopySelection"
-                >
-                  {{ crossCopyApplyLoading ? '执行中...' : `执行复制（${crossCopySelectedCount}）` }}
-                </button>
-              </div>
+              </CrossCopyMobileStepper>
             </section>
           </div>
           </Transition>
@@ -2954,6 +2923,7 @@ import CrossCopyControls from './components/CrossCopyControls.vue';
 import CrossCopySourceList from './components/CrossCopySourceList.vue';
 import CrossCopyActionRows from './components/CrossCopyActionRows.vue';
 import CrossCopyBulkActions from './components/CrossCopyBulkActions.vue';
+import CrossCopyMobileStepper from './components/CrossCopyMobileStepper.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
