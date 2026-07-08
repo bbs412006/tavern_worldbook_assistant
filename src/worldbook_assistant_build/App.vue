@@ -628,69 +628,44 @@
                 </section>
 
                 <section v-show="crossCopyMobileStep === 3" class="cross-copy-mobile-stage-panel">
-                  <div class="cross-copy-list-head">
-                    <strong>对比与动作</strong>
-                    <span>已选 {{ crossCopySelectedCount }} 条</span>
-                  </div>
-                  <div class="cross-copy-list-tools">
-                    <select v-model="crossCopyStatusFilter" class="text-input">
-                      <option value="all">全部状态</option>
-                      <option v-for="status in CROSS_COPY_STATUS_PRIORITY" :key="`m-copy-filter-${status}`" :value="status">
-                        {{ getCrossCopyStatusLabel(status) }} ({{ crossCopyStatusCounts[status] }})
-                      </option>
-                    </select>
-                  </div>
-                  <div class="cross-copy-mobile-bulk">
-                    <button class="btn mini" type="button" :disabled="!crossCopyRows.length" @click="setCrossCopySelectionForAll(false)">全不选</button>
-                    <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('same_name_changed', 'overwrite')">同名更新→覆盖</button>
-                    <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('duplicate_exact', 'skip')">同名同内容→跳过</button>
-                    <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('content_duplicate_other_name', 'skip')">异名同内容→跳过</button>
-                    <div class="cross-copy-bulk-box">
-                      <select v-model="crossCopyBulkAction" class="text-input">
-                        <option value="skip">{{ getCrossCopyActionLabel('skip') }}</option>
-                        <option value="overwrite">{{ getCrossCopyActionLabel('overwrite') }}</option>
-                        <option value="create">{{ getCrossCopyActionLabel('create') }}</option>
-                        <option value="rename_create">{{ getCrossCopyActionLabel('rename_create') }}</option>
-                      </select>
-                      <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyBulkAction()">应用到已选</button>
-                    </div>
-                  </div>
-                  <div class="cross-copy-rows mobile-rows">
-                    <article v-for="row in crossCopyRowsFiltered" :key="`m-copy-row-${row.id}`" class="cross-copy-row">
-                      <div class="cross-copy-row-head">
-                        <div class="cross-copy-row-title">
-                          <span class="cross-copy-status-badge" :class="getCrossCopyStatusBadgeClass(row.status)">{{ getCrossCopyStatusLabel(row.status) }}</span>
-                          <strong :title="row.source_entry.name || `条目 ${row.source_entry.uid}`">{{ row.source_entry.name || `条目 ${row.source_entry.uid}` }}</strong>
+                  <CrossCopyActionRows
+                    :rows="crossCopyRowsFiltered"
+                    :selected-count="crossCopySelectedCount"
+                    :status-filter="crossCopyStatusFilter"
+                    :status-priority="CROSS_COPY_STATUS_PRIORITY"
+                    :status-counts="crossCopyStatusCounts"
+                    :apply-loading="crossCopyApplyLoading"
+                    id-prefix="m"
+                    mobile
+                    :status-label="getCrossCopyStatusLabel"
+                    :action-label="getCrossCopyActionLabel"
+                    :status-badge-class="getCrossCopyStatusBadgeClass"
+                    :row-diff-summary="getCrossCopyRowDiffSummary"
+                    @update:status-filter="crossCopyStatusFilter = $event"
+                    @set-selected="setCrossCopyRowSelected"
+                    @set-action="setCrossCopyRowAction"
+                    @set-rename-name="setCrossCopyRowRenameName"
+                    @rename-blur="handleCrossCopyRowRenameBlur"
+                    @open-detail="openCrossCopyDiffById"
+                  >
+                    <template #bulk>
+                      <div class="cross-copy-mobile-bulk">
+                        <button class="btn mini" type="button" :disabled="!crossCopyRows.length" @click="setCrossCopySelectionForAll(false)">全不选</button>
+                        <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('same_name_changed', 'overwrite')">同名更新→覆盖</button>
+                        <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('duplicate_exact', 'skip')">同名同内容→跳过</button>
+                        <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyActionByStatus('content_duplicate_other_name', 'skip')">异名同内容→跳过</button>
+                        <div class="cross-copy-bulk-box">
+                          <select v-model="crossCopyBulkAction" class="text-input">
+                            <option value="skip">{{ getCrossCopyActionLabel('skip') }}</option>
+                            <option value="overwrite">{{ getCrossCopyActionLabel('overwrite') }}</option>
+                            <option value="create">{{ getCrossCopyActionLabel('create') }}</option>
+                            <option value="rename_create">{{ getCrossCopyActionLabel('rename_create') }}</option>
+                          </select>
+                          <button class="btn mini" type="button" :disabled="!crossCopySelectedCount" @click="applyCrossCopyBulkAction()">应用到已选</button>
                         </div>
-                        <label class="checkbox-inline">
-                          <input v-model="row.selected" type="checkbox" :disabled="row.status === 'invalid_same_source_target' || crossCopyApplyLoading" />
-                          <span>选中</span>
-                        </label>
                       </div>
-                      <div class="cross-copy-row-note">{{ row.note || getCrossCopyRowDiffSummary(row) }}</div>
-                      <div class="cross-copy-row-actions">
-                        <select v-model="row.action" class="text-input" :disabled="!row.selected || row.status === 'invalid_same_source_target' || crossCopyApplyLoading" @change="onCrossCopyRowActionChange(row)">
-                          <option value="skip">{{ getCrossCopyActionLabel('skip') }}</option>
-                          <option value="overwrite">{{ getCrossCopyActionLabel('overwrite') }}</option>
-                          <option value="create">{{ getCrossCopyActionLabel('create') }}</option>
-                          <option value="rename_create">{{ getCrossCopyActionLabel('rename_create') }}</option>
-                        </select>
-                        <input
-                          v-if="row.action === 'rename_create'"
-                          v-model="row.rename_name"
-                          type="text"
-                          class="text-input"
-                          placeholder="输入新名称（自动去重）"
-                          :disabled="!row.selected || crossCopyApplyLoading"
-                          @blur="onCrossCopyRowRenameBlur(row)"
-                        />
-                      </div>
-                      <button class="btn mini cross-copy-detail-trigger" type="button" @click="openCrossCopyDiff(row)">
-                        ▷ 查看对比明细
-                      </button>
-                    </article>
-                    <div v-if="!crossCopyRowsFiltered.length" class="empty-note">当前筛选下无条目</div>
-                  </div>
+                    </template>
+                  </CrossCopyActionRows>
                 </section>
               </div>
 
@@ -1789,56 +1764,25 @@
                 <span>⋮</span>
               </div>
 
-              <section class="cross-copy-right">
-                <div class="cross-copy-list-head">
-                  <strong>对比与动作</strong>
-                  <span>已选 {{ crossCopySelectedCount }} 条</span>
-                </div>
-                <div class="cross-copy-list-tools">
-                  <select v-model="crossCopyStatusFilter" class="text-input">
-                    <option value="all">全部状态</option>
-                    <option v-for="status in CROSS_COPY_STATUS_PRIORITY" :key="`d-copy-filter-${status}`" :value="status">
-                      {{ getCrossCopyStatusLabel(status) }} ({{ crossCopyStatusCounts[status] }})
-                    </option>
-                  </select>
-                </div>
-                <div class="cross-copy-rows">
-                  <article v-for="row in crossCopyRowsFiltered" :key="`d-copy-row-${row.id}`" class="cross-copy-row">
-                    <div class="cross-copy-row-head">
-                      <div class="cross-copy-row-title">
-                        <span class="cross-copy-status-badge" :class="getCrossCopyStatusBadgeClass(row.status)">{{ getCrossCopyStatusLabel(row.status) }}</span>
-                        <strong :title="row.source_entry.name || `条目 ${row.source_entry.uid}`">{{ row.source_entry.name || `条目 ${row.source_entry.uid}` }}</strong>
-                      </div>
-                      <label class="checkbox-inline">
-                        <input v-model="row.selected" type="checkbox" :disabled="row.status === 'invalid_same_source_target' || crossCopyApplyLoading" />
-                        <span>选中</span>
-                      </label>
-                    </div>
-                    <div class="cross-copy-row-note">{{ row.note || getCrossCopyRowDiffSummary(row) }}</div>
-                    <div class="cross-copy-row-actions">
-                      <select v-model="row.action" class="text-input" :disabled="!row.selected || row.status === 'invalid_same_source_target' || crossCopyApplyLoading" @change="onCrossCopyRowActionChange(row)">
-                        <option value="skip">{{ getCrossCopyActionLabel('skip') }}</option>
-                        <option value="overwrite">{{ getCrossCopyActionLabel('overwrite') }}</option>
-                        <option value="create">{{ getCrossCopyActionLabel('create') }}</option>
-                        <option value="rename_create">{{ getCrossCopyActionLabel('rename_create') }}</option>
-                      </select>
-                      <input
-                        v-if="row.action === 'rename_create'"
-                        v-model="row.rename_name"
-                        type="text"
-                        class="text-input"
-                        placeholder="输入新名称（自动去重）"
-                        :disabled="!row.selected || crossCopyApplyLoading"
-                        @blur="onCrossCopyRowRenameBlur(row)"
-                      />
-                    </div>
-                    <button class="btn mini cross-copy-detail-trigger" type="button" @click="openCrossCopyDiff(row)">
-                      ▷ 查看对比明细
-                    </button>
-                  </article>
-                  <div v-if="!crossCopyRowsFiltered.length" class="empty-note">当前筛选下无条目</div>
-                </div>
-              </section>
+              <CrossCopyActionRows
+                :rows="crossCopyRowsFiltered"
+                :selected-count="crossCopySelectedCount"
+                :status-filter="crossCopyStatusFilter"
+                :status-priority="CROSS_COPY_STATUS_PRIORITY"
+                :status-counts="crossCopyStatusCounts"
+                :apply-loading="crossCopyApplyLoading"
+                id-prefix="d"
+                :status-label="getCrossCopyStatusLabel"
+                :action-label="getCrossCopyActionLabel"
+                :status-badge-class="getCrossCopyStatusBadgeClass"
+                :row-diff-summary="getCrossCopyRowDiffSummary"
+                @update:status-filter="crossCopyStatusFilter = $event"
+                @set-selected="setCrossCopyRowSelected"
+                @set-action="setCrossCopyRowAction"
+                @set-rename-name="setCrossCopyRowRenameName"
+                @rename-blur="handleCrossCopyRowRenameBlur"
+                @open-detail="openCrossCopyDiffById"
+              />
             </div>
 
             <div class="cross-copy-actions">
@@ -3015,6 +2959,7 @@ import EditorPanel from './components/EditorPanel.vue';
 import CrossCopyPanel from './components/CrossCopyPanel.vue';
 import CrossCopyControls from './components/CrossCopyControls.vue';
 import CrossCopySourceList from './components/CrossCopySourceList.vue';
+import CrossCopyActionRows from './components/CrossCopyActionRows.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
@@ -6991,6 +6936,43 @@ function setCrossCopyRowSelected(rowId: string, selected: boolean): void {
     return;
   }
   row.selected = selected;
+}
+
+function findCrossCopyRow(rowId: string): CrossCopyRow | null {
+  return crossCopyRows.value.find(item => item.id === rowId) ?? null;
+}
+
+function setCrossCopyRowAction(rowId: string, action: CrossCopyAction): void {
+  const row = findCrossCopyRow(rowId);
+  if (!row) {
+    return;
+  }
+  row.action = action;
+  onCrossCopyRowActionChange(row);
+}
+
+function setCrossCopyRowRenameName(rowId: string, value: string): void {
+  const row = findCrossCopyRow(rowId);
+  if (!row) {
+    return;
+  }
+  row.rename_name = value;
+}
+
+function handleCrossCopyRowRenameBlur(rowId: string): void {
+  const row = findCrossCopyRow(rowId);
+  if (!row) {
+    return;
+  }
+  onCrossCopyRowRenameBlur(row);
+}
+
+function openCrossCopyDiffById(rowId: string): void {
+  const row = findCrossCopyRow(rowId);
+  if (!row) {
+    return;
+  }
+  openCrossCopyDiff(row);
 }
 
 function setCrossCopySelectionForAll(selected: boolean): void {
