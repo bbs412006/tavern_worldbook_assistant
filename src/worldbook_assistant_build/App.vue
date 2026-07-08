@@ -2937,10 +2937,6 @@ import {
   COPY_CINE_STAGGER,
   COPY_CINE_MAX_STAGGER_STEPS,
   CROSS_COPY_DESKTOP_LEFT_DEFAULT,
-  CROSS_COPY_DESKTOP_LEFT_MIN,
-  CROSS_COPY_DESKTOP_LEFT_MAX,
-  CROSS_COPY_SPLITTER_SIZE,
-  CROSS_COPY_RIGHT_MIN,
   ENTRIES_DIGEST_DEBOUNCE_MS,
   MOBILE_MULTI_LONG_PRESS_MS,
   MOBILE_MULTI_LONG_PRESS_MOVE_PX,
@@ -2990,7 +2986,6 @@ import type {
   FloatingPanelState,
   PaneResizeState,
   HistorySectionResizeState,
-  CrossCopyPaneResizeState,
   FocusHeroSnapshot,
   FocusSinkSnapshot,
   WorldbookSnapshot,
@@ -3029,6 +3024,7 @@ import {
 import { getHostWindow, resolveModalTarget } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
+import { useCrossCopyResize } from './composables/useCrossCopyResize';
 import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
 import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
@@ -3223,8 +3219,6 @@ const crossCopyBulkAction = ref<CrossCopyAction>('skip');
 const crossCopyCompareSummary = ref('');
 const crossCopyLastResultSummary = ref('');
 const crossCopyLastComparedAt = ref<number>(0);
-const crossCopyPaneResizeState = ref<CrossCopyPaneResizeState | null>(null);
-const crossCopyGridElement = ref<HTMLElement | null>(null);
 const crossCopyMobileStep = ref<CrossCopyMobileStep>(1);
 
 const AI_CHAT_SESSION_LIMIT = 50;
@@ -3981,16 +3975,17 @@ const crossCopyCanApply = computed(() =>
 );
 
 const crossCopyDesktopSingleColumn = computed(() => viewportWidth.value <= 1200);
-const crossCopyDesktopLeftWidthClamped = computed(() =>
-  clampNumber(Math.floor(crossCopyDesktopLeftWidth.value), CROSS_COPY_DESKTOP_LEFT_MIN, CROSS_COPY_DESKTOP_LEFT_MAX),
-);
-const crossCopyGridStyle = computed((): Record<string, string> | undefined => {
-  if (crossCopyDesktopSingleColumn.value) {
-    return undefined;
-  }
-  return {
-    gridTemplateColumns: `${crossCopyDesktopLeftWidthClamped.value}px ${CROSS_COPY_SPLITTER_SIZE}px minmax(0, 1fr)`,
-  };
+const {
+  crossCopyPaneResizeState,
+  desktopLeftWidthClamped: crossCopyDesktopLeftWidthClamped,
+  gridStyle: crossCopyGridStyle,
+  startResize: startCrossCopyPaneResize,
+  stopResize: stopCrossCopyPaneResize,
+} = useCrossCopyResize({
+  desktopLeftWidth: crossCopyDesktopLeftWidth,
+  desktopSingleColumn: crossCopyDesktopSingleColumn,
+  cineLocked: isAnyCineLocked,
+  persistState: persistCrossCopyState,
 });
 
 const crossCopyMobileCanGoStep2 = computed(() => crossCopyHasCompared.value && crossCopyRows.value.length > 0);
@@ -6602,66 +6597,6 @@ function goToPreviousCrossCopyMobileStep(): void {
 function goToNextCrossCopyMobileStep(): void {
   const next = clampNumber(crossCopyMobileStep.value + 1, 1, 3) as CrossCopyMobileStep;
   goToCrossCopyMobileStep(next);
-}
-
-function startCrossCopyPaneResize(event: PointerEvent, gridElement: HTMLElement | null): void {
-  if (isAnyCineLocked.value) {
-    return;
-  }
-  if (crossCopyDesktopSingleColumn.value) {
-    return;
-  }
-  if (event.pointerType === 'mouse' && event.button !== 0) {
-    return;
-  }
-  crossCopyGridElement.value = gridElement;
-  const trigger = event.currentTarget as HTMLElement | null;
-  const hostDoc = trigger?.ownerDocument ?? document;
-  const hostWin = hostDoc.defaultView ?? window;
-  crossCopyPaneResizeState.value = {
-    pointerId: event.pointerId,
-    doc: hostDoc,
-    win: hostWin,
-  };
-  trigger?.setPointerCapture?.(event.pointerId);
-  hostDoc.addEventListener('pointermove', onCrossCopyPaneResizeMove);
-  hostDoc.addEventListener('pointerup', stopCrossCopyPaneResize);
-  hostDoc.addEventListener('pointercancel', stopCrossCopyPaneResize);
-  hostWin.addEventListener('blur', stopCrossCopyPaneResize);
-  event.preventDefault();
-}
-
-function onCrossCopyPaneResizeMove(event: PointerEvent): void {
-  const state = crossCopyPaneResizeState.value;
-  if (!state || state.pointerId !== event.pointerId) {
-    return;
-  }
-  const rect = crossCopyGridElement.value?.getBoundingClientRect();
-  if (!rect) {
-    return;
-  }
-  const pointerLeft = Math.floor(event.clientX - rect.left - CROSS_COPY_SPLITTER_SIZE / 2);
-  const maxByLayout = Math.max(
-    CROSS_COPY_DESKTOP_LEFT_MIN,
-    Math.floor(rect.width - CROSS_COPY_SPLITTER_SIZE - CROSS_COPY_RIGHT_MIN),
-  );
-  const maxWidth = Math.min(CROSS_COPY_DESKTOP_LEFT_MAX, maxByLayout);
-  crossCopyDesktopLeftWidth.value = clampNumber(pointerLeft, CROSS_COPY_DESKTOP_LEFT_MIN, maxWidth);
-}
-
-function stopCrossCopyPaneResize(): void {
-  const state = crossCopyPaneResizeState.value;
-  if (!state) {
-    return;
-  }
-  state.doc.removeEventListener('pointermove', onCrossCopyPaneResizeMove);
-  state.doc.removeEventListener('pointerup', stopCrossCopyPaneResize);
-  state.doc.removeEventListener('pointercancel', stopCrossCopyPaneResize);
-  state.win.removeEventListener('blur', stopCrossCopyPaneResize);
-  crossCopyPaneResizeState.value = null;
-  crossCopyGridElement.value = null;
-  crossCopyDesktopLeftWidth.value = crossCopyDesktopLeftWidthClamped.value;
-  persistCrossCopyState();
 }
 
 function setCrossCopyModeActive(next: boolean): void {

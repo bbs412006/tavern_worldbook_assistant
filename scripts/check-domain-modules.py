@@ -113,6 +113,9 @@ checks = {
     'cross copy mobile stages component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyMobileStages.vue').exists(),
     'app uses cross copy mobile stages component': '<CrossCopyMobileStages' in app,
     'cross copy mobile stages exposes stage slots': all(token in ((root / 'src/worldbook_assistant_build/components/CrossCopyMobileStages.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/CrossCopyMobileStages.vue').exists() else '') for token in ['name="controls"', 'name="source"', 'name="action"']),
+    'cross copy resize composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopyResize.ts').exists(),
+    'app imports cross copy resize composable': "from './composables/useCrossCopyResize'" in app and 'useCrossCopyResize' in app,
+    'app no longer declares cross copy resize handlers inline': 'function startCrossCopyPaneResize' not in app and 'function onCrossCopyPaneResizeMove' not in app and 'function stopCrossCopyPaneResize' not in app,
 }
 
 for name, ok in checks.items():
