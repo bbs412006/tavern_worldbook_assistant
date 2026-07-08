@@ -585,50 +585,30 @@
               <div v-if="crossCopyLastResultSummary" class="cross-copy-inline-tip success">{{ crossCopyLastResultSummary }}</div>
               <div class="cross-copy-mobile-stage">
                 <section v-show="crossCopyMobileStep === 1" class="cross-copy-mobile-stage-panel">
-                  <div class="cross-copy-controls">
-                    <label class="field">
-                      <span>来源世界书</span>
-                      <select v-model="crossCopySourceWorldbook" class="text-input">
-                        <option value="">请选择来源世界书</option>
-                        <option v-for="name in worldbookNames" :key="`m-copy-source-${name}`" :value="name">{{ name }}</option>
-                      </select>
-                    </label>
-                    <label class="field">
-                      <span>目标世界书</span>
-                      <select v-model="crossCopyTargetWorldbook" class="text-input">
-                        <option value="">请选择目标世界书</option>
-                        <option v-for="name in worldbookNames" :key="`m-copy-target-${name}`" :value="name">{{ name }}</option>
-                      </select>
-                    </label>
-                    <div class="cross-copy-control-actions">
-                      <button class="btn" type="button" :disabled="!crossCopyCanCompare || crossCopyCompareLoading || crossCopyApplyLoading" @click="refreshCrossCopyComparison">
-                        {{ crossCopyCompareLoading ? '比较中...' : '刷新比较' }}
-                      </button>
-                    </div>
-                  </div>
-                  <button class="btn mini utility-btn cross-copy-mobile-advanced-toggle" type="button" @click="toggleCrossCopyControlsCollapsed">
-                    {{ crossCopyControlsCollapsed ? '展开高级项' : '收起高级项' }}
-                  </button>
-                  <Transition name="copy-controls-advanced">
-                    <div v-if="!crossCopyControlsCollapsed" class="cross-copy-mobile-advanced">
-                      <label class="checkbox-inline">
-                        <input
-                          v-model="crossCopyUseDraftSourceWhenCurrent"
-                          type="checkbox"
-                          :disabled="!crossCopySourceIsCurrentWorldbook"
-                        />
-                        <span>{{ crossCopySourceVersionLabel }}</span>
-                      </label>
-                      <label class="checkbox-inline">
-                        <input v-model="crossCopySnapshotBeforeApply" type="checkbox" />
-                        <span>执行前写入目标快照（默认开启）</span>
-                      </label>
-                    </div>
-                  </Transition>
-                  <div v-if="crossCopyControlsCollapsed" class="cross-copy-inline-tip">
-                    {{ crossCopySourceVersionLabel }} | {{ crossCopySnapshotBeforeApply ? '执行前写入快照' : '不写入快照' }}
-                  </div>
-                  <div v-if="crossCopyCompareSummary" class="cross-copy-inline-tip">{{ crossCopyCompareSummary }}</div>
+                  <CrossCopyControls
+                    :worldbook-names="worldbookNames"
+                    :source-worldbook="crossCopySourceWorldbook"
+                    :target-worldbook="crossCopyTargetWorldbook"
+                    :can-compare="crossCopyCanCompare"
+                    :compare-loading="crossCopyCompareLoading"
+                    :apply-loading="crossCopyApplyLoading"
+                    :controls-collapsed="crossCopyControlsCollapsed"
+                    :use-draft-source-when-current="crossCopyUseDraftSourceWhenCurrent"
+                    :source-is-current-worldbook="crossCopySourceIsCurrentWorldbook"
+                    :source-version-label="crossCopySourceVersionLabel"
+                    :snapshot-before-apply="crossCopySnapshotBeforeApply"
+                    :source-target-invalid="crossCopySourceTargetInvalid"
+                    :compare-summary="crossCopyCompareSummary"
+                    :last-result-summary="crossCopyLastResultSummary"
+                    id-prefix="m"
+                    mobile
+                    @update:source-worldbook="crossCopySourceWorldbook = $event"
+                    @update:target-worldbook="crossCopyTargetWorldbook = $event"
+                    @update:use-draft-source-when-current="crossCopyUseDraftSourceWhenCurrent = $event"
+                    @update:snapshot-before-apply="crossCopySnapshotBeforeApply = $event"
+                    @refresh="refreshCrossCopyComparison"
+                    @toggle-collapsed="toggleCrossCopyControlsCollapsed"
+                  />
                 </section>
 
                 <section v-show="crossCopyMobileStep === 2" class="cross-copy-mobile-stage-panel">
@@ -1765,55 +1745,29 @@
               </div>
             </div>
 
-            <div class="cross-copy-controls-wrap">
-              <div class="cross-copy-controls cross-copy-controls-primary">
-                <label class="field">
-                  <span>来源世界书</span>
-                  <select v-model="crossCopySourceWorldbook" class="text-input">
-                    <option value="">请选择来源世界书</option>
-                    <option v-for="name in worldbookNames" :key="`d-copy-source-${name}`" :value="name">{{ name }}</option>
-                  </select>
-                </label>
-                <label class="field">
-                  <span>目标世界书</span>
-                  <select v-model="crossCopyTargetWorldbook" class="text-input">
-                    <option value="">请选择目标世界书</option>
-                    <option v-for="name in worldbookNames" :key="`d-copy-target-${name}`" :value="name">{{ name }}</option>
-                  </select>
-                </label>
-                <div class="cross-copy-control-actions">
-                  <button class="btn" type="button" :disabled="!crossCopyCanCompare || crossCopyCompareLoading || crossCopyApplyLoading" @click="refreshCrossCopyComparison">
-                    {{ crossCopyCompareLoading ? '比较中...' : '刷新比较' }}
-                  </button>
-                </div>
-              </div>
-
-              <Transition name="copy-controls-advanced">
-                <div v-if="!crossCopyControlsCollapsed" class="cross-copy-controls cross-copy-controls-advanced">
-                  <label class="checkbox-inline">
-                    <input
-                      v-model="crossCopyUseDraftSourceWhenCurrent"
-                      type="checkbox"
-                      :disabled="!crossCopySourceIsCurrentWorldbook"
-                    />
-                    <span>{{ crossCopySourceVersionLabel }}</span>
-                  </label>
-                  <label class="checkbox-inline">
-                    <input v-model="crossCopySnapshotBeforeApply" type="checkbox" />
-                    <span>执行前写入目标快照</span>
-                  </label>
-                </div>
-              </Transition>
-
-              <div v-if="crossCopyControlsCollapsed" class="cross-copy-inline-tip">
-                {{ crossCopySourceVersionLabel }} | {{ crossCopySnapshotBeforeApply ? '执行前写入快照' : '不写入快照' }}
-              </div>
-              <div class="cross-copy-inline-tips">
-                <div v-if="crossCopySourceTargetInvalid" class="cross-copy-inline-tip warning">来源和目标不能相同。</div>
-                <div v-if="crossCopyCompareSummary" class="cross-copy-inline-tip">{{ crossCopyCompareSummary }}</div>
-                <div v-if="crossCopyLastResultSummary" class="cross-copy-inline-tip success">{{ crossCopyLastResultSummary }}</div>
-              </div>
-            </div>
+            <CrossCopyControls
+              :worldbook-names="worldbookNames"
+              :source-worldbook="crossCopySourceWorldbook"
+              :target-worldbook="crossCopyTargetWorldbook"
+              :can-compare="crossCopyCanCompare"
+              :compare-loading="crossCopyCompareLoading"
+              :apply-loading="crossCopyApplyLoading"
+              :controls-collapsed="crossCopyControlsCollapsed"
+              :use-draft-source-when-current="crossCopyUseDraftSourceWhenCurrent"
+              :source-is-current-worldbook="crossCopySourceIsCurrentWorldbook"
+              :source-version-label="crossCopySourceVersionLabel"
+              :snapshot-before-apply="crossCopySnapshotBeforeApply"
+              :source-target-invalid="crossCopySourceTargetInvalid"
+              :compare-summary="crossCopyCompareSummary"
+              :last-result-summary="crossCopyLastResultSummary"
+              id-prefix="d"
+              @update:source-worldbook="crossCopySourceWorldbook = $event"
+              @update:target-worldbook="crossCopyTargetWorldbook = $event"
+              @update:use-draft-source-when-current="crossCopyUseDraftSourceWhenCurrent = $event"
+              @update:snapshot-before-apply="crossCopySnapshotBeforeApply = $event"
+              @refresh="refreshCrossCopyComparison"
+              @toggle-collapsed="toggleCrossCopyControlsCollapsed"
+            />
 
             <div
               ref="crossCopyGridRef"
@@ -3078,6 +3032,7 @@ import WorldbookPicker from './components/WorldbookPicker.vue';
 import BrowsePanel from './components/BrowsePanel.vue';
 import EditorPanel from './components/EditorPanel.vue';
 import CrossCopyPanel from './components/CrossCopyPanel.vue';
+import CrossCopyControls from './components/CrossCopyControls.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';

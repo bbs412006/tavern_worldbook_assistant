@@ -91,6 +91,8 @@ checks = {
     'tag editor panel component exists': (root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').exists(),
     'tag editor panel composes tag panels': all(token in ((root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagEditorPanel.vue').exists() else '') for token in ['<TagCreatePanel', '<TagTreePanel', '<TagAssignmentPanel']),
     'app uses tag editor panel component': app.count('<TagEditorPanel') >= 2,
+    'cross copy controls component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyControls.vue').exists(),
+    'app uses cross copy controls component': app.count('<CrossCopyControls') >= 2,
 }
 
 for name, ok in checks.items():
