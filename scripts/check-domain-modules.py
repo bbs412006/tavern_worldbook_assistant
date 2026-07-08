@@ -84,7 +84,9 @@ checks = {
     'tag color picker component exists': (root / 'src/worldbook_assistant_build/components/TagColorPicker.vue').exists(),
     'tag tree item uses tag color picker component': '<TagColorPicker' in ((root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').exists() else ''),
     'tag tree item component exists': (root / 'src/worldbook_assistant_build/components/TagTreeItem.vue').exists(),
-    'app uses tag tree item component': app.count('<TagTreeItem') >= 2,
+    'tag tree panel component exists': (root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').exists(),
+    'tag tree panel uses tag tree item component': '<TagTreeItem' in ((root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/TagTreePanel.vue').exists() else ''),
+    'app uses tag tree panel component': app.count('<TagTreePanel') >= 2,
 }
 
 for name, ok in checks.items():

@@ -785,26 +785,20 @@
                 @reset-all="tagResetAll"
               />
 
-              <div v-if="tagDefinitions.length" class="tag-editor-tree-wrap">
-                <div class="tag-editor-subtitle">标签树</div>
-                <div class="tag-editor-tree-list">
-                  <TagTreeItem
-                    v-for="row in tagManagementRows"
-                    :key="`tag-mobile-row-${row.id}`"
-                    :row="row"
-                    :name="tagDefinitionMap.get(row.id)?.name ?? ''"
-                    :parent-id="tagDefinitionMap.get(row.id)?.parent_id ?? null"
-                    :parent-options="tagAssignOptions"
-                    :disabled-parent-ids="getTagDisabledParentIds(row.id)"
-                    :colors="TAG_COLORS"
-                    :id-prefix="'mobile'"
-                    @rename="tagRename(row.id, $event)"
-                    @set-parent="tagSetParent(row.id, $event)"
-                    @set-color="tagSetColor(row.id, $event)"
-                    @delete="tagDelete(row.id)"
-                  />
-                </div>
-              </div>
+              <TagTreePanel
+                v-if="tagDefinitions.length"
+                :rows="tagManagementRows"
+                :parent-options="tagAssignOptions"
+                :colors="TAG_COLORS"
+                id-prefix="mobile"
+                :name-of="getTagDefinitionName"
+                :parent-id-of="getTagDefinitionParentId"
+                :disabled-parent-ids="getTagDisabledParentIds"
+                @rename="tagRename"
+                @set-parent="tagSetParent"
+                @set-color="tagSetColor"
+                @delete="tagDelete"
+              />
 
               <div v-if="tagDefinitions.length" class="tag-assign-panel">
                 <div class="tag-editor-subtitle">世界书分配</div>
@@ -1761,26 +1755,20 @@
               @reset-all="tagResetAll"
             />
             <div v-if="tagDefinitions.length" class="tag-editor-layout">
-              <div class="tag-editor-tree-wrap">
-                <div class="tag-editor-subtitle">标签树</div>
-                <TransitionGroup name="list" tag="div" class="tag-editor-tree-list">
-                  <TagTreeItem
-                    v-for="row in tagManagementRows"
-                    :key="`tag-desktop-row-${row.id}`"
-                    :row="row"
-                    :name="tagDefinitionMap.get(row.id)?.name ?? ''"
-                    :parent-id="tagDefinitionMap.get(row.id)?.parent_id ?? null"
-                    :parent-options="tagAssignOptions"
-                    :disabled-parent-ids="getTagDisabledParentIds(row.id)"
-                    :colors="TAG_COLORS"
-                    :id-prefix="'desktop'"
-                    @rename="tagRename(row.id, $event)"
-                    @set-parent="tagSetParent(row.id, $event)"
-                    @set-color="tagSetColor(row.id, $event)"
-                    @delete="tagDelete(row.id)"
-                  />
-                </TransitionGroup>
-              </div>
+              <TagTreePanel
+                :rows="tagManagementRows"
+                :parent-options="tagAssignOptions"
+                :colors="TAG_COLORS"
+                id-prefix="desktop"
+                animated
+                :name-of="getTagDefinitionName"
+                :parent-id-of="getTagDefinitionParentId"
+                :disabled-parent-ids="getTagDisabledParentIds"
+                @rename="tagRename"
+                @set-parent="tagSetParent"
+                @set-color="tagSetColor"
+                @delete="tagDelete"
+              />
               <div class="tag-assign-panel">
                 <div class="tag-editor-subtitle">世界书分配</div>
                 <div class="tag-assign-controls">
@@ -3168,7 +3156,7 @@ import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
 import TagCreatePanel from './components/TagCreatePanel.vue';
-import TagTreeItem from './components/TagTreeItem.vue';
+import TagTreePanel from './components/TagTreePanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import AIConfigModal from './components/AIConfigModal.vue';
 import { APP_VERSION } from './domain/version';
@@ -6620,6 +6608,14 @@ function isTagParentOptionDisabled(tagId: string, parentId: string): boolean {
 
 function getTagDisabledParentIds(tagId: string): Set<string> {
   return new Set(tagAssignOptions.value.filter(option => isTagParentOptionDisabled(tagId, option.id)).map(option => option.id));
+}
+
+function getTagDefinitionName(tagId: string): string {
+  return tagDefinitionMap.value.get(tagId)?.name ?? '';
+}
+
+function getTagDefinitionParentId(tagId: string): string | null {
+  return tagDefinitionMap.value.get(tagId)?.parent_id ?? null;
 }
 
 function setTagDeleteParentMode(modeRaw: string): void {
