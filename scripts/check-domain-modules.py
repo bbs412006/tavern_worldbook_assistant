@@ -93,6 +93,8 @@ checks = {
     'app uses tag editor panel component': app.count('<TagEditorPanel') >= 2,
     'cross copy controls component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyControls.vue').exists(),
     'app uses cross copy controls component': app.count('<CrossCopyControls') >= 2,
+    'cross copy source list component exists': (root / 'src/worldbook_assistant_build/components/CrossCopySourceList.vue').exists(),
+    'app uses cross copy source list component': app.count('<CrossCopySourceList') >= 2,
 }
 
 for name, ok in checks.items():

@@ -612,27 +612,19 @@
                 </section>
 
                 <section v-show="crossCopyMobileStep === 2" class="cross-copy-mobile-stage-panel">
-                  <div class="cross-copy-list-head">
-                    <strong>来源条目</strong>
-                    <span>{{ crossCopyRows.length }} 条</span>
-                  </div>
-                  <div class="cross-copy-list-tools">
-                    <input v-model="crossCopySearchText" type="text" class="text-input" placeholder="搜索来源名称 / 内容" />
-                    <div class="cross-copy-mini-actions">
-                      <button class="btn mini" type="button" :disabled="!crossCopySourceRowsFiltered.length" @click="setCrossCopySelectionForFiltered(true)">全选显示</button>
-                      <button class="btn mini" type="button" :disabled="!crossCopyRows.length" @click="setCrossCopySelectionForAll(false)">全不选</button>
-                    </div>
-                  </div>
-                  <div class="cross-copy-source-list mobile-source-list">
-                    <label v-for="row in crossCopySourceRowsFiltered" :key="`m-copy-pick-${row.id}`" class="cross-copy-source-item" :class="{ checked: row.selected }">
-                      <input v-model="row.selected" type="checkbox" :disabled="row.status === 'invalid_same_source_target' || crossCopyApplyLoading" />
-                      <span class="cross-copy-status-dot" :class="getCrossCopyStatusBadgeClass(row.status)"></span>
-                      <span class="cross-copy-source-name" :title="row.source_entry.name || `条目 ${row.source_entry.uid}`">
-                        {{ row.source_entry.name || `条目 ${row.source_entry.uid}` }}
-                      </span>
-                    </label>
-                    <div v-if="!crossCopySourceRowsFiltered.length" class="empty-note">暂无可选条目，请先刷新比较</div>
-                  </div>
+                  <CrossCopySourceList
+                    :rows="crossCopySourceRowsFiltered"
+                    :total-count="crossCopyRows.length"
+                    :search-text="crossCopySearchText"
+                    :apply-loading="crossCopyApplyLoading"
+                    id-prefix="m"
+                    mobile
+                    :status-badge-class="getCrossCopyStatusBadgeClass"
+                    @update:search-text="crossCopySearchText = $event"
+                    @select-filtered="setCrossCopySelectionForFiltered"
+                    @select-all="setCrossCopySelectionForAll"
+                    @set-selected="setCrossCopyRowSelected"
+                  />
                 </section>
 
                 <section v-show="crossCopyMobileStep === 3" class="cross-copy-mobile-stage-panel">
@@ -1775,29 +1767,18 @@
               :class="{ 'single-column': crossCopyDesktopSingleColumn }"
               :style="crossCopyGridStyle"
             >
-              <aside class="cross-copy-left">
-                <div class="cross-copy-list-head">
-                  <strong>来源条目</strong>
-                  <span>{{ crossCopyRows.length }} 条</span>
-                </div>
-                <div class="cross-copy-list-tools">
-                  <input v-model="crossCopySearchText" type="text" class="text-input" placeholder="搜索来源名称 / 内容" />
-                  <div class="cross-copy-mini-actions">
-                    <button class="btn mini" type="button" :disabled="!crossCopySourceRowsFiltered.length" @click="setCrossCopySelectionForFiltered(true)">全选显示</button>
-                    <button class="btn mini" type="button" :disabled="!crossCopyRows.length" @click="setCrossCopySelectionForAll(false)">全不选</button>
-                  </div>
-                </div>
-                <div class="cross-copy-source-list">
-                  <label v-for="row in crossCopySourceRowsFiltered" :key="`d-copy-pick-${row.id}`" class="cross-copy-source-item" :class="{ checked: row.selected }">
-                    <input v-model="row.selected" type="checkbox" :disabled="row.status === 'invalid_same_source_target' || crossCopyApplyLoading" />
-                    <span class="cross-copy-status-dot" :class="getCrossCopyStatusBadgeClass(row.status)"></span>
-                    <span class="cross-copy-source-name" :title="row.source_entry.name || `条目 ${row.source_entry.uid}`">
-                      {{ row.source_entry.name || `条目 ${row.source_entry.uid}` }}
-                    </span>
-                  </label>
-                  <div v-if="!crossCopySourceRowsFiltered.length" class="empty-note">暂无可选条目，请先刷新比较</div>
-                </div>
-              </aside>
+              <CrossCopySourceList
+                :rows="crossCopySourceRowsFiltered"
+                :total-count="crossCopyRows.length"
+                :search-text="crossCopySearchText"
+                :apply-loading="crossCopyApplyLoading"
+                id-prefix="d"
+                :status-badge-class="getCrossCopyStatusBadgeClass"
+                @update:search-text="crossCopySearchText = $event"
+                @select-filtered="setCrossCopySelectionForFiltered"
+                @select-all="setCrossCopySelectionForAll"
+                @set-selected="setCrossCopyRowSelected"
+              />
 
               <div
                 v-if="!crossCopyDesktopSingleColumn"
@@ -3033,6 +3014,7 @@ import BrowsePanel from './components/BrowsePanel.vue';
 import EditorPanel from './components/EditorPanel.vue';
 import CrossCopyPanel from './components/CrossCopyPanel.vue';
 import CrossCopyControls from './components/CrossCopyControls.vue';
+import CrossCopySourceList from './components/CrossCopySourceList.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
@@ -7001,6 +6983,14 @@ function setCrossCopySelectionForFiltered(selected: boolean): void {
     }
     row.selected = selected;
   }
+}
+
+function setCrossCopyRowSelected(rowId: string, selected: boolean): void {
+  const row = crossCopyRows.value.find(item => item.id === rowId);
+  if (!row || row.status === 'invalid_same_source_target') {
+    return;
+  }
+  row.selected = selected;
 }
 
 function setCrossCopySelectionForAll(selected: boolean): void {
