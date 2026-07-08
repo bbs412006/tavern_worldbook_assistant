@@ -103,6 +103,9 @@ checks = {
     'cross copy mobile workspace component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyMobileWorkspace.vue').exists(),
     'app uses cross copy mobile workspace component': '<CrossCopyMobileWorkspace' in app,
     'cross copy mobile workspace composes stepper': '<CrossCopyMobileStepper' in ((root / 'src/worldbook_assistant_build/components/CrossCopyMobileWorkspace.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/CrossCopyMobileWorkspace.vue').exists() else ''),
+    'cross copy desktop workspace component exists': (root / 'src/worldbook_assistant_build/components/CrossCopyDesktopWorkspace.vue').exists(),
+    'app uses cross copy desktop workspace component': '<CrossCopyDesktopWorkspace' in app,
+    'cross copy desktop workspace owns header': 'cross-copy-head-main' in ((root / 'src/worldbook_assistant_build/components/CrossCopyDesktopWorkspace.vue').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/components/CrossCopyDesktopWorkspace.vue').exists() else ''),
 }
 
 for name, ok in checks.items():

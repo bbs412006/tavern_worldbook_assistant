@@ -1643,36 +1643,15 @@
             @toggle-assignment="tagToggleAssignmentForSelectedTag"
           />
 
-          <section v-if="crossCopyMode" class="cross-copy-panel desktop">
-            <div class="cross-copy-head">
-              <div class="cross-copy-head-main">
-                <strong>📚 跨世界书复制条目</strong>
-                <span>{{ crossCopyWorkspaceSummary }}</span>
-              </div>
-              <div class="cross-copy-head-actions">
-                <span>{{ crossCopyWorkspaceComparedText }}</span>
-                <button class="btn mini utility-btn" type="button" @click="toggleCrossCopyControlsCollapsed">
-                  {{ crossCopyControlsCollapsed ? '展开高级项' : '收起高级项' }}
-                </button>
-                <button class="btn mini utility-btn" type="button" :disabled="isAnyCineLocked" @click="toggleCrossCopyMode">退出模式</button>
-                <div class="copy-cine-sink-cluster" aria-hidden="true">
-                  <span class="copy-cine-sink" data-copy-sink="focus_toggle"></span>
-                  <span class="copy-cine-sink" data-copy-sink="save_btn"></span>
-                  <span class="copy-cine-sink" data-copy-sink="more_btn"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tools_btn"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_global"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_entry_history"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_worldbook_history"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_activation"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_ai_generate"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_extract"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_tag"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_copy"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_settings"></span>
-                  <span class="copy-cine-sink" data-copy-sink="tool_ai_config"></span>
-                </div>
-              </div>
-            </div>
+          <CrossCopyDesktopWorkspace
+            v-if="crossCopyMode"
+            :workspace-summary="crossCopyWorkspaceSummary"
+            :compared-text="crossCopyWorkspaceComparedText"
+            :controls-collapsed="crossCopyControlsCollapsed"
+            :cine-locked="isAnyCineLocked"
+            @toggle-controls-collapsed="toggleCrossCopyControlsCollapsed"
+            @exit="toggleCrossCopyMode"
+          >
 
             <CrossCopyControls
               :worldbook-names="worldbookNames"
@@ -1760,7 +1739,7 @@
               @apply-bulk-action="applyCrossCopyBulkAction"
               @apply-selection="applyCrossCopySelection"
             />
-          </section>
+          </CrossCopyDesktopWorkspace>
 
           <section v-show="!aiGeneratorMode && !tagEditorMode && !crossCopyMode" ref="mainLayoutRef" class="wb-main-layout" :class="{ 'focus-mode': isDesktopFocusMode, 'global-mode-visible': globalWorldbookMode }" :style="mainLayoutStyle">
             <aside v-show="!showMobileEditor" class="wb-entry-list" :class="{ focus: isDesktopFocusMode }">
@@ -2919,6 +2898,7 @@ import CrossCopySourceList from './components/CrossCopySourceList.vue';
 import CrossCopyActionRows from './components/CrossCopyActionRows.vue';
 import CrossCopyBulkActions from './components/CrossCopyBulkActions.vue';
 import CrossCopyMobileWorkspace from './components/CrossCopyMobileWorkspace.vue';
+import CrossCopyDesktopWorkspace from './components/CrossCopyDesktopWorkspace.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
