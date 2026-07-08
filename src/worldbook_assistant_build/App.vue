@@ -553,25 +553,21 @@
           <!-- Tab: 复制 -->
           <Transition name="mobile-tab">
           <div v-show="mobileTab === 'copy'" class="mobile-pane">
-            <section class="cross-copy-panel mobile">
-              <div class="cross-copy-head">
-                <strong>📚 跨世界书复制</strong>
-                <span>{{ crossCopyWorkspaceComparedText }}</span>
-              </div>
-              <CrossCopyMobileStepper
-                :step="crossCopyMobileStep"
-                :can-go-step2="crossCopyMobileCanGoStep2"
-                :can-go-step3="crossCopyMobileCanGoStep3"
-                :next-disabled="crossCopyMobileNextDisabled"
-                :apply-loading="crossCopyApplyLoading"
-                :selected-count="crossCopySelectedCount"
-                @go-step="goToCrossCopyMobileStep"
-                @previous="goToPreviousCrossCopyMobileStep"
-                @next="goToNextCrossCopyMobileStep"
-                @apply="applyCrossCopySelection"
-              >
-              <div v-if="crossCopySourceTargetInvalid" class="cross-copy-inline-tip warning">来源和目标不能相同。</div>
-              <div v-if="crossCopyLastResultSummary" class="cross-copy-inline-tip success">{{ crossCopyLastResultSummary }}</div>
+            <CrossCopyMobileWorkspace
+              :compared-text="crossCopyWorkspaceComparedText"
+              :source-target-invalid="crossCopySourceTargetInvalid"
+              :last-result-summary="crossCopyLastResultSummary"
+              :step="crossCopyMobileStep"
+              :can-go-step2="crossCopyMobileCanGoStep2"
+              :can-go-step3="crossCopyMobileCanGoStep3"
+              :next-disabled="crossCopyMobileNextDisabled"
+              :apply-loading="crossCopyApplyLoading"
+              :selected-count="crossCopySelectedCount"
+              @go-step="goToCrossCopyMobileStep"
+              @previous="goToPreviousCrossCopyMobileStep"
+              @next="goToNextCrossCopyMobileStep"
+              @apply="applyCrossCopySelection"
+            >
               <div class="cross-copy-mobile-stage">
                 <section v-show="crossCopyMobileStep === 1" class="cross-copy-mobile-stage-panel">
                   <CrossCopyControls
@@ -656,8 +652,7 @@
                 </section>
               </div>
 
-              </CrossCopyMobileStepper>
-            </section>
+            </CrossCopyMobileWorkspace>
           </div>
           </Transition>
 
@@ -2923,7 +2918,7 @@ import CrossCopyControls from './components/CrossCopyControls.vue';
 import CrossCopySourceList from './components/CrossCopySourceList.vue';
 import CrossCopyActionRows from './components/CrossCopyActionRows.vue';
 import CrossCopyBulkActions from './components/CrossCopyBulkActions.vue';
-import CrossCopyMobileStepper from './components/CrossCopyMobileStepper.vue';
+import CrossCopyMobileWorkspace from './components/CrossCopyMobileWorkspace.vue';
 import GlobalModePanel from './components/GlobalModePanel.vue';
 import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
