@@ -3035,8 +3035,11 @@ import { buildEditorShellStyle, buildMainLayoutStyle, isCompactLayoutWidth, isDe
 import {
   CROSS_COPY_ACTION_LABELS,
   CROSS_COPY_STATUS_LABELS,
+  applyCrossCopyRowsToEntries,
   buildCrossCopyTextDiff,
   buildEntryFieldDiffRows,
+  createCrossCopyApplyStats,
+  formatCrossCopyApplySummary,
   generateCrossCopyUniqueName,
   getCrossCopyRowDiffSummary,
   getCrossCopyActionLabel,
@@ -6761,83 +6764,10 @@ async function applyCrossCopySelection(): Promise<void> {
       pushSnapshotForWorldbook(targetName, targetBefore, '跨书复制前快照');
     }
 
-    const duplicateDetectedCount = selectedRows.filter(row => {
-      return row.status === 'duplicate_exact' || row.status === 'content_duplicate_other_name';
-    }).length;
-
-    const stats = {
-      created: 0,
-      renamedCreated: 0,
-      overwritten: 0,
-      skipped: 0,
-      duplicateDetected: duplicateDetectedCount,
-    };
-
     const orderedRows = crossCopyRows.value.filter(row => row.selected);
+    const stats = createCrossCopyApplyStats(orderedRows);
     const updatedEntries = await updateWorldbookWith(targetName, worldbook => {
-      const next = normalizeEntryList(worldbook.map(entry => klona(entry)));
-      const occupied = new Set(next.map(entry => normalizeCrossCopyNameKey(entry.name)));
-      let nextUid = getNextUid(next);
-
-      for (const row of orderedRows) {
-        if (row.action === 'skip' || row.status === 'invalid_same_source_target') {
-          stats.skipped += 1;
-          continue;
-        }
-        const sourceEntry = normalizeEntry(klona(row.source_entry), row.source_entry.uid);
-
-        if (row.action === 'overwrite') {
-          let replaced = 0;
-          for (let index = 0; index < next.length; index += 1) {
-            if (normalizeCrossCopyNameKey(next[index].name) !== row.source_name_key) {
-              continue;
-            }
-            const uid = next[index].uid;
-            const replacement = normalizeEntry({ ...klona(sourceEntry), uid }, uid);
-            replacement.uid = uid;
-            next[index] = replacement;
-            replaced += 1;
-          }
-          if (replaced === 0) {
-            const uid = nextUid;
-            nextUid += 1;
-            const created = normalizeEntry({ ...klona(sourceEntry), uid }, uid);
-            created.uid = uid;
-            next.push(created);
-            stats.created += 1;
-            occupied.add(normalizeCrossCopyNameKey(created.name));
-          } else {
-            stats.overwritten += replaced;
-            occupied.add(row.source_name_key);
-          }
-          continue;
-        }
-
-        let createdName = sourceEntry.name;
-        if (row.action === 'rename_create') {
-          const typed = toStringSafe(row.rename_name).trim();
-          const typedKey = normalizeCrossCopyNameKey(typed);
-          if (!typed) {
-            createdName = generateCrossCopyUniqueName(sourceEntry.name, occupied);
-          } else if (!occupied.has(typedKey)) {
-            createdName = typed;
-          } else {
-            createdName = generateCrossCopyUniqueName(typed, occupied);
-          }
-          row.rename_name = createdName;
-          stats.renamedCreated += 1;
-        } else {
-          stats.created += 1;
-        }
-        const uid = nextUid;
-        nextUid += 1;
-        const created = normalizeEntry({ ...klona(sourceEntry), uid, name: createdName }, uid);
-        created.uid = uid;
-        next.push(created);
-        occupied.add(normalizeCrossCopyNameKey(createdName));
-      }
-
-      return next;
+      return applyCrossCopyRowsToEntries(worldbook, orderedRows, stats);
     }, { render: 'immediate' });
 
     if (targetName === selectedWorldbookName.value) {
@@ -6848,14 +6778,7 @@ async function applyCrossCopySelection(): Promise<void> {
       ensureSelectedEntryExists();
     }
 
-    crossCopyLastResultSummary.value = [
-      `执行完成`,
-      `新增 ${stats.created}`,
-      `另存新增 ${stats.renamedCreated}`,
-      `覆盖 ${stats.overwritten}`,
-      `跳过 ${stats.skipped}`,
-      `检测重复 ${stats.duplicateDetected}`,
-    ].join(' | ');
+    crossCopyLastResultSummary.value = formatCrossCopyApplySummary(stats);
     setStatus(`跨书复制完成：${crossCopyLastResultSummary.value}`);
     toastr.success('跨书复制已完成');
     await refreshCrossCopyComparison();

@@ -128,6 +128,9 @@ checks = {
     'cross copy diff modal composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopyDiffModal.ts').exists(),
     'app imports cross copy diff modal composable': "from './composables/useCrossCopyDiffModal'" in app and 'useCrossCopyDiffModal' in app,
     'app no longer declares cross copy diff modal functions inline': 'function openCrossCopyDiff' not in app and 'function closeCrossCopyDiff' not in app,
+    'cross copy domain exports apply helpers': all(token in ((root / 'src/worldbook_assistant_build/domain/crossCopy.ts').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/domain/crossCopy.ts').exists() else '') for token in ['applyCrossCopyRowsToEntries', 'createCrossCopyApplyStats', 'formatCrossCopyApplySummary']),
+    'app uses cross copy apply domain helpers': all(token in app for token in ['applyCrossCopyRowsToEntries', 'createCrossCopyApplyStats', 'formatCrossCopyApplySummary']),
+    'app no longer declares cross copy apply mutation loop inline': 'duplicateDetectedCount' not in app and 'let replaced = 0' not in app and 'stats.renamedCreated += 1' not in app,
 }
 
 for name, ok in checks.items():

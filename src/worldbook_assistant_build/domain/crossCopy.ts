@@ -1,4 +1,6 @@
 import { diffLines } from 'https://testingcf.jsdelivr.net/npm/diff/+esm';
+import { klona } from 'klona';
+import { normalizeEntry, normalizeEntryList, toStringSafe } from './persistedState';
 import type {
   CrossCopyAction,
   CrossCopyFieldDiffRow,
@@ -238,6 +240,42 @@ export function getCrossCopyRowDiffSummary(row: CrossCopyRow): string {
   return `字段 ${fieldChanged}/${fieldRows.length} 不同 · 新增行 ${content.added} / 修改行 ${content.changed} / 删除行 ${content.removed}`;
 }
 
+export interface CrossCopyApplyStats {
+  created: number;
+  renamedCreated: number;
+  overwritten: number;
+  skipped: number;
+  duplicateDetected: number;
+}
+
+function getNextCrossCopyUid(entries: WorldbookEntry[]): number {
+  if (entries.length === 0) {
+    return 1;
+  }
+  return Math.max(...entries.map(entry => entry.uid)) + 1;
+}
+
+export function createCrossCopyApplyStats(rows: CrossCopyRow[]): CrossCopyApplyStats {
+  return {
+    created: 0,
+    renamedCreated: 0,
+    overwritten: 0,
+    skipped: 0,
+    duplicateDetected: rows.filter(row => row.status === 'duplicate_exact' || row.status === 'content_duplicate_other_name').length,
+  };
+}
+
+export function formatCrossCopyApplySummary(stats: CrossCopyApplyStats): string {
+  return [
+    '执行完成',
+    `新增 ${stats.created}`,
+    `另存新增 ${stats.renamedCreated}`,
+    `覆盖 ${stats.overwritten}`,
+    `跳过 ${stats.skipped}`,
+    `检测重复 ${stats.duplicateDetected}`,
+  ].join(' | ');
+}
+
 export function generateCrossCopyUniqueName(baseName: string, occupiedNameKeys: Set<string>): string {
   const base = String(baseName ?? '').trim() || '未命名条目';
   const first = `${base} (复制)`;
@@ -251,4 +289,70 @@ export function generateCrossCopyUniqueName(baseName: string, occupiedNameKeys: 
     }
   }
   return `${base} (复制${Date.now()})`;
+}
+
+export function applyCrossCopyRowsToEntries(targetEntries: WorldbookEntry[], rows: CrossCopyRow[], stats: CrossCopyApplyStats): WorldbookEntry[] {
+  const next = normalizeEntryList(targetEntries.map(entry => klona(entry)));
+  const occupied = new Set(next.map(entry => normalizeCrossCopyNameKey(entry.name)));
+  let nextUid = getNextCrossCopyUid(next);
+
+  for (const row of rows) {
+    if (row.action === 'skip' || row.status === 'invalid_same_source_target') {
+      stats.skipped += 1;
+      continue;
+    }
+    const sourceEntry = normalizeEntry(klona(row.source_entry), row.source_entry.uid);
+
+    if (row.action === 'overwrite') {
+      let replaced = 0;
+      for (let index = 0; index < next.length; index += 1) {
+        if (normalizeCrossCopyNameKey(next[index].name) !== row.source_name_key) {
+          continue;
+        }
+        const uid = next[index].uid;
+        const replacement = normalizeEntry({ ...klona(sourceEntry), uid }, uid);
+        replacement.uid = uid;
+        next[index] = replacement;
+        replaced += 1;
+      }
+      if (replaced === 0) {
+        const uid = nextUid;
+        nextUid += 1;
+        const created = normalizeEntry({ ...klona(sourceEntry), uid }, uid);
+        created.uid = uid;
+        next.push(created);
+        stats.created += 1;
+        occupied.add(normalizeCrossCopyNameKey(created.name));
+      } else {
+        stats.overwritten += replaced;
+        occupied.add(row.source_name_key);
+      }
+      continue;
+    }
+
+    let createdName = sourceEntry.name;
+    if (row.action === 'rename_create') {
+      const typed = toStringSafe(row.rename_name).trim();
+      const typedKey = normalizeCrossCopyNameKey(typed);
+      if (!typed) {
+        createdName = generateCrossCopyUniqueName(sourceEntry.name, occupied);
+      } else if (!occupied.has(typedKey)) {
+        createdName = typed;
+      } else {
+        createdName = generateCrossCopyUniqueName(typed, occupied);
+      }
+      row.rename_name = createdName;
+      stats.renamedCreated += 1;
+    } else {
+      stats.created += 1;
+    }
+    const uid = nextUid;
+    nextUid += 1;
+    const created = normalizeEntry({ ...klona(sourceEntry), uid, name: createdName }, uid);
+    created.uid = uid;
+    next.push(created);
+    occupied.add(normalizeCrossCopyNameKey(createdName));
+  }
+
+  return next;
 }
