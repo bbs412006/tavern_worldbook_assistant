@@ -3027,6 +3027,7 @@ import { useCrossCopyMobileSteps } from './composables/useCrossCopyMobileSteps';
 import { useCrossCopyPersistence } from './composables/useCrossCopyPersistence';
 import { useCrossCopySelection } from './composables/useCrossCopySelection';
 import { useCrossCopyDiffModal } from './composables/useCrossCopyDiffModal';
+import { useCrossCopyApply } from './composables/useCrossCopyApply';
 import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
 import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
@@ -3035,11 +3036,8 @@ import { buildEditorShellStyle, buildMainLayoutStyle, isCompactLayoutWidth, isDe
 import {
   CROSS_COPY_ACTION_LABELS,
   CROSS_COPY_STATUS_LABELS,
-  applyCrossCopyRowsToEntries,
   buildCrossCopyTextDiff,
   buildEntryFieldDiffRows,
-  createCrossCopyApplyStats,
-  formatCrossCopyApplySummary,
   generateCrossCopyUniqueName,
   getCrossCopyRowDiffSummary,
   getCrossCopyActionLabel,
@@ -4023,6 +4021,32 @@ const {
   close: closeCrossCopyDiff,
 } = useCrossCopyDiffModal({
   rows: crossCopyRows,
+});
+
+const { applySelection: applyCrossCopySelection } = useCrossCopyApply({
+  sourceWorldbook: crossCopySourceWorldbook,
+  targetWorldbook: crossCopyTargetWorldbook,
+  rows: crossCopyRows,
+  applyLoading: crossCopyApplyLoading,
+  snapshotBeforeApply: crossCopySnapshotBeforeApply,
+  currentWorldbookName: selectedWorldbookName,
+  hasUnsavedChanges,
+  lastResultSummary: crossCopyLastResultSummary,
+  getWorldbook,
+  updateWorldbookWith,
+  saveCurrentWorldbook,
+  pushSnapshot: pushSnapshotForWorldbook,
+  syncCurrentTargetEntries: entries => {
+    draftEntries.value = klona(entries);
+    originalEntries.value = klona(entries);
+    syncEntriesDigestNow();
+    ensureSelectedEntryExists();
+  },
+  refreshComparison: refreshCrossCopyComparison,
+  setStatus,
+  warn: message => toastr.warning(message),
+  error: message => toastr.error(message),
+  success: message => toastr.success(message),
 });
 
 const globalAddCandidates = computed(() => {
@@ -6729,67 +6753,6 @@ function pushSnapshotForWorldbook(worldbookName: string, entries: WorldbookEntry
   });
 }
 
-async function applyCrossCopySelection(): Promise<void> {
-  if (!crossCopySourceWorldbook.value || !crossCopyTargetWorldbook.value) {
-    toastr.warning('请先选择来源与目标世界书');
-    return;
-  }
-  if (crossCopySourceWorldbook.value === crossCopyTargetWorldbook.value) {
-    toastr.warning('来源和目标不能相同');
-    return;
-  }
-  const selectedRows = crossCopyRows.value.filter(row => row.selected);
-  if (!selectedRows.length) {
-    toastr.warning('请至少勾选一条来源条目');
-    return;
-  }
-  if (crossCopyApplyLoading.value) {
-    return;
-  }
-
-  if (crossCopyTargetWorldbook.value === selectedWorldbookName.value && hasUnsavedChanges.value) {
-    setStatus('目标为当前世界书，正在自动保存未保存修改...');
-    await saveCurrentWorldbook();
-    if (hasUnsavedChanges.value) {
-      toastr.error('自动保存失败，请先处理保存问题后再执行复制');
-      return;
-    }
-  }
-
-  crossCopyApplyLoading.value = true;
-  try {
-    const targetName = crossCopyTargetWorldbook.value;
-    const targetBefore = normalizeEntryList(await getWorldbook(targetName));
-    if (crossCopySnapshotBeforeApply.value) {
-      pushSnapshotForWorldbook(targetName, targetBefore, '跨书复制前快照');
-    }
-
-    const orderedRows = crossCopyRows.value.filter(row => row.selected);
-    const stats = createCrossCopyApplyStats(orderedRows);
-    const updatedEntries = await updateWorldbookWith(targetName, worldbook => {
-      return applyCrossCopyRowsToEntries(worldbook, orderedRows, stats);
-    }, { render: 'immediate' });
-
-    if (targetName === selectedWorldbookName.value) {
-      const normalized = normalizeEntryList(updatedEntries.map(entry => klona(entry)));
-      draftEntries.value = klona(normalized);
-      originalEntries.value = klona(normalized);
-      syncEntriesDigestNow();
-      ensureSelectedEntryExists();
-    }
-
-    crossCopyLastResultSummary.value = formatCrossCopyApplySummary(stats);
-    setStatus(`跨书复制完成：${crossCopyLastResultSummary.value}`);
-    toastr.success('跨书复制已完成');
-    await refreshCrossCopyComparison();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    toastr.error(`复制失败: ${message}`);
-    crossCopyLastResultSummary.value = `执行失败：${message}`;
-  } finally {
-    crossCopyApplyLoading.value = false;
-  }
-}
 
 function syncExtraTextWithSelection(): void {
   if (!selectedEntry.value || !selectedEntry.value.extra) {
