@@ -3018,6 +3018,7 @@ import {
   createDefaultPersistedState,
   normalizePersistedState,
   normalizeLayoutState,
+  normalizeTagFilterState,
 } from './domain/persistedState';
 import { getHostWindow, resolveModalTarget } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
@@ -3932,6 +3933,21 @@ const crossCopySourceTargetInvalid = computed(() => {
 });
 
 const {
+  showModal: showCrossCopyDiffModal,
+  row: crossCopyDiffRow,
+  targetEntry: crossCopyDiffTargetEntry,
+  fieldDiffRows: crossCopyFieldDiffRows,
+  contentDiff: crossCopyContentDiff,
+  contentDiffSummary: crossCopyContentDiffSummary,
+  summary: crossCopyDiffSummary,
+  headerText: crossCopyDiffHeaderText,
+  open: openCrossCopyDiff,
+  close: closeCrossCopyDiff,
+} = useCrossCopyDiffModal({
+  rows: crossCopyRows,
+});
+
+const {
   sourceRowsFiltered: crossCopySourceRowsFiltered,
   rowsFiltered: crossCopyRowsFiltered,
   selectedRows: crossCopySelectedRows,
@@ -4006,21 +4022,6 @@ const {
   compareLoading: crossCopyCompareLoading,
   canApply: crossCopyCanApply,
   notifyBlocked: () => toastr.info('请先完成比较，再继续下一步'),
-});
-
-const {
-  showModal: showCrossCopyDiffModal,
-  row: crossCopyDiffRow,
-  targetEntry: crossCopyDiffTargetEntry,
-  fieldDiffRows: crossCopyFieldDiffRows,
-  contentDiff: crossCopyContentDiff,
-  contentDiffSummary: crossCopyContentDiffSummary,
-  summary: crossCopyDiffSummary,
-  headerText: crossCopyDiffHeaderText,
-  open: openCrossCopyDiff,
-  close: closeCrossCopyDiff,
-} = useCrossCopyDiffModal({
-  rows: crossCopyRows,
 });
 
 const { applySelection: applyCrossCopySelection } = useCrossCopyApply({
