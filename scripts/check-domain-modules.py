@@ -122,6 +122,9 @@ checks = {
     'cross copy persistence composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopyPersistence.ts').exists(),
     'app imports cross copy persistence composable': "from './composables/useCrossCopyPersistence'" in app and 'useCrossCopyPersistence' in app,
     'app no longer declares cross copy persistence functions inline': 'function applyCrossCopyStateFromPersisted' not in app and 'function persistCrossCopyState' not in app,
+    'cross copy selection composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopySelection.ts').exists(),
+    'app imports cross copy selection composable': "from './composables/useCrossCopySelection'" in app and 'useCrossCopySelection' in app,
+    'app no longer declares cross copy selection helpers inline': 'function setCrossCopySelectionForFiltered' not in app and 'function setCrossCopyRowSelected' not in app and 'function findCrossCopyRow' not in app and 'function setCrossCopySelectionForAll' not in app,
 }
 
 for name, ok in checks.items():

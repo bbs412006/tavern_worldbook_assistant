@@ -3025,6 +3025,7 @@ import { usePersistedState } from './composables/usePersistedState';
 import { useCrossCopyResize } from './composables/useCrossCopyResize';
 import { useCrossCopyMobileSteps } from './composables/useCrossCopyMobileSteps';
 import { useCrossCopyPersistence } from './composables/useCrossCopyPersistence';
+import { useCrossCopySelection } from './composables/useCrossCopySelection';
 import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
 import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
@@ -3929,43 +3930,29 @@ const crossCopySourceTargetInvalid = computed(() => {
   return crossCopySourceWorldbook.value === crossCopyTargetWorldbook.value;
 });
 
-const crossCopySourceRowsFiltered = computed(() => {
-  const keyword = crossCopySearchText.value.trim().toLowerCase();
-  return crossCopyRows.value.filter(row => {
-    if (!keyword) {
-      return true;
-    }
-    return (
-      row.source_entry.name.toLowerCase().includes(keyword) ||
-      row.source_entry.content.toLowerCase().includes(keyword)
-    );
-  });
+const {
+  sourceRowsFiltered: crossCopySourceRowsFiltered,
+  rowsFiltered: crossCopyRowsFiltered,
+  selectedRows: crossCopySelectedRows,
+  statusCounts: crossCopyStatusCounts,
+  selectedCount: crossCopySelectedCount,
+  setSelectionForFiltered: setCrossCopySelectionForFiltered,
+  setSelectionForAll: setCrossCopySelectionForAll,
+  setRowSelected: setCrossCopyRowSelected,
+  setRowAction: setCrossCopyRowAction,
+  setRowRenameName: setCrossCopyRowRenameName,
+  handleRowRenameBlur: handleCrossCopyRowRenameBlur,
+  openDiffById: openCrossCopyDiffById,
+  applyBulkAction: applyCrossCopyBulkActionToRows,
+  applyActionByStatus: applyCrossCopyActionByStatus,
+} = useCrossCopySelection({
+  rows: crossCopyRows,
+  searchText: crossCopySearchText,
+  statusFilter: crossCopyStatusFilter,
+  ensureRenameForRow: ensureCrossCopyRenameForRow,
+  openDiff: openCrossCopyDiff,
 });
 
-const crossCopyRowsFiltered = computed(() => {
-  if (crossCopyStatusFilter.value === 'all') {
-    return crossCopySourceRowsFiltered.value;
-  }
-  return crossCopySourceRowsFiltered.value.filter(row => row.status === crossCopyStatusFilter.value);
-});
-
-const crossCopySelectedRows = computed(() => crossCopyRows.value.filter(row => row.selected));
-
-const crossCopyStatusCounts = computed(() => {
-  const counts: Record<CrossCopyRowStatus, number> = {
-    new: 0,
-    duplicate_exact: 0,
-    same_name_changed: 0,
-    content_duplicate_other_name: 0,
-    invalid_same_source_target: 0,
-  };
-  for (const row of crossCopyRows.value) {
-    counts[row.status] += 1;
-  }
-  return counts;
-});
-
-const crossCopySelectedCount = computed(() => crossCopySelectedRows.value.length);
 const crossCopyCanCompare = computed(() =>
   Boolean(crossCopySourceWorldbook.value && crossCopyTargetWorldbook.value) && !crossCopySourceTargetInvalid.value,
 );
@@ -6759,103 +6746,8 @@ async function refreshCrossCopyComparison(): Promise<void> {
   }
 }
 
-function setCrossCopySelectionForFiltered(selected: boolean): void {
-  for (const row of crossCopySourceRowsFiltered.value) {
-    if (row.status === 'invalid_same_source_target') {
-      row.selected = false;
-      continue;
-    }
-    row.selected = selected;
-  }
-}
-
-function setCrossCopyRowSelected(rowId: string, selected: boolean): void {
-  const row = crossCopyRows.value.find(item => item.id === rowId);
-  if (!row || row.status === 'invalid_same_source_target') {
-    return;
-  }
-  row.selected = selected;
-}
-
-function findCrossCopyRow(rowId: string): CrossCopyRow | null {
-  return crossCopyRows.value.find(item => item.id === rowId) ?? null;
-}
-
-function setCrossCopyRowAction(rowId: string, action: CrossCopyAction): void {
-  const row = findCrossCopyRow(rowId);
-  if (!row) {
-    return;
-  }
-  row.action = action;
-  onCrossCopyRowActionChange(row);
-}
-
-function setCrossCopyRowRenameName(rowId: string, value: string): void {
-  const row = findCrossCopyRow(rowId);
-  if (!row) {
-    return;
-  }
-  row.rename_name = value;
-}
-
-function handleCrossCopyRowRenameBlur(rowId: string): void {
-  const row = findCrossCopyRow(rowId);
-  if (!row) {
-    return;
-  }
-  onCrossCopyRowRenameBlur(row);
-}
-
-function openCrossCopyDiffById(rowId: string): void {
-  const row = findCrossCopyRow(rowId);
-  if (!row) {
-    return;
-  }
-  openCrossCopyDiff(row);
-}
-
-function setCrossCopySelectionForAll(selected: boolean): void {
-  for (const row of crossCopyRows.value) {
-    if (row.status === 'invalid_same_source_target') {
-      row.selected = false;
-      continue;
-    }
-    row.selected = selected;
-  }
-}
-
 function applyCrossCopyBulkAction(action = crossCopyBulkAction.value): void {
-  for (const row of crossCopyRows.value) {
-    if (!row.selected) {
-      continue;
-    }
-    row.action = action;
-    if (row.action === 'rename_create') {
-      ensureCrossCopyRenameForRow(row);
-    }
-  }
-}
-
-function applyCrossCopyActionByStatus(status: CrossCopyRowStatus, action: CrossCopyAction): void {
-  for (const row of crossCopyRows.value) {
-    if (!row.selected || row.status !== status) {
-      continue;
-    }
-    row.action = action;
-    if (row.action === 'rename_create') {
-      ensureCrossCopyRenameForRow(row);
-    }
-  }
-}
-
-function onCrossCopyRowActionChange(row: CrossCopyRow): void {
-  if (row.action === 'rename_create') {
-    ensureCrossCopyRenameForRow(row);
-  }
-}
-
-function onCrossCopyRowRenameBlur(row: CrossCopyRow): void {
-  ensureCrossCopyRenameForRow(row);
+  applyCrossCopyBulkActionToRows(action);
 }
 
 function pushSnapshotForWorldbook(worldbookName: string, entries: WorldbookEntry[], label: string): void {
