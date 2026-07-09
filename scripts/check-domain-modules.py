@@ -42,6 +42,7 @@ checks = {
     'persisted state exports normalizer': 'export function normalizePersistedState' in ((root / 'src/worldbook_assistant_build/domain/persistedState.ts').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/domain/persistedState.ts').exists() else ''),
     'app imports persisted state helpers': "from './domain/persistedState'" in app,
     'app imports tag filter normalizer': 'normalizeTagFilterState' in app.split("from './domain/persistedState'", 1)[0],
+    'global preset sync has safe default state': 'function syncSelectedGlobalPresetFromState(state: PersistedState = persistedState.value)' in app,
     'app no longer declares persisted state default inline': 'function createDefaultPersistedState' not in app,
     'app no longer declares persisted state normalizer inline': 'function normalizePersistedState' not in app,
     'persisted state composable exists': persisted_composable_path.exists(),

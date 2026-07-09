@@ -5561,7 +5561,7 @@ function getNextUid(entries: WorldbookEntry[]): number {
   return Math.max(...entries.map(entry => entry.uid)) + 1;
 }
 
-function syncSelectedGlobalPresetFromState(state: PersistedState): void {
+function syncSelectedGlobalPresetFromState(state: PersistedState = persistedState.value): void {
   const presets = state.global_presets;
   const byId = new Set(presets.map(item => item.id));
   const preferredId = state.last_global_preset_id;
