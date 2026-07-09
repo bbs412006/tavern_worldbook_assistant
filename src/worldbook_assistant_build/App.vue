@@ -2973,7 +2973,6 @@ import type {
   MultiEditPersistState,
   TagDeleteParentMode,
   TagEditorPersistState,
-  CrossCopyPersistState,
   CrossCopyMatchSummary,
   CrossCopyRow,
   CrossCopyFieldDiffRow,
@@ -3019,13 +3018,13 @@ import {
   createDefaultPersistedState,
   normalizePersistedState,
   normalizeLayoutState,
-  normalizeCrossCopyPersistState,
 } from './domain/persistedState';
 import { getHostWindow, resolveModalTarget } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
 import { useCrossCopyResize } from './composables/useCrossCopyResize';
 import { useCrossCopyMobileSteps } from './composables/useCrossCopyMobileSteps';
+import { useCrossCopyPersistence } from './composables/useCrossCopyPersistence';
 import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
 import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
@@ -3985,7 +3984,23 @@ const {
   desktopLeftWidth: crossCopyDesktopLeftWidth,
   desktopSingleColumn: crossCopyDesktopSingleColumn,
   cineLocked: isAnyCineLocked,
-  persistState: persistCrossCopyState,
+  persistState: () => persistCrossCopyState(),
+});
+
+const {
+  applyFromPersisted: applyCrossCopyStateFromPersisted,
+  persist: persistCrossCopyState,
+} = useCrossCopyPersistence({
+  persistedState,
+  updatePersistedState,
+  sourceWorldbook: crossCopySourceWorldbook,
+  targetWorldbook: crossCopyTargetWorldbook,
+  useDraftSourceWhenCurrent: crossCopyUseDraftSourceWhenCurrent,
+  snapshotBeforeApply: crossCopySnapshotBeforeApply,
+  desktopLeftWidth: crossCopyDesktopLeftWidth,
+  desktopLeftWidthClamped: crossCopyDesktopLeftWidthClamped,
+  controlsCollapsed: crossCopyControlsCollapsed,
+  workspaceToolsExpanded: crossCopyWorkspaceToolsExpanded,
 });
 
 const {
@@ -5597,31 +5612,6 @@ function persistLayoutState(): void {
       normal_right_width: editorSideWidth.value,
       focus_left_width: focusMainPaneWidth.value,
       focus_right_width: focusEditorSideWidth.value,
-    };
-  });
-}
-
-function applyCrossCopyStateFromPersisted(): void {
-  const state = normalizeCrossCopyPersistState(persistedState.value.cross_copy);
-  crossCopySourceWorldbook.value = state.last_source_worldbook;
-  crossCopyTargetWorldbook.value = state.last_target_worldbook;
-  crossCopyUseDraftSourceWhenCurrent.value = state.use_draft_source_when_current;
-  crossCopySnapshotBeforeApply.value = state.snapshot_before_apply;
-  crossCopyDesktopLeftWidth.value = state.desktop_left_width;
-  crossCopyControlsCollapsed.value = state.controls_collapsed;
-  crossCopyWorkspaceToolsExpanded.value = state.workspace_tools_expanded;
-}
-
-function persistCrossCopyState(): void {
-  updatePersistedState(state => {
-    state.cross_copy = {
-      last_source_worldbook: crossCopySourceWorldbook.value,
-      last_target_worldbook: crossCopyTargetWorldbook.value,
-      use_draft_source_when_current: crossCopyUseDraftSourceWhenCurrent.value,
-      snapshot_before_apply: crossCopySnapshotBeforeApply.value,
-      desktop_left_width: crossCopyDesktopLeftWidthClamped.value,
-      controls_collapsed: crossCopyControlsCollapsed.value,
-      workspace_tools_expanded: crossCopyWorkspaceToolsExpanded.value,
     };
   });
 }

@@ -119,6 +119,9 @@ checks = {
     'cross copy mobile steps composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopyMobileSteps.ts').exists(),
     'app imports cross copy mobile steps composable': "from './composables/useCrossCopyMobileSteps'" in app and 'useCrossCopyMobileSteps' in app,
     'app no longer declares cross copy mobile step handlers inline': 'function canEnterCrossCopyMobileStep' not in app and 'function goToCrossCopyMobileStep' not in app and 'function goToPreviousCrossCopyMobileStep' not in app and 'function goToNextCrossCopyMobileStep' not in app,
+    'cross copy persistence composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopyPersistence.ts').exists(),
+    'app imports cross copy persistence composable': "from './composables/useCrossCopyPersistence'" in app and 'useCrossCopyPersistence' in app,
+    'app no longer declares cross copy persistence functions inline': 'function applyCrossCopyStateFromPersisted' not in app and 'function persistCrossCopyState' not in app,
 }
 
 for name, ok in checks.items():
