@@ -125,6 +125,9 @@ checks = {
     'cross copy selection composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopySelection.ts').exists(),
     'app imports cross copy selection composable': "from './composables/useCrossCopySelection'" in app and 'useCrossCopySelection' in app,
     'app no longer declares cross copy selection helpers inline': 'function setCrossCopySelectionForFiltered' not in app and 'function setCrossCopyRowSelected' not in app and 'function findCrossCopyRow' not in app and 'function setCrossCopySelectionForAll' not in app,
+    'cross copy diff modal composable exists': (root / 'src/worldbook_assistant_build/composables/useCrossCopyDiffModal.ts').exists(),
+    'app imports cross copy diff modal composable': "from './composables/useCrossCopyDiffModal'" in app and 'useCrossCopyDiffModal' in app,
+    'app no longer declares cross copy diff modal functions inline': 'function openCrossCopyDiff' not in app and 'function closeCrossCopyDiff' not in app,
 }
 
 for name, ok in checks.items():

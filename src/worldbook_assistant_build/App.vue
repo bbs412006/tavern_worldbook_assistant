@@ -3026,6 +3026,7 @@ import { useCrossCopyResize } from './composables/useCrossCopyResize';
 import { useCrossCopyMobileSteps } from './composables/useCrossCopyMobileSteps';
 import { useCrossCopyPersistence } from './composables/useCrossCopyPersistence';
 import { useCrossCopySelection } from './composables/useCrossCopySelection';
+import { useCrossCopyDiffModal } from './composables/useCrossCopyDiffModal';
 import { buildConfigSystemPrompt, extractJsonArray } from './domain/aiConfig';
 import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from './domain/aiTags';
 import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
@@ -3034,10 +3035,10 @@ import { buildEditorShellStyle, buildMainLayoutStyle, isCompactLayoutWidth, isDe
 import {
   CROSS_COPY_ACTION_LABELS,
   CROSS_COPY_STATUS_LABELS,
-  buildCrossCopyFieldDiffRows,
   buildCrossCopyTextDiff,
   buildEntryFieldDiffRows,
   generateCrossCopyUniqueName,
+  getCrossCopyRowDiffSummary,
   getCrossCopyActionLabel,
   getCrossCopyStatusLabel,
   normalizeCrossCopyContentKey,
@@ -3273,8 +3274,7 @@ const findHitIndex = ref(-1);
 const statusMessage = ref('就绪');
 const isBusy = ref(false);
 const isSaving = ref(false);
-const showCrossCopyDiffModal = ref(false);
-const crossCopyDiffRowId = ref('');
+
 const showEntryHistoryModal = ref(false);
 const showWorldbookHistoryModal = ref(false);
 const entryHistoryLeftId = ref('');
@@ -4007,54 +4007,19 @@ const {
   notifyBlocked: () => toastr.info('请先完成比较，再继续下一步'),
 });
 
-const crossCopyDiffRow = computed(() => {
-  if (!crossCopyDiffRowId.value) {
-    return null;
-  }
-  return crossCopyRows.value.find(row => row.id === crossCopyDiffRowId.value) ?? null;
-});
-
-const crossCopyDiffTargetEntry = computed(() => {
-  if (!crossCopyDiffRow.value) {
-    return null;
-  }
-  return getCrossCopyPrimaryTargetMatch(crossCopyDiffRow.value);
-});
-
-const crossCopyFieldDiffRows = computed<CrossCopyFieldDiffRow[]>(() => {
-  return buildCrossCopyFieldDiffRows(crossCopyDiffRow.value?.source_entry ?? null, crossCopyDiffTargetEntry.value);
-});
-
-const crossCopyContentDiff = computed<CrossCopyTextDiffResult>(() => {
-  const left = crossCopyDiffRow.value?.source_entry.content ?? '';
-  const right = crossCopyDiffTargetEntry.value?.content ?? '';
-  return buildCrossCopyTextDiff(toStringSafe(left), toStringSafe(right));
-});
-
-const crossCopyContentDiffSummary = computed(() => {
-  const result = crossCopyContentDiff.value;
-  return `新增行 ${result.added} / 修改行 ${result.changed} / 删除行 ${result.removed}`;
-});
-
-const crossCopyDiffSummary = computed(() => {
-  if (!crossCopyDiffRow.value) {
-    return '未选择对比条目';
-  }
-  if (!crossCopyDiffTargetEntry.value) {
-    return '目标无直接命中，右侧为空';
-  }
-  return getCrossCopyRowDiffSummary(crossCopyDiffRow.value);
-});
-
-const crossCopyDiffHeaderText = computed(() => {
-  if (!crossCopyDiffRow.value) {
-    return '-';
-  }
-  const sourceName = crossCopyDiffRow.value.source_entry.name || `条目 ${crossCopyDiffRow.value.source_entry.uid}`;
-  const targetName = crossCopyDiffTargetEntry.value
-    ? (crossCopyDiffTargetEntry.value.name || `条目 ${crossCopyDiffTargetEntry.value.uid}`)
-    : '无命中条目';
-  return `${sourceName}  ↔  ${targetName}`;
+const {
+  showModal: showCrossCopyDiffModal,
+  row: crossCopyDiffRow,
+  targetEntry: crossCopyDiffTargetEntry,
+  fieldDiffRows: crossCopyFieldDiffRows,
+  contentDiff: crossCopyContentDiff,
+  contentDiffSummary: crossCopyContentDiffSummary,
+  summary: crossCopyDiffSummary,
+  headerText: crossCopyDiffHeaderText,
+  open: openCrossCopyDiff,
+  close: closeCrossCopyDiff,
+} = useCrossCopyDiffModal({
+  rows: crossCopyRows,
 });
 
 const globalAddCandidates = computed(() => {
@@ -6529,15 +6494,6 @@ function ensureCrossCopyRenameForRow(row: CrossCopyRow): void {
   row.rename_name = typed;
 }
 
-function openCrossCopyDiff(row: CrossCopyRow): void {
-  crossCopyDiffRowId.value = row.id;
-  showCrossCopyDiffModal.value = true;
-}
-
-function closeCrossCopyDiff(): void {
-  showCrossCopyDiffModal.value = false;
-  crossCopyDiffRowId.value = '';
-}
 
 function toggleCrossCopyWorkspaceTools(): void {
   if (isAnyCineLocked.value) {

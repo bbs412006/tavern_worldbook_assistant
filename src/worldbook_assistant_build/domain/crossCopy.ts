@@ -2,6 +2,7 @@ import { diffLines } from 'https://testingcf.jsdelivr.net/npm/diff/+esm';
 import type {
   CrossCopyAction,
   CrossCopyFieldDiffRow,
+  CrossCopyRow,
   CrossCopyRowStatus,
   CrossCopyTextDiffLine,
   CrossCopyTextDiffResult,
@@ -218,6 +219,23 @@ export function buildCrossCopyTextDiff(leftText: string, rightText: string): Cro
     removed: Math.max(0, delLines - changed),
     changed,
   };
+}
+
+export function getCrossCopyPrimaryTargetMatch(row: CrossCopyRow): WorldbookEntry | null {
+  return row.target_summary.same_name_matches[0]
+    ?? row.target_summary.content_duplicate_other_name_matches[0]
+    ?? null;
+}
+
+export function getCrossCopyRowDiffSummary(row: CrossCopyRow): string {
+  const target = getCrossCopyPrimaryTargetMatch(row);
+  if (!target) {
+    return '目标无直接命中，右侧为空';
+  }
+  const fieldRows = buildCrossCopyFieldDiffRows(row.source_entry, target);
+  const fieldChanged = fieldRows.filter(item => item.changed).length;
+  const content = buildCrossCopyTextDiff(String(row.source_entry.content ?? ''), String(target.content ?? ''));
+  return `字段 ${fieldChanged}/${fieldRows.length} 不同 · 新增行 ${content.added} / 修改行 ${content.changed} / 删除行 ${content.removed}`;
 }
 
 export function generateCrossCopyUniqueName(baseName: string, occupiedNameKeys: Set<string>): string {
