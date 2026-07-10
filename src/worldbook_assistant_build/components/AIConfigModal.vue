@@ -3,10 +3,10 @@
   <template v-if="showInput && !preview && !generating">
     <div
       class="ai-tag-review-overlay"
-      @pointerdown="shieldModalHostEvent"
-      @mousedown="shieldModalHostEvent"
-      @touchstart="shieldModalHostEvent"
-      @click.self="$emit('close-input')"
+      @pointerdown.stop
+      @mousedown.stop
+      @touchstart.stop
+      @click.self.stop="$emit('close-input')"
     >
       <div class="ai-tag-review-modal" style="max-width:600px;">
         <div class="ai-tag-review-head">
@@ -64,9 +64,9 @@
   <div
     v-if="generating"
     class="ai-tag-review-overlay"
-    @pointerdown="shieldModalHostEvent"
-    @mousedown="shieldModalHostEvent"
-    @touchstart="shieldModalHostEvent"
+    @pointerdown.stop
+    @mousedown.stop
+    @touchstart.stop
   >
     <div class="ai-tag-review-modal" style="max-width:400px;text-align:center;padding:40px;">
       <div style="font-size:24px;margin-bottom:12px;">⏳</div>
@@ -77,10 +77,10 @@
   <div
     v-if="preview"
     class="ai-tag-review-overlay"
-    @pointerdown="shieldModalHostEvent"
-    @mousedown="shieldModalHostEvent"
-    @touchstart="shieldModalHostEvent"
-    @click.self="$emit('close-preview')"
+    @pointerdown.stop
+    @mousedown.stop
+    @touchstart.stop
+    @click.self.stop="$emit('close-preview')"
   >
     <div class="ai-tag-review-modal" style="max-width:700px;">
       <div class="ai-tag-review-head">
@@ -125,7 +125,6 @@
 
 <script setup lang="ts">
 import './modal-shared.css';
-import { shieldModalHostEvent } from '../host/modalHost';
 
 defineProps<{
   teleportTarget: HTMLElement | string;

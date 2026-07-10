@@ -2,10 +2,10 @@
   <Teleport :to="teleportTarget">
   <div
     class="ai-tag-review-overlay"
-    @pointerdown="shieldModalHostEvent"
-    @mousedown="shieldModalHostEvent"
-    @touchstart="shieldModalHostEvent"
-    @click.self="$emit('close')"
+    @pointerdown.stop
+    @mousedown.stop
+    @touchstart.stop
+    @click.self.stop="$emit('close')"
   >
     <div class="ai-tag-review-modal" style="max-width:520px;">
       <div class="ai-tag-review-head">
@@ -169,7 +169,6 @@
 
 <script setup lang="ts">
 import './modal-shared.css';
-import { shieldModalHostEvent } from '../host/modalHost';
 
 interface VersionInfo {
   version: string;
