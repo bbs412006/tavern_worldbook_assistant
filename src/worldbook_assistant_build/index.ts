@@ -38,6 +38,92 @@ let fabViewportSyncScrollHandler: (() => void) | null = null;
 let fabViewportSyncResizeHandler: (() => void) | null = null;
 let fabViewportSyncRaf: number | null = null;
 let fabVisibilitySetHandler: ((event: Event) => void) | null = null;
+let debugWindowErrorHandler: ((event: ErrorEvent) => void) | null = null;
+let debugUnhandledRejectionHandler: ((event: PromiseRejectionEvent) => void) | null = null;
+
+function escapeDebugHtml(value: string): string {
+  return value.replace(/[&<>"']/g, character => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return entities[character];
+  });
+}
+
+function formatDebugError(error: unknown): { message: string; stack: string } {
+  if (error instanceof Error) {
+    return {
+      message: error.message || error.name,
+      stack: error.stack || `${error.name}: ${error.message}`,
+    };
+  }
+  if (typeof error === 'string') {
+    return { message: error, stack: error };
+  }
+  try {
+    const serialized = JSON.stringify(error, null, 2);
+    return { message: serialized || String(error), stack: serialized || String(error) };
+  } catch {
+    return { message: String(error), stack: String(error) };
+  }
+}
+
+function renderDebugDiagnostic(phase: string, error: unknown, info = ''): void {
+  const doc = getHostDocument();
+  const body = doc.getElementById(PANEL_BODY_ID);
+  if (!body) {
+    console.error('[WB-Debug] panel body unavailable', phase, error, info);
+    return;
+  }
+
+  const formatted = formatDebugError(error);
+  body.innerHTML = `
+<div data-wb-debug-diagnostic style="box-sizing:border-box;width:100%;height:100%;overflow:auto;padding:14px;background:#160b12;color:#ffe4e6;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">
+  <h2 style="margin:0 0 10px;color:#fb7185;font-size:17px;">世界书助手 Debug 诊断</h2>
+  <p style="margin:0 0 8px;color:#fecdd3;">请完整截图或复制以下内容。</p>
+  <pre style="margin:0;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #881337;border-radius:8px;padding:10px;background:#090409;color:#fff1f2;">阶段: ${escapeDebugHtml(phase)}
+信息: ${escapeDebugHtml(info || '-')}
+错误: ${escapeDebugHtml(formatted.message)}
+
+堆栈:
+${escapeDebugHtml(formatted.stack)}
+
+构建提交: ${escapeDebugHtml(__WB_ASSISTANT_BUILD_COMMIT__)}
+构建时间: ${escapeDebugHtml(__WB_ASSISTANT_BUILD_TIME__)}
+页面: ${escapeDebugHtml(String(window.location.href))}
+User-Agent: ${escapeDebugHtml(navigator.userAgent)}</pre>
+</div>`;
+}
+
+function installDebugDiagnostics(): void {
+  if (!debugWindowErrorHandler) {
+    debugWindowErrorHandler = event => {
+      renderDebugDiagnostic('window error', event.error ?? event.message, `${event.filename}:${event.lineno}:${event.colno}`);
+    };
+    window.addEventListener('error', debugWindowErrorHandler);
+  }
+  if (!debugUnhandledRejectionHandler) {
+    debugUnhandledRejectionHandler = event => {
+      renderDebugDiagnostic('unhandledrejection', event.reason);
+    };
+    window.addEventListener('unhandledrejection', debugUnhandledRejectionHandler);
+  }
+}
+
+function removeDebugDiagnostics(): void {
+  if (debugWindowErrorHandler) {
+    window.removeEventListener('error', debugWindowErrorHandler);
+    debugWindowErrorHandler = null;
+  }
+  if (debugUnhandledRejectionHandler) {
+    window.removeEventListener('unhandledrejection', debugUnhandledRejectionHandler);
+    debugUnhandledRejectionHandler = null;
+  }
+}
 
 function isTextEntryTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) {
@@ -417,10 +503,20 @@ function mountAppIntoPanel(): void {
     return;
   }
 
-  panelRoot = createScriptIdDiv().appendTo(body as unknown as JQuery);
-  destroyTeleport = teleportStyle().destroy;
-  app = createApp(WorldbookAssistantApp);
-  app.mount(panelRoot[0]);
+  installDebugDiagnostics();
+  try {
+    panelRoot = createScriptIdDiv().appendTo(body as unknown as JQuery);
+    destroyTeleport = teleportStyle().destroy;
+    app = createApp(WorldbookAssistantApp);
+    app.config.errorHandler = (error, _instance, info) => {
+      renderDebugDiagnostic('Vue errorHandler', error, info);
+      console.error('[WB-Debug] Vue error:', error, info);
+    };
+    app.mount(panelRoot[0]);
+  } catch (error) {
+    renderDebugDiagnostic('mount', error);
+    throw error;
+  }
 }
 
 function ensurePanelElement(): JQuery {
@@ -1964,6 +2060,7 @@ function init(): void {
 
 function cleanup(): void {
   const doc = getHostDocument();
+  removeDebugDiagnostics();
   stopMenuRetry();
   stopMenuObserver();
   stopFloorButtonListeners();
