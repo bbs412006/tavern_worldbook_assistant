@@ -15,7 +15,7 @@ bundle_path = root / 'dist/worldbook_assistant_build/index.js'
 bundle = bundle_path.read_text(encoding='utf-8') if bundle_path.exists() else ''
 
 checks = {
-    'app version bumped for modal visibility fix': "APP_VERSION = '2.0.0'" in version_module and "from './domain/version'" in app,
+    'app version bumped for modal visibility fix': "APP_VERSION = '2.0.1'" in version_module and "from './domain/version'" in app,
     'app resolves host document teleport target': 'modalTeleportTarget' in app and 'resolveModalTarget(rootRef.value)' in app,
     'settings modal receives explicit teleport target': ':teleport-target="modalTeleportTarget"' in app,
     'ai config modal receives explicit teleport target': ':teleport-target="modalTeleportTarget"' in app,
