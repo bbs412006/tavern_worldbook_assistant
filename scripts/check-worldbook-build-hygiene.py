@@ -7,13 +7,21 @@ webpack = (root / 'webpack.config.ts').read_text(encoding='utf-8')
 package = json.loads((root / 'package.json').read_text(encoding='utf-8'))
 gitignore = (root / '.gitignore').read_text(encoding='utf-8')
 
+verify_runner_path = root / 'scripts/verify-worldbook-build.py'
+verify_runner = verify_runner_path.read_text(encoding='utf-8') if verify_runner_path.is_file() else ''
+vitest_config = root / 'vitest.config.ts'
+
 checks = {
     'webpack supports worldbook-only entry selection': 'WORLD_BOOK_ONLY' in webpack and 'src/worldbook_assistant_build/index.ts' in webpack,
     'webpack supports disabling worldbook source maps': 'WORLD_BOOK_SOURCE_MAP' in webpack,
     'package exposes build:worldbook': 'build:worldbook' in package.get('scripts', {}),
     'package exposes verify:worldbook': 'verify:worldbook' in package.get('scripts', {}),
+    'package exposes test:worldbook-domain': 'test:worldbook-domain' in package.get('scripts', {}),
+    'vitest is a development dependency': 'vitest' in package.get('devDependencies', {}),
+    'vitest config exists': vitest_config.is_file(),
     'source maps are ignored': '*.map' in gitignore,
-    'verification runner exists': (root / 'scripts/verify-worldbook-build.py').is_file(),
+    'verification runner exists': verify_runner_path.is_file(),
+    'verification runner executes domain tests': 'test:worldbook-domain' in verify_runner,
 }
 
 failed = False

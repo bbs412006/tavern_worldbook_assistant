@@ -37,6 +37,7 @@ def main() -> None:
     for check in checks:
         run(['python3', check])
 
+    run(['corepack', 'pnpm', 'test:worldbook-domain'])
     run(['corepack', 'pnpm', 'build:worldbook'])
 
     maps = sorted((ROOT / 'dist').rglob('*.map'))
