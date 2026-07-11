@@ -1,4 +1,4 @@
-import { diffLines } from 'https://testingcf.jsdelivr.net/npm/diff/+esm';
+import { diffLines } from 'diff';
 import { klona } from 'klona';
 import { normalizeEntry, normalizeEntryList, toStringSafe } from './persistedState';
 import type {

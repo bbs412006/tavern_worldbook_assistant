@@ -89,6 +89,7 @@
     "async-wait-until": "^2.0.31",
     "compare-versions": "^6.1.1",
     "dedent": "^1.7.2",
+    "diff": "^8.0.4",
     "gsap": "^3.14.2",
     "jquery": "^3.7.1",
     "jqueryui": "^1.11.1",
