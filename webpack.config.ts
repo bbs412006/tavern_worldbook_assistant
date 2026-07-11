@@ -59,6 +59,10 @@ function common_path(lhs: string, rhs: string) {
 }
 
 function glob_script_files() {
+  if (process.env.WORLD_BOOK_ONLY === '1') {
+    return ['src/worldbook_assistant_build/index.ts'];
+  }
+
   const results: string[] = [];
 
   fs.globSync(`{示例,src}/**/index.{ts,tsx,js,jsx}`)
@@ -202,7 +206,12 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     experiments: {
       outputModule: true,
     },
-    devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
+    devtool:
+      argv.mode === 'production'
+        ? process.env.WORLD_BOOK_SOURCE_MAP === '0'
+          ? false
+          : 'source-map'
+        : 'eval-source-map',
     watchOptions: {
       ignored: ['**/dist', '**/node_modules'],
     },

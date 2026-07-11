@@ -2,6 +2,8 @@
   "scripts": {
     "build:dev": "webpack --mode development",
     "build": "webpack --mode production",
+    "build:worldbook": "WORLD_BOOK_ONLY=1 WORLD_BOOK_SOURCE_MAP=0 webpack --mode production",
+    "verify:worldbook": "python3 scripts/verify-worldbook-build.py",
     "watch": "webpack --mode development --watch --progress",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,scss,html,vue}\" --no-error-on-unmatched-pattern",
     "lint": "eslint",
