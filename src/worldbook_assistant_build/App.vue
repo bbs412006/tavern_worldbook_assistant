@@ -3312,6 +3312,16 @@ const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 14
 const mainLayoutRef = ref<HTMLElement | null>(null);
 const editorShellRef = ref<HTMLElement | null>(null);
 const contentTextareaRef = ref<HTMLTextAreaElement | null>(null);
+type ContentDragSession = {
+  pointerId: number;
+  target: HTMLElement;
+  onMove: (event: PointerEvent) => void;
+  onStop: () => void;
+  rafId: number;
+  cleanupTransientState: () => void;
+};
+let contentResizeSession: ContentDragSession | null = null;
+let contentTopDragSession: ContentDragSession | null = null;
 const mainPaneWidth = ref(MAIN_PANE_DEFAULT);
 const editorSideWidth = ref(EDITOR_SIDE_DEFAULT);
 const focusMainPaneWidth = ref(FOCUS_MAIN_PANE_DEFAULT);
@@ -10049,6 +10059,8 @@ const workspaceActivity = useWorkspaceActivity({
     stopPaneResize();
     stopCrossCopyPaneResize();
     stopHistorySectionResize();
+    stopContentResize();
+    stopContentTopDrag();
   },
   refreshLayout: handleFloatingWindowResize,
 });
@@ -10185,6 +10197,36 @@ function clampPaneWidths(): void {
   }
 }
 
+function stopContentDragSession(kind: 'resize' | 'top'): void {
+  const session = kind === 'resize' ? contentResizeSession : contentTopDragSession;
+  if (!session) {
+    return;
+  }
+  if (session.rafId) {
+    cancelAnimationFrame(session.rafId);
+  }
+  session.target.removeEventListener('pointermove', session.onMove);
+  session.target.removeEventListener('pointerup', session.onStop);
+  session.target.removeEventListener('pointercancel', session.onStop);
+  if (session.target.hasPointerCapture?.(session.pointerId)) {
+    session.target.releasePointerCapture?.(session.pointerId);
+  }
+  session.cleanupTransientState();
+  if (kind === 'resize') {
+    contentResizeSession = null;
+  } else {
+    contentTopDragSession = null;
+  }
+}
+
+function stopContentResize(): void {
+  stopContentDragSession('resize');
+}
+
+function stopContentTopDrag(): void {
+  stopContentDragSession('top');
+}
+
 function startContentResize(e: PointerEvent): void {
   if (focusCineLocked.value) {
     return;
@@ -10193,42 +10235,52 @@ function startContentResize(e: PointerEvent): void {
   const textarea = contentTextareaRef.value;
   if (!textarea) return;
 
+  stopContentResize();
   const startY = e.clientY;
   const startHeight = textarea.offsetHeight;
   const target = e.currentTarget as HTMLElement;
-  target.setPointerCapture(e.pointerId);
+  target.setPointerCapture?.(e.pointerId);
 
-  // Disable textarea interaction during drag to reduce reflow
   textarea.style.pointerEvents = 'none';
   textarea.style.willChange = 'height';
 
-  let rafId = 0;
   let pendingHeight = startHeight;
-
   const applyHeight = () => {
     textarea.style.height = `${pendingHeight}px`;
     textarea.style.minHeight = `${pendingHeight}px`;
-    rafId = 0;
-  };
-
-  const onMove = (ev: PointerEvent) => {
-    pendingHeight = Math.max(120, startHeight + (ev.clientY - startY));
-    if (!rafId) {
-      rafId = requestAnimationFrame(applyHeight);
+    if (contentResizeSession) {
+      contentResizeSession.rafId = 0;
     }
   };
-
-  const onUp = () => {
-    if (rafId) cancelAnimationFrame(rafId);
+  const onMove = (ev: PointerEvent) => {
+    pendingHeight = Math.max(120, startHeight + (ev.clientY - startY));
+    if (contentResizeSession && !contentResizeSession.rafId) {
+      contentResizeSession.rafId = requestAnimationFrame(applyHeight);
+    }
+  };
+  const onStop = () => {
+    if (contentResizeSession?.rafId) {
+      cancelAnimationFrame(contentResizeSession.rafId);
+      contentResizeSession.rafId = 0;
+    }
     applyHeight();
-    textarea.style.pointerEvents = '';
-    textarea.style.willChange = '';
-    target.removeEventListener('pointermove', onMove);
-    target.removeEventListener('pointerup', onUp);
+    stopContentResize();
   };
 
+  contentResizeSession = {
+    pointerId: e.pointerId,
+    target,
+    onMove,
+    onStop,
+    rafId: 0,
+    cleanupTransientState: () => {
+      textarea.style.pointerEvents = '';
+      textarea.style.willChange = '';
+    },
+  };
   target.addEventListener('pointermove', onMove);
-  target.addEventListener('pointerup', onUp);
+  target.addEventListener('pointerup', onStop);
+  target.addEventListener('pointercancel', onStop);
 }
 
 const editorContentBlockRef = ref<HTMLElement | null>(null);
@@ -10242,37 +10294,49 @@ function startContentTopDrag(e: PointerEvent): void {
   const block = editorContentBlockRef.value;
   if (!block) return;
 
+  stopContentTopDrag();
   const startY = e.clientY;
   const startOffset = contentTopDragOffset;
   const target = e.currentTarget as HTMLElement;
-  target.setPointerCapture(e.pointerId);
+  target.setPointerCapture?.(e.pointerId);
 
-  let rafId = 0;
   let pendingOffset = startOffset;
-
   const apply = () => {
     block.style.marginTop = `${-pendingOffset}px`;
-    rafId = 0;
-  };
-
-  const onMove = (ev: PointerEvent) => {
-    const delta = startY - ev.clientY; // positive = drag up
-    pendingOffset = Math.max(0, Math.min(400, startOffset + delta));
-    if (!rafId) {
-      rafId = requestAnimationFrame(apply);
+    if (contentTopDragSession) {
+      contentTopDragSession.rafId = 0;
     }
   };
-
-  const onUp = () => {
-    if (rafId) cancelAnimationFrame(rafId);
+  const onMove = (ev: PointerEvent) => {
+    const delta = startY - ev.clientY;
+    pendingOffset = Math.max(0, Math.min(400, startOffset + delta));
+    if (contentTopDragSession && !contentTopDragSession.rafId) {
+      contentTopDragSession.rafId = requestAnimationFrame(apply);
+    }
+  };
+  const onStop = () => {
+    if (contentTopDragSession?.rafId) {
+      cancelAnimationFrame(contentTopDragSession.rafId);
+      contentTopDragSession.rafId = 0;
+    }
     contentTopDragOffset = pendingOffset;
     apply();
-    target.removeEventListener('pointermove', onMove);
-    target.removeEventListener('pointerup', onUp);
+    stopContentTopDrag();
   };
 
+  contentTopDragSession = {
+    pointerId: e.pointerId,
+    target,
+    onMove,
+    onStop,
+    rafId: 0,
+    cleanupTransientState: () => {
+      block.style.marginTop = `${-contentTopDragOffset}px`;
+    },
+  };
   target.addEventListener('pointermove', onMove);
-  target.addEventListener('pointerup', onUp);
+  target.addEventListener('pointerup', onStop);
+  target.addEventListener('pointercancel', onStop);
 }
 
 function startPaneResize(key: PaneResizeKey, event: PointerEvent): void {
@@ -10339,12 +10403,13 @@ function onPaneResizeMove(event: PointerEvent): void {
 
 function stopPaneResize(): void {
   const state = paneResizeState.value;
-  if (state) {
-    state.doc.removeEventListener('pointermove', onPaneResizeMove);
-    state.doc.removeEventListener('pointerup', stopPaneResize);
-    state.doc.removeEventListener('pointercancel', stopPaneResize);
-    state.win.removeEventListener('blur', stopPaneResize);
+  if (!state) {
+    return;
   }
+  state.doc.removeEventListener('pointermove', onPaneResizeMove);
+  state.doc.removeEventListener('pointerup', stopPaneResize);
+  state.doc.removeEventListener('pointercancel', stopPaneResize);
+  state.win.removeEventListener('blur', stopPaneResize);
   paneResizeState.value = null;
   if (!isCompactLayout.value) {
     persistLayoutState();
@@ -10509,6 +10574,8 @@ onUnmounted(() => {
   stopPaneResize();
   stopCrossCopyPaneResize();
   stopHistorySectionResize();
+  stopContentResize();
+  stopContentTopDrag();
   window.removeEventListener('wb-helper:refresh', onPanelRefresh);
   window.removeEventListener('wb-helper:save', onPanelSave);
   window.removeEventListener('wb-helper:discard', onPanelDiscard);

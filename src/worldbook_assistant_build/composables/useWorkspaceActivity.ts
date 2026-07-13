@@ -30,6 +30,7 @@ export function useWorkspaceActivity(options: WorkspaceActivityOptions) {
   const owner = useVisibilityActivity(options.active, (): VisibilityResource => {
     let observer: IntersectionObserver | null = null;
     let active = false;
+    let hasResumed = false;
     let resizeTarget: ResizeEventTarget | null = null;
 
     refreshResizeTarget = () => {
@@ -78,6 +79,11 @@ export function useWorkspaceActivity(options: WorkspaceActivityOptions) {
         active = true;
         refreshBrowseObservation();
         refreshResizeTarget();
+        if (hasResumed) {
+          onResize();
+        } else {
+          hasResumed = true;
+        }
       },
       suspend() {
         if (!active) {

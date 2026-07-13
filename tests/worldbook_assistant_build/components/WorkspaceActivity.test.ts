@@ -171,6 +171,37 @@ describe('workspace visibility activity', () => {
     harness.scope.stop();
   });
 
+  it('cancels an actually pending layout frame when the workspace hides', () => {
+    const harness = createHarness();
+
+    harness.resizeTarget.dispatchResize();
+    expect(harness.frames.pendingCount).toBe(1);
+
+    harness.active.value = false;
+
+    expect(harness.frames.cancel).toHaveBeenCalledTimes(1);
+    expect(harness.frames.pendingCount).toBe(0);
+    harness.frames.flush();
+    expect(harness.refreshLayout).not.toHaveBeenCalled();
+    harness.scope.stop();
+  });
+
+  it('coalesces one layout refresh on resume without synchronous initial work', () => {
+    const harness = createHarness();
+
+    expect(harness.refreshLayout).not.toHaveBeenCalled();
+    expect(harness.frames.pendingCount).toBe(0);
+
+    harness.active.value = false;
+    harness.active.value = true;
+
+    expect(harness.refreshLayout).not.toHaveBeenCalled();
+    expect(harness.frames.pendingCount).toBe(1);
+    harness.frames.flush();
+    expect(harness.refreshLayout).toHaveBeenCalledTimes(1);
+    harness.scope.stop();
+  });
+
   it('returns owned listener and observer counts to baseline after twenty cycles', () => {
     const harness = createHarness();
 

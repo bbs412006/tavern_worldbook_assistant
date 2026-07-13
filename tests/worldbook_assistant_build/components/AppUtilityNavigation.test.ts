@@ -6,6 +6,7 @@ import { defineComponent, nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from '../../../src/worldbook_assistant_build/App.vue';
+import { normalizeEntry } from '../../../src/worldbook_assistant_build/domain/persistedState';
 
 const SettingsPageStub = defineComponent({
   name: 'SettingsPage',
@@ -124,6 +125,7 @@ describe('App utility navigation', () => {
     const host = foreignDocument.createElement('div');
     foreignDocument.body.append(host);
     const foreignAdd = vi.spyOn(foreignWindow, 'addEventListener');
+    const foreignRemove = vi.spyOn(foreignWindow, 'removeEventListener');
     const localAdd = vi.spyOn(window, 'addEventListener');
 
     const wrapper = mountApp(host);
@@ -133,7 +135,80 @@ describe('App utility navigation', () => {
     expect(foreignResizeListeners).toHaveLength(1);
     expect(localResizeListeners).toHaveLength(1);
     wrapper.unmount();
+    expect(foreignRemove.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1);
     iframe.remove();
+  });
+
+  it('does not persist layout when navigation stops no active pane resize', async () => {
+    const wrapper = mountApp();
+    const replaceVariables = vi.mocked((globalThis as Record<string, any>).replaceVariables);
+    await nextTick();
+    replaceVariables.mockClear();
+
+    await openUtility(wrapper, 'settings');
+
+    expect(replaceVariables).not.toHaveBeenCalled();
+    wrapper.unmount();
+    expect(replaceVariables).not.toHaveBeenCalled();
+  });
+
+  it('persists layout after stopping a real pane resize', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 });
+    const wrapper = mountApp();
+    const replaceVariables = vi.mocked((globalThis as Record<string, any>).replaceVariables);
+    const vm = wrapper.vm as unknown as {
+      startPaneResize(key: 'main', event: PointerEvent): void;
+    };
+    const target = document.createElement('div');
+    target.setPointerCapture = vi.fn();
+    await nextTick();
+    replaceVariables.mockClear();
+
+    vm.startPaneResize('main', {
+      button: 0,
+      pointerId: 7,
+      pointerType: 'mouse',
+      clientX: 320,
+      currentTarget: target,
+      preventDefault: vi.fn(),
+    } as unknown as PointerEvent);
+    document.dispatchEvent(new Event('pointerup'));
+
+    expect(replaceVariables).toHaveBeenCalledTimes(1);
+    wrapper.unmount();
+  });
+
+  it('tears down an active content resize session when the workspace hides', async () => {
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      panelMode: string;
+      draftEntries: ReturnType<typeof normalizeEntry>[];
+      selectedEntryUid: number | null;
+    };
+    vm.panelMode = 'editor';
+    vm.draftEntries = [normalizeEntry({ uid: 1, comment: 'Entry', content: 'Draft' }, 1)];
+    vm.selectedEntryUid = 1;
+    await nextTick();
+
+    const textarea = wrapper.get('.editor-content-area').element as HTMLTextAreaElement;
+    const handle = wrapper.get('.content-resize-handle').element as HTMLElement;
+    const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame');
+    Object.defineProperty(handle, 'setPointerCapture', { configurable: true, value: vi.fn() });
+    Object.defineProperty(handle, 'hasPointerCapture', { configurable: true, value: vi.fn(() => true) });
+    Object.defineProperty(handle, 'releasePointerCapture', { configurable: true, value: vi.fn() });
+
+    handle.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 9, clientY: 200 }));
+    handle.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 9, clientY: 260 }));
+    expect(textarea.style.pointerEvents).toBe('none');
+    expect(textarea.style.willChange).toBe('height');
+
+    await openUtility(wrapper, 'settings');
+
+    expect(cancelFrame).toHaveBeenCalledTimes(1);
+    expect(handle.releasePointerCapture).toHaveBeenCalledWith(9);
+    expect(textarea.style.pointerEvents).toBe('');
+    expect(textarea.style.willChange).toBe('');
+    wrapper.unmount();
   });
 
   it('keeps the same main workspace element across settings and AI config round trips', async () => {
