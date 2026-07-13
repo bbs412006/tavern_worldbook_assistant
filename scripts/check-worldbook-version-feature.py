@@ -3,7 +3,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 webpack = (root / 'webpack.config.ts').read_text(encoding='utf-8')
 app = (root / 'src/worldbook_assistant_build/App.vue').read_text(encoding='utf-8')
-settings = (root / 'src/worldbook_assistant_build/components/SettingsModal.vue').read_text(encoding='utf-8')
+settings = (root / 'src/worldbook_assistant_build/components/SettingsPage.vue').read_text(encoding='utf-8')
 version_module_path = root / 'src/worldbook_assistant_build/domain/version.ts'
 version_module = version_module_path.read_text(encoding='utf-8') if version_module_path.exists() else ''
 version_composable_path = root / 'src/worldbook_assistant_build/composables/useVersionInfo.ts'

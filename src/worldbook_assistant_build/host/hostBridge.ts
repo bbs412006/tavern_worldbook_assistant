@@ -13,11 +13,3 @@ export function getHostDocument(): Document {
     return document;
   }
 }
-
-export function resolveModalTarget(root: HTMLElement | null): HTMLElement | string {
-  return root?.ownerDocument?.body ?? getHostDocument().body ?? 'body';
-}
-
-export function stopHostPointerEvents(event: Event): void {
-  event.stopPropagation();
-}

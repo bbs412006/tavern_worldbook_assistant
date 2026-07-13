@@ -23,6 +23,24 @@
       @check-latest-version="checkLatestVersion"
       @copy-version-import-url="copyVersionImportUrl"
     />
+    <AIConfigPage
+      v-else-if="utilityPage === 'ai-config'"
+      :worldbook-names="worldbookNames"
+      :target-worldbook="aiConfigTargetWorldbook"
+      :input="aiConfigInput"
+      :custom-prompt="aiConfigCustomPrompt"
+      :changes="aiConfigChanges"
+      :preview="aiConfigPreview"
+      :generating="aiConfigGenerating"
+      @back="closeUtilityPage"
+      @back-to-input="aiConfigPreview = false"
+      @update:target-worldbook="aiConfigTargetWorldbook = $event"
+      @update:input="aiConfigInput = $event"
+      @update:custom-prompt="aiConfigCustomPrompt = $event"
+      @load-default-config-prompt="loadDefaultConfigPrompt"
+      @generate="aiConfigGenerate"
+      @apply="aiConfigApply"
+    />
     <template v-else>
 
     <!-- ═══ Mobile Tab View ═══ -->
@@ -296,7 +314,7 @@
                 <button class="btn" type="button" @click="toggleGlobalMode" :style="{ padding:'8px 14px', fontSize:'13px', background: globalWorldbookMode ? 'var(--wb-primary)' : '', color: globalWorldbookMode ? '#fff' : '' }">🌐 全局</button>
                 <button class="btn" type="button" @click="extractFromChat" style="padding:8px 14px;font-size:13px;">📥 提取</button>
                 <button class="btn" type="button" @click="openSettingsPage" style="padding:8px 14px;font-size:13px;">⚙️ 设置</button>
-                <button class="btn" type="button" @click="openAiConfigModal" style="padding:8px 14px;font-size:13px;">🔧 AI配置</button>
+                <button class="btn" type="button" @click="openAiConfigPage" style="padding:8px 14px;font-size:13px;">🔧 AI配置</button>
                 <button class="btn" type="button" :disabled="!draftEntries.length" @click="sortEntries" :class="{ active: viewSortActive }" style="padding:8px 14px;font-size:13px;">🔢 排序</button>
                 <button class="btn" type="button" :disabled="!selectedEntry" @click="openEntryHistoryModal" style="padding:8px 14px;font-size:13px;">🕰️ 条目时光机</button>
                 <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal" style="padding:8px 14px;font-size:13px;">⏪ 整本时光机</button>
@@ -1244,7 +1262,7 @@
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_tag" data-copy-hero="tool_tag" type="button" :class="{ active: tagEditorMode }" @click="tagToggleMode">🏷️ 标签管理</button>
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_copy" data-copy-hero="tool_copy" type="button" :class="{ active: crossCopyMode }" :disabled="isAnyCineLocked" @click="toggleCrossCopyMode">📚 跨书复制</button>
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_settings" data-copy-hero="tool_settings" type="button" @click="openSettingsPage">⚙️ 设置</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_ai_config" data-copy-hero="tool_ai_config" type="button" @click="openAiConfigModal">🔧 AI配置</button>
+                <button class="btn history-btn utility-btn" data-focus-hero="tool_ai_config" data-copy-hero="tool_ai_config" type="button" @click="openAiConfigPage">🔧 AI配置</button>
                 <button class="btn history-btn utility-btn focus-tools-collapse" type="button" @click="closeFocusToolsBand">收起工具</button>
               </div>
             </Transition>
@@ -1400,7 +1418,7 @@
                 data-focus-hero="tool_ai_config"
                 data-copy-hero="tool_ai_config"
                 type="button"
-                @click="openAiConfigModal"
+                @click="openAiConfigPage"
               >
                 🔧 AI配置
               </button>
@@ -2185,28 +2203,6 @@
       aria-hidden="true"
     ></div>
 
-    <!-- ═══ Shared Modals (both mobile & desktop) ═══ -->
-    <!-- AI 配置弹窗 -->
-    <AIConfigModal
-      :worldbook-names="worldbookNames"
-      :show-input="showAiConfigModal"
-      :target-worldbook="aiConfigTargetWorldbook"
-      :input="aiConfigInput"
-      :custom-prompt="aiConfigCustomPrompt"
-      :changes="aiConfigChanges"
-      :preview="aiConfigPreview"
-      :generating="aiConfigGenerating"
-      :teleport-target="modalTeleportTarget"
-      @update:target-worldbook="aiConfigTargetWorldbook = $event"
-      @update:input="aiConfigInput = $event"
-      @update:custom-prompt="aiConfigCustomPrompt = $event"
-      @close-input="closeAiConfigModal"
-      @close-preview="aiConfigPreview = false"
-      @load-default-config-prompt="loadDefaultConfigPrompt"
-      @generate="aiConfigGenerate"
-      @apply="aiConfigApply"
-    />
-
     <!-- 标签审查 -->
     <div v-if="aiShowTagReview" class="ai-tag-review-overlay" @click.self="aiShowTagReview = false">
       <div class="ai-tag-review-modal">
@@ -2903,7 +2899,7 @@ import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
 import TagEditorPanel from './components/TagEditorPanel.vue';
 import SettingsPage from './components/SettingsPage.vue';
-import AIConfigModal from './components/AIConfigModal.vue';
+import AIConfigPage from './components/AIConfigPage.vue';
 import { APP_VERSION } from './domain/version';
 import {
   type ThemeKey,
@@ -3019,7 +3015,7 @@ import {
   normalizeLayoutState,
   normalizeTagFilterState,
 } from './domain/persistedState';
-import { getHostWindow, resolveModalTarget } from './host/hostBridge';
+import { getHostWindow } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
 import { useCrossCopyResize } from './composables/useCrossCopyResize';
@@ -3089,7 +3085,6 @@ const rolePickerOpen = ref(false);
 const rolePickerRef = ref<HTMLElement | null>(null);
 const rolePickerSearchInputRef = ref<HTMLInputElement | null>(null);
 const currentTheme = ref<ThemeKey>('ocean');
-const modalTeleportTarget = computed<HTMLElement | string>(() => resolveModalTarget(rootRef.value));
 const themePickerOpen = ref(false);
 const globalWorldbookMode = ref(false);
 const aiGeneratorMode = ref(false);
@@ -3180,10 +3175,6 @@ function closeUtilityPage(): void {
   utilityPage.value = 'main';
 }
 
-function openAiConfigPage(): void {
-  openAiConfigModal();
-}
-
 const apiModelList = ref<string[]>([]);
 const apiModelLoading = ref(false);
 
@@ -3201,21 +3192,14 @@ const aiConfigInput = ref('');
 const aiConfigChanges = ref<ConfigChange[]>([]);
 const aiConfigPreview = ref(false);
 const aiConfigGenerating = ref(false);
-const showAiConfigModal = ref(false);
 const aiConfigTargetWorldbook = ref('');
 const aiConfigCustomPrompt = ref('');
 
-function openAiConfigModal(): void {
+function openAiConfigPage(): void {
   aiConfigPreview.value = false;
   aiConfigChanges.value = [];
   aiConfigTargetWorldbook.value = selectedWorldbookName.value || '';
-  showAiConfigModal.value = true;
-}
-
-function closeAiConfigModal(): void {
-  showAiConfigModal.value = false;
-  aiConfigPreview.value = false;
-  aiConfigTargetWorldbook.value = '';
+  utilityPage.value = 'ai-config';
 }
 
 const crossCopySourceWorldbook = ref('');
