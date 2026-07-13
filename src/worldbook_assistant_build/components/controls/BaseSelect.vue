@@ -11,6 +11,14 @@ export interface BaseSelectOption<T extends string | number = string | number> {
   keywords?: string[];
 }
 
+interface IndexedOption {
+  option: BaseSelectOption;
+  sourceIndex: number;
+  valueKey: string;
+  occurrenceKey: string;
+  id: string;
+}
+
 const props = withDefaults(
   defineProps<{
     modelValue: string | number | null;
@@ -37,7 +45,6 @@ const emit = defineEmits<{ 'update:modelValue': [value: string | number | null] 
 let idSeed = 0;
 const instanceId = `wb-base-select-${++idSeed}`;
 const listboxId = `${instanceId}-listbox`;
-const searchId = `${instanceId}-search`;
 const open = ref(false);
 const query = ref('');
 const activeIndex = ref(-1);
@@ -49,19 +56,38 @@ let ownerDocument: Document | null = null;
 let ownerWindow: Window | null = null;
 let frame: CoalescedFrame | null = null;
 
+function valueKey(option: BaseSelectOption): string {
+  return `${typeof option.value}:${String(option.value)}`;
+}
+
+const indexedOptions = computed<IndexedOption[]>(() => {
+  const occurrences = new Map<string, number>();
+  return props.options.map((option, sourceIndex) => {
+    const key = valueKey(option);
+    const occurrence = occurrences.get(key) ?? 0;
+    occurrences.set(key, occurrence + 1);
+    return {
+      option,
+      sourceIndex,
+      valueKey: key,
+      occurrenceKey: `${key}:${occurrence}`,
+      id: `${instanceId}-option-${sourceIndex}-${occurrence}`,
+    };
+  });
+});
 const searchEnabled = computed(() =>
   props.searchable === true || (props.searchable === 'auto' && props.options.length > props.searchThreshold),
 );
 const selectedOption = computed(() => props.options.find(option => option.value === props.modelValue) ?? null);
 const filteredOptions = computed(() => {
   const normalizedQuery = query.value.trim().toLocaleLowerCase();
-  if (!normalizedQuery) return props.options;
-  return props.options.filter(option =>
+  if (!normalizedQuery) return indexedOptions.value;
+  return indexedOptions.value.filter(({ option }) =>
     [option.label, ...(option.keywords ?? [])].some(text => text.toLocaleLowerCase().includes(normalizedQuery)),
   );
 });
-const activeOption = computed(() => filteredOptions.value[activeIndex.value] ?? null);
-const activeDescendant = computed(() => activeOption.value ? optionId(activeOption.value) : undefined);
+const activeEntry = computed(() => filteredOptions.value[activeIndex.value] ?? null);
+const activeDescendant = computed(() => activeEntry.value?.id);
 const menuStyle = computed(() => ({
   left: `${placement.value.left}px`,
   top: `${placement.value.top}px`,
@@ -69,40 +95,38 @@ const menuStyle = computed(() => ({
   maxHeight: `${placement.value.maxHeight}px`,
 }));
 
-function optionKey(option: BaseSelectOption): string {
-  return `${typeof option.value}:${String(option.value)}`;
-}
-
-function optionId(option: BaseSelectOption): string {
-  return `${instanceId}-option-${optionKey(option).replace(/[^a-zA-Z0-9_-]/g, '-')}`;
-}
-
 function firstEnabledIndex(): number {
-  return filteredOptions.value.findIndex(option => !option.disabled);
+  return filteredOptions.value.findIndex(({ option }) => !option.disabled);
 }
 
 function lastEnabledIndex(): number {
   for (let index = filteredOptions.value.length - 1; index >= 0; index -= 1) {
-    if (!filteredOptions.value[index]?.disabled) return index;
+    if (!filteredOptions.value[index]?.option.disabled) return index;
   }
   return -1;
 }
 
 function selectedEnabledIndex(): number {
-  const index = filteredOptions.value.findIndex(option => option.value === props.modelValue && !option.disabled);
+  const index = filteredOptions.value.findIndex(({ option }) => option.value === props.modelValue && !option.disabled);
   return index >= 0 ? index : firstEnabledIndex();
 }
 
+function normalizeActiveIndex(preferSelected = false): void {
+  const current = filteredOptions.value[activeIndex.value];
+  if (!preferSelected && current && !current.option.disabled) return;
+  activeIndex.value = selectedEnabledIndex();
+}
+
 function moveActive(direction: 1 | -1): void {
-  const options = filteredOptions.value;
-  if (!options.length) {
+  const entries = filteredOptions.value;
+  if (!entries.length) {
     activeIndex.value = -1;
     return;
   }
   let index = activeIndex.value;
-  for (let count = 0; count < options.length; count += 1) {
-    index = (index + direction + options.length) % options.length;
-    if (!options[index]?.disabled) {
+  for (let count = 0; count < entries.length; count += 1) {
+    index = (index + direction + entries.length) % entries.length;
+    if (!entries[index]?.option.disabled) {
       activeIndex.value = index;
       return;
     }
@@ -113,6 +137,12 @@ function ownerRoot(): HTMLElement | null {
   return triggerRef.value?.closest('.wb-assistant-root') as HTMLElement | null
     ?? triggerRef.value?.parentElement
     ?? null;
+}
+
+function moveMenuToRoot(): void {
+  const root = ownerRoot();
+  const menu = menuRef.value;
+  if (root && menu && menu.parentElement !== root) root.append(menu);
 }
 
 function updatePlacement(): void {
@@ -136,9 +166,7 @@ function scrollActiveIntoView(): void {
     const active = activeDescendant.value
       ? menuRef.value?.querySelector<HTMLElement>(`[id="${activeDescendant.value}"]`)
       : null;
-    if (typeof active?.scrollIntoView === 'function') {
-      active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
+    active?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
   });
 }
 
@@ -151,18 +179,22 @@ function addOpenListeners(): void {
     cancel: ownerWindow.cancelAnimationFrame.bind(ownerWindow),
   });
   ownerDocument.addEventListener('pointerdown', onOwnerPointerDown);
-  ownerDocument.addEventListener('keydown', onOwnerKeyDown);
   ownerWindow.addEventListener('resize', schedulePlacement);
 }
 
 function removeOpenListeners(): void {
   ownerDocument?.removeEventListener('pointerdown', onOwnerPointerDown);
-  ownerDocument?.removeEventListener('keydown', onOwnerKeyDown);
   ownerWindow?.removeEventListener('resize', schedulePlacement);
   frame?.dispose();
   frame = null;
   ownerDocument = null;
   ownerWindow = null;
+}
+
+async function focusCurrentOwner(): Promise<void> {
+  await nextTick();
+  const target = searchEnabled.value ? searchRef.value : triggerRef.value;
+  target?.focus({ preventScroll: true });
 }
 
 async function openMenu(): Promise<void> {
@@ -172,9 +204,10 @@ async function openMenu(): Promise<void> {
   activeIndex.value = selectedEnabledIndex();
   addOpenListeners();
   await nextTick();
+  moveMenuToRoot();
   updatePlacement();
   scrollActiveIntoView();
-  if (searchEnabled.value) searchRef.value?.focus({ preventScroll: true });
+  await focusCurrentOwner();
 }
 
 function closeMenu(options: { focus?: boolean } = {}): void {
@@ -186,14 +219,13 @@ function closeMenu(options: { focus?: boolean } = {}): void {
   if (options.focus) nextTick(() => triggerRef.value?.focus({ preventScroll: true }));
 }
 
-function selectOption(option: BaseSelectOption): void {
-  if (option.disabled) return;
-  emit('update:modelValue', option.value);
+function selectOption(entry: IndexedOption): void {
+  if (entry.option.disabled) return;
+  emit('update:modelValue', entry.option.value);
   closeMenu({ focus: true });
 }
 
-function clearValue(event: MouseEvent): void {
-  event.stopPropagation();
+function clearValue(): void {
   if (!props.disabled) emit('update:modelValue', null);
 }
 
@@ -202,9 +234,18 @@ function onTriggerClick(): void {
   else void openMenu();
 }
 
+function onClearClick(event: MouseEvent): void {
+  event.stopPropagation();
+  clearValue();
+}
+
+function onClearKeydown(event: KeyboardEvent): void {
+  event.stopPropagation();
+}
+
 function onOwnerPointerDown(event: Event): void {
   const target = event.target as Node | null;
-  if (!target || triggerRef.value?.contains(target) || menuRef.value?.contains(target)) return;
+  if (!target || triggerRef.value?.parentElement?.contains(target) || menuRef.value?.contains(target)) return;
   closeMenu();
 }
 
@@ -245,17 +286,9 @@ function handleKey(event: KeyboardEvent): void {
   }
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
-    if (!open.value) {
-      void openMenu();
-    } else if (activeOption.value) {
-      selectOption(activeOption.value);
-    }
+    if (!open.value) void openMenu();
+    else if (activeEntry.value) selectOption(activeEntry.value);
   }
-}
-
-function onOwnerKeyDown(event: KeyboardEvent): void {
-  if (event.target === triggerRef.value || event.target === searchRef.value) return;
-  handleKey(event);
 }
 
 watch(query, () => {
@@ -264,84 +297,107 @@ watch(query, () => {
 });
 watch(() => props.options, () => {
   if (!open.value) return;
-  activeIndex.value = selectedEnabledIndex();
-  nextTick(updatePlacement);
+  normalizeActiveIndex(true);
+  nextTick(() => {
+    moveMenuToRoot();
+    updatePlacement();
+  });
 }, { deep: true });
+watch(searchEnabled, async (enabled, wasEnabled) => {
+  if (!open.value || enabled === wasEnabled) return;
+  query.value = '';
+  normalizeActiveIndex(true);
+  await nextTick();
+  moveMenuToRoot();
+  updatePlacement();
+  await focusCurrentOwner();
+  scrollActiveIntoView();
+});
 watch(() => props.disabled, disabled => {
   if (disabled) closeMenu();
 });
 
-onBeforeUnmount(removeOpenListeners);
+onBeforeUnmount(() => {
+  removeOpenListeners();
+  menuRef.value?.remove();
+});
 </script>
 
 <template>
   <div class="wb-control-select-shell" :class="{ 'is-open': open, 'is-disabled': disabled }">
-    <div
-      ref="triggerRef"
-      role="combobox"
-      class="wb-control wb-control-select-trigger"
-      :class="`wb-control--${size}`"
-      :tabindex="disabled ? -1 : 0"
-      :aria-disabled="disabled || undefined"
-      :aria-controls="listboxId"
-      :aria-expanded="open"
-      :aria-haspopup="'listbox'"
-      :aria-activedescendant="open ? activeDescendant : undefined"
-      @click="onTriggerClick"
-      @keydown="handleKey"
-    >
-      <span class="wb-control-select-value" :class="{ 'is-placeholder': !selectedOption }">
-        {{ selectedOption?.label ?? placeholder }}
-      </span>
+    <div class="wb-control-select-control">
+      <div
+        ref="triggerRef"
+        role="combobox"
+        data-select-trigger
+        class="wb-control wb-control-select-trigger"
+        :class="`wb-control--${size}`"
+        :tabindex="disabled ? -1 : 0"
+        :aria-disabled="disabled || undefined"
+        :aria-controls="listboxId"
+        :aria-expanded="open"
+        aria-haspopup="listbox"
+        :aria-activedescendant="open && !searchEnabled ? activeDescendant : undefined"
+        @click="onTriggerClick"
+        @keydown="handleKey"
+      >
+        <span class="wb-control-select-value" :class="{ 'is-placeholder': !selectedOption }">
+          {{ selectedOption?.label ?? placeholder }}
+        </span>
+        <span class="wb-control-select-chevron" aria-hidden="true">⌄</span>
+      </div>
       <button
         v-if="clearable && modelValue !== null"
         type="button"
         class="wb-control-select-clear"
         aria-label="清除选择"
-        @click="clearValue"
+        :disabled="disabled"
+        @click="onClearClick"
+        @keydown="onClearKeydown"
       >×</button>
-      <span class="wb-control-select-chevron" aria-hidden="true">⌄</span>
     </div>
 
     <div
       v-if="open"
-      :id="listboxId"
       ref="menuRef"
-      role="listbox"
       class="wb-control-select-menu"
-      :aria-labelledby="searchEnabled ? searchId : undefined"
       :data-side="placement.side"
       :style="menuStyle"
     >
       <div v-if="searchEnabled" class="wb-control-select-search-wrap">
         <input
-          :id="searchId"
           ref="searchRef"
           v-model="query"
           type="search"
+          role="combobox"
           class="wb-control wb-control-input wb-control-select-search"
           placeholder="搜索"
           aria-label="搜索选项"
+          :aria-controls="listboxId"
+          aria-expanded="true"
+          aria-haspopup="listbox"
+          :aria-activedescendant="activeDescendant"
           @keydown="handleKey"
         />
       </div>
-      <div class="wb-control-select-options">
+      <div :id="listboxId" role="listbox" class="wb-control-select-options">
         <button
-          v-for="(option, index) in filteredOptions"
-          :id="optionId(option)"
-          :key="optionKey(option)"
+          v-for="(entry, index) in filteredOptions"
+          :id="entry.id"
+          :key="entry.occurrenceKey"
           type="button"
           role="option"
+          tabindex="-1"
           class="wb-control-select-option"
-          :class="{ 'is-active': index === activeIndex, 'is-selected': option.value === modelValue }"
-          :disabled="option.disabled"
-          :aria-disabled="option.disabled || undefined"
-          :aria-selected="option.value === modelValue"
-          :data-value-key="optionKey(option)"
-          @mouseenter="!option.disabled && (activeIndex = index)"
-          @click="selectOption(option)"
+          :class="{ 'is-active': index === activeIndex, 'is-selected': entry.option.value === modelValue }"
+          :disabled="entry.option.disabled"
+          :aria-disabled="entry.option.disabled || undefined"
+          :aria-selected="entry.option.value === modelValue"
+          :data-value-key="entry.valueKey"
+          @mouseenter="!entry.option.disabled && (activeIndex = index)"
+          @click="selectOption(entry)"
         >
-          {{ option.label }}
+          {{ entry.option.label }}
         </button>
         <div v-if="filteredOptions.length === 0" class="wb-control-select-empty">无匹配选项</div>
       </div>
@@ -351,13 +407,19 @@ onBeforeUnmount(removeOpenListeners);
 
 <style scoped>
 .wb-control-select-shell {
+  min-width: 0;
+}
+
+.wb-control-select-control {
   position: relative;
+  display: flex;
   min-width: 0;
 }
 
 .wb-control-select-trigger {
   display: flex;
   width: 100%;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   text-align: left;
@@ -377,10 +439,13 @@ onBeforeUnmount(removeOpenListeners);
 }
 
 .wb-control-select-clear {
+  position: absolute;
+  top: 50%;
+  right: 28px;
+  z-index: 1;
   display: grid;
   width: 24px;
   height: 24px;
-  flex: 0 0 24px;
   place-items: center;
   padding: 0;
   border: 0;
@@ -388,6 +453,11 @@ onBeforeUnmount(removeOpenListeners);
   color: inherit;
   background: transparent;
   font: inherit;
+  transform: translateY(-50%);
+}
+
+.wb-control-select-control:has(.wb-control-select-clear) .wb-control-select-value {
+  padding-right: 24px;
 }
 
 .wb-control-select-chevron {
