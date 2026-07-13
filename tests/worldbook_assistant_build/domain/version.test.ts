@@ -11,6 +11,10 @@ import {
 } from '../../../src/worldbook_assistant_build/domain/version';
 
 describe('version domain', () => {
+  it('reports the current assistant release version', () => {
+    expect(APP_VERSION).toBe('2.1.1');
+  });
+
   it('normalizes whitespace and a leading v prefix', () => {
     expect(normalizeVersionTag('  v2.0.1 ')).toBe('2.0.1');
     expect(normalizeVersionTag('V1.3.3')).toBe('1.3.3');
