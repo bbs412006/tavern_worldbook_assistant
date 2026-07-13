@@ -6,6 +6,7 @@
     "verify:worldbook": "python3 scripts/verify-worldbook-build.py",
     "test:worldbook-domain": "vitest run --config vitest.config.ts tests/worldbook_assistant_build/domain",
     "test:worldbook-components": "vitest run --config vitest.config.ts tests/worldbook_assistant_build/components",
+    "test:worldbook-composables": "vitest run --config vitest.config.ts tests/worldbook_assistant_build/composables",
     "watch": "webpack --mode development --watch --progress",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,scss,html,vue}\" --no-error-on-unmatched-pattern",
     "lint": "eslint",

@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [vue()],
   test: {
     environment: 'node',
-    include: ['tests/worldbook_assistant_build/{components,domain}/**/*.test.ts'],
+    include: ['tests/worldbook_assistant_build/{components,composables,domain}/**/*.test.ts'],
   },
 });

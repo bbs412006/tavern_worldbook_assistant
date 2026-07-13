@@ -42,6 +42,7 @@ def main() -> None:
 
     run(['corepack', 'pnpm', 'test:worldbook-domain'])
     run(['corepack', 'pnpm', 'test:worldbook-components'])
+    run(['corepack', 'pnpm', 'test:worldbook-composables'])
     run(['corepack', 'pnpm', 'build:worldbook'])
 
     maps = sorted((ROOT / 'dist').rglob('*.map'))

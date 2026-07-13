@@ -10,6 +10,7 @@ gitignore = (root / '.gitignore').read_text(encoding='utf-8')
 verify_runner_path = root / 'scripts/verify-worldbook-build.py'
 verify_runner = verify_runner_path.read_text(encoding='utf-8') if verify_runner_path.is_file() else ''
 vitest_config = root / 'vitest.config.ts'
+vitest_config_text = vitest_config.read_text(encoding='utf-8') if vitest_config.is_file() else ''
 
 checks = {
     'webpack supports worldbook-only entry selection': 'WORLD_BOOK_ONLY' in webpack and 'src/worldbook_assistant_build/index.ts' in webpack,
@@ -17,11 +18,14 @@ checks = {
     'package exposes build:worldbook': 'build:worldbook' in package.get('scripts', {}),
     'package exposes verify:worldbook': 'verify:worldbook' in package.get('scripts', {}),
     'package exposes test:worldbook-domain': 'test:worldbook-domain' in package.get('scripts', {}),
+    'package exposes test:worldbook-composables': 'test:worldbook-composables' in package.get('scripts', {}),
     'vitest is a development dependency': 'vitest' in package.get('devDependencies', {}),
     'vitest config exists': vitest_config.is_file(),
+    'vitest config collects composable tests': 'composables' in vitest_config_text,
     'source maps are ignored': '*.map' in gitignore,
     'verification runner exists': verify_runner_path.is_file(),
     'verification runner executes domain tests': 'test:worldbook-domain' in verify_runner,
+    'verification runner executes composable tests': 'test:worldbook-composables' in verify_runner,
 }
 
 failed = False
