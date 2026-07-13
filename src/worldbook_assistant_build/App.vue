@@ -1,5 +1,29 @@
 <template>
   <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode }]" :style="themeStyles">
+    <SettingsPage
+      v-if="utilityPage === 'settings'"
+      :persisted-state="persistedState"
+      :fab-visible="fabVisible"
+      :floor-btn-visible="floorBtnVisible"
+      :current-theme="currentTheme"
+      :theme-options="themeOptions"
+      :api-model-list="apiModelList"
+      :api-model-loading="apiModelLoading"
+      :version-info="versionInfo"
+      :version-check-loading="versionCheckLoading"
+      :version-check-error="versionCheckError"
+      @back="closeUtilityPage"
+      @set-fab-visible="setFabVisible"
+      @toggle-floor-btns="toggleFloorBtns"
+      @update-persisted-state="updatePersistedState"
+      @set-tag-delete-parent-mode="setTagDeleteParentMode"
+      @set-theme="setTheme"
+      @update-api-config="updateApiConfig"
+      @load-model-list="loadModelList"
+      @check-latest-version="checkLatestVersion"
+      @copy-version-import-url="copyVersionImportUrl"
+    />
+    <template v-else>
 
     <!-- ═══ Mobile Tab View ═══ -->
     <template v-if="isMobile">
@@ -271,7 +295,7 @@
                 <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook" style="padding:8px 14px;font-size:13px;">📤 导出</button>
                 <button class="btn" type="button" @click="toggleGlobalMode" :style="{ padding:'8px 14px', fontSize:'13px', background: globalWorldbookMode ? 'var(--wb-primary)' : '', color: globalWorldbookMode ? '#fff' : '' }">🌐 全局</button>
                 <button class="btn" type="button" @click="extractFromChat" style="padding:8px 14px;font-size:13px;">📥 提取</button>
-                <button class="btn" type="button" @click="showApiSettings = true" style="padding:8px 14px;font-size:13px;">⚙️ 设置</button>
+                <button class="btn" type="button" @click="openSettingsPage" style="padding:8px 14px;font-size:13px;">⚙️ 设置</button>
                 <button class="btn" type="button" @click="openAiConfigModal" style="padding:8px 14px;font-size:13px;">🔧 AI配置</button>
                 <button class="btn" type="button" :disabled="!draftEntries.length" @click="sortEntries" :class="{ active: viewSortActive }" style="padding:8px 14px;font-size:13px;">🔢 排序</button>
                 <button class="btn" type="button" :disabled="!selectedEntry" @click="openEntryHistoryModal" style="padding:8px 14px;font-size:13px;">🕰️ 条目时光机</button>
@@ -1219,7 +1243,7 @@
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_extract" data-copy-hero="tool_extract" type="button" @click="extractFromChat">📥 从聊天提取</button>
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_tag" data-copy-hero="tool_tag" type="button" :class="{ active: tagEditorMode }" @click="tagToggleMode">🏷️ 标签管理</button>
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_copy" data-copy-hero="tool_copy" type="button" :class="{ active: crossCopyMode }" :disabled="isAnyCineLocked" @click="toggleCrossCopyMode">📚 跨书复制</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_settings" data-copy-hero="tool_settings" type="button" @click="showApiSettings = true">⚙️ 设置</button>
+                <button class="btn history-btn utility-btn" data-focus-hero="tool_settings" data-copy-hero="tool_settings" type="button" @click="openSettingsPage">⚙️ 设置</button>
                 <button class="btn history-btn utility-btn" data-focus-hero="tool_ai_config" data-copy-hero="tool_ai_config" type="button" @click="openAiConfigModal">🔧 AI配置</button>
                 <button class="btn history-btn utility-btn focus-tools-collapse" type="button" @click="closeFocusToolsBand">收起工具</button>
               </div>
@@ -1367,7 +1391,7 @@
                 data-focus-hero="tool_settings"
                 data-copy-hero="tool_settings"
                 type="button"
-                @click="showApiSettings = true"
+                @click="openSettingsPage"
               >
                 ⚙️ 设置
               </button>
@@ -2162,32 +2186,6 @@
     ></div>
 
     <!-- ═══ Shared Modals (both mobile & desktop) ═══ -->
-    <!-- 设置弹窗 -->
-    <SettingsModal
-      v-if="showApiSettings"
-      :persisted-state="persistedState"
-      :fab-visible="fabVisible"
-      :floor-btn-visible="floorBtnVisible"
-      :current-theme="currentTheme"
-      :theme-options="themeOptions"
-      :api-model-list="apiModelList"
-      :api-model-loading="apiModelLoading"
-      :teleport-target="modalTeleportTarget"
-      @close="showApiSettings = false"
-      @set-fab-visible="setFabVisible"
-      @toggle-floor-btns="toggleFloorBtns"
-      @update-persisted-state="updatePersistedState"
-      @set-tag-delete-parent-mode="setTagDeleteParentMode"
-      @set-theme="setTheme"
-      :version-info="versionInfo"
-      :version-check-loading="versionCheckLoading"
-      :version-check-error="versionCheckError"
-      @update-api-config="updateApiConfig"
-      @load-model-list="loadModelList"
-      @check-latest-version="checkLatestVersion"
-      @copy-version-import-url="copyVersionImportUrl"
-    />
-
     <!-- AI 配置弹窗 -->
     <AIConfigModal
       :worldbook-names="worldbookNames"
@@ -2877,6 +2875,7 @@
             </div>
           </div>
     </template><!-- end editor mode -->
+    </template>
   </div>
 </template>
 
@@ -2903,7 +2902,7 @@ import TagManager from './components/TagManager.vue';
 import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
 import TagEditorPanel from './components/TagEditorPanel.vue';
-import SettingsModal from './components/SettingsModal.vue';
+import SettingsPage from './components/SettingsPage.vue';
 import AIConfigModal from './components/AIConfigModal.vue';
 import { APP_VERSION } from './domain/version';
 import {
@@ -3170,7 +3169,21 @@ const aiShowTagReview = ref(false);
 const aiTargetWorldbook = ref('');
 const aiChatInputText = ref('');
 const aiUseContext = ref(true);
-const showApiSettings = ref(false);
+type UtilityPage = 'main' | 'settings' | 'ai-config';
+const utilityPage = ref<UtilityPage>('main');
+
+function openSettingsPage(): void {
+  utilityPage.value = 'settings';
+}
+
+function closeUtilityPage(): void {
+  utilityPage.value = 'main';
+}
+
+function openAiConfigPage(): void {
+  openAiConfigModal();
+}
+
 const apiModelList = ref<string[]>([]);
 const apiModelLoading = ref(false);
 
