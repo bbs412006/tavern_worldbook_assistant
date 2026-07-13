@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 root = Path(__file__).resolve().parents[1]
 webpack = (root / 'webpack.config.ts').read_text(encoding='utf-8')
@@ -14,7 +15,7 @@ checks = {
     'webpack defines build branch': '__WB_ASSISTANT_BUILD_BRANCH__' in webpack,
     'webpack defines build time': '__WB_ASSISTANT_BUILD_TIME__' in webpack,
     'version module exists': version_module_path.exists(),
-    'version module declares semantic version': "APP_VERSION = '2.0.1'" in version_module,
+    'version module declares semantic version': re.search(r"APP_VERSION\s*=\s*'[0-9]+\.[0-9]+\.[0-9]+'", version_module) is not None,
     'version module exports semver helpers': 'export function normalizeVersionTag' in version_module and 'export function compareSemver' in version_module,
     'version module exports import url builder': 'export function buildVersionImportUrl' in version_module and "@${version}" in version_module and 'VERSION_BUNDLE_PATH' in version_module,
     'app imports version helpers': "from './domain/version'" in app and 'APP_VERSION' in app,
