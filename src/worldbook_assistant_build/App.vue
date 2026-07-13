@@ -11101,6 +11101,24 @@ watch(hasUnsavedChanges, (val) => {
 /* ═══ End Browse Mode Styles ═══ */
 
 .wb-assistant-root {
+  --wb-control-height-sm: 28px;
+  --wb-control-height-md: 36px;
+  --wb-control-height-lg: 42px;
+  --wb-control-radius: 8px;
+  --wb-control-padding-x-sm: 9px;
+  --wb-control-padding-x-md: 12px;
+  --wb-control-padding-x-lg: 15px;
+  --wb-control-bg: var(--wb-input-bg);
+  --wb-control-bg-hover: var(--wb-input-bg-hover);
+  --wb-control-bg-active: var(--wb-input-bg-focus);
+  --wb-control-border: var(--wb-border-main);
+  --wb-control-border-hover: var(--wb-primary-light);
+  --wb-control-focus-ring: 0 0 0 2px color-mix(in srgb, var(--wb-primary) 34%, transparent);
+  --wb-control-disabled-opacity: 0.5;
+  --wb-control-menu-bg: var(--wb-dropdown-bg, var(--wb-bg-panel));
+  --wb-control-menu-shadow: var(--wb-shadow-main);
+  --wb-control-option-active: var(--wb-primary-hover);
+  --wb-control-option-selected: var(--wb-primary-soft);
   position: relative;
   flex: 1;
   min-height: 0;
@@ -11116,6 +11134,221 @@ watch(hasUnsavedChanges, (val) => {
   line-height: 1.5;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.wb-assistant-root :deep(.wb-control) {
+  box-sizing: border-box;
+  border: 1px solid var(--wb-control-border);
+  border-radius: var(--wb-control-radius);
+  color: var(--wb-text-main);
+  background: var(--wb-control-bg);
+  font: inherit;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.wb-assistant-root :deep(.wb-control--sm) {
+  min-height: var(--wb-control-height-sm);
+  padding-inline: var(--wb-control-padding-x-sm);
+}
+
+.wb-assistant-root :deep(.wb-control--md) {
+  min-height: var(--wb-control-height-md);
+  padding-inline: var(--wb-control-padding-x-md);
+}
+
+.wb-assistant-root :deep(.wb-control--lg) {
+  min-height: var(--wb-control-height-lg);
+  padding-inline: var(--wb-control-padding-x-lg);
+}
+
+.wb-assistant-root :deep(.wb-control:hover:not(:disabled)) {
+  border-color: var(--wb-control-border-hover);
+  background: var(--wb-control-bg-hover);
+}
+
+.wb-assistant-root :deep(.wb-control:focus-visible),
+.wb-assistant-root :deep(.wb-control-native:focus-visible + .wb-control-checkbox-indicator),
+.wb-assistant-root :deep(.wb-control-native:focus-visible + .wb-control-switch-track) {
+  outline: none;
+  box-shadow: var(--wb-control-focus-ring);
+}
+
+.wb-assistant-root :deep(.wb-control:disabled),
+.wb-assistant-root :deep(.wb-control-choice.is-disabled) {
+  cursor: not-allowed;
+  opacity: var(--wb-control-disabled-opacity);
+}
+
+.wb-assistant-root :deep(.wb-control-button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.wb-assistant-root :deep(.wb-control-button:active:not(:disabled)) {
+  background: var(--wb-control-bg-active);
+  transform: translateY(1px);
+}
+
+.wb-assistant-root :deep(.wb-control-button--primary) {
+  border-color: var(--wb-primary);
+  background: var(--wb-primary);
+  color: #fff;
+}
+
+.wb-assistant-root :deep(.wb-control-button--danger) {
+  border-color: color-mix(in srgb, #e11d48 55%, transparent);
+  background: color-mix(in srgb, #e11d48 12%, var(--wb-control-bg));
+  color: #f43f5e;
+}
+
+.wb-assistant-root :deep(.wb-control-button--ghost) {
+  border-color: transparent;
+  background: transparent;
+}
+
+.wb-assistant-root :deep(.wb-control-button.is-icon-only) {
+  width: var(--wb-control-height-md);
+  padding-inline: 0;
+}
+
+.wb-assistant-root :deep(.wb-control-input),
+.wb-assistant-root :deep(.wb-control-textarea) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.wb-assistant-root :deep(.wb-control-textarea) {
+  min-height: 96px;
+  padding-block: 8px;
+}
+
+.wb-assistant-root :deep(.wb-control-textarea--resize-none) { resize: none; }
+.wb-assistant-root :deep(.wb-control-textarea--resize-vertical) { resize: vertical; }
+.wb-assistant-root :deep(.wb-control-textarea--resize-both) { resize: both; }
+
+.wb-assistant-root :deep(.wb-control-choice) {
+  display: inline-flex;
+  min-height: var(--wb-control-height-md);
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wb-assistant-root :deep(.wb-control-native) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wb-assistant-root :deep(.wb-control-checkbox-indicator) {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  place-items: center;
+  border: 1px solid var(--wb-control-border);
+  border-radius: 5px;
+  background: var(--wb-control-bg);
+}
+
+.wb-assistant-root :deep(.wb-control-native:checked + .wb-control-checkbox-indicator),
+.wb-assistant-root :deep(.wb-control-native:indeterminate + .wb-control-checkbox-indicator) {
+  border-color: var(--wb-primary);
+  background: var(--wb-primary);
+}
+
+.wb-assistant-root :deep(.wb-control-native:checked + .wb-control-checkbox-indicator::after) {
+  content: '';
+  width: 8px;
+  height: 4px;
+  border: solid #fff;
+  border-width: 0 0 2px 2px;
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.wb-assistant-root :deep(.wb-control-native:indeterminate + .wb-control-checkbox-indicator::after) {
+  content: '';
+  width: 9px;
+  height: 2px;
+  border-radius: 1px;
+  background: #fff;
+}
+
+.wb-assistant-root :deep(.wb-control-switch-track) {
+  display: flex;
+  width: 38px;
+  height: 22px;
+  flex: 0 0 38px;
+  align-items: center;
+  padding: 2px;
+  border: 1px solid var(--wb-control-border);
+  border-radius: 999px;
+  background: var(--wb-control-bg);
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.wb-assistant-root :deep(.wb-control-switch-thumb) {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--wb-text-muted);
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.wb-assistant-root :deep(.wb-control-native:checked + .wb-control-switch-track) {
+  border-color: var(--wb-primary);
+  background: var(--wb-primary);
+}
+
+.wb-assistant-root :deep(.wb-control-native:checked + .wb-control-switch-track .wb-control-switch-thumb) {
+  background: #fff;
+  transform: translateX(16px);
+}
+
+.wb-assistant-root :deep(.wb-control-spinner) {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: wb-control-spin 700ms linear infinite;
+}
+
+@keyframes wb-control-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-assistant-root :deep(.wb-control),
+  .wb-assistant-root :deep(.wb-control-switch-track),
+  .wb-assistant-root :deep(.wb-control-switch-thumb) {
+    transition: none;
+  }
+
+  .wb-assistant-root :deep(.wb-control-spinner) {
+    animation: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .wb-assistant-root :deep(.wb-control--md),
+  .wb-assistant-root :deep(.wb-control-choice) {
+    min-height: 40px;
+  }
 }
 
 .main-workspace {
@@ -13782,12 +14015,13 @@ watch(hasUnsavedChanges, (val) => {
 .wb-assistant-root .text-area,
 .wb-assistant-root .toolbar-select {
   width: 100%;
+  min-height: var(--wb-control-height-md);
   box-sizing: border-box;
-  border: 1px solid var(--wb-border-subtle);
-  border-radius: 8px;
+  border: 1px solid var(--wb-control-border);
+  border-radius: var(--wb-control-radius);
   padding: 8px 12px;
   color: var(--wb-text-main);
-  background: var(--wb-input-bg);
+  background: var(--wb-control-bg);
   transition: background 0.25s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.25s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.25s cubic-bezier(0.25, 1, 0.5, 1);
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
 }
@@ -13795,17 +14029,17 @@ watch(hasUnsavedChanges, (val) => {
 .wb-assistant-root .text-input:hover,
 .wb-assistant-root .text-area:hover,
 .wb-assistant-root .toolbar-select:hover {
-  background: var(--wb-input-bg-hover);
-  border-color: var(--wb-border-main);
+  background: var(--wb-control-bg-hover);
+  border-color: var(--wb-control-border-hover);
 }
 
 .wb-assistant-root .text-input:focus,
 .wb-assistant-root .text-area:focus,
 .wb-assistant-root .toolbar-select:focus {
-  background: var(--wb-input-bg-focus);
-  border-color: var(--wb-primary-light);
+  background: var(--wb-control-bg-active);
+  border-color: var(--wb-control-border-hover);
   outline: none;
-  box-shadow: 0 0 0 3px var(--wb-primary-soft), inset 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: var(--wb-control-focus-ring), inset 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .text-area {
@@ -14144,13 +14378,14 @@ watch(hasUnsavedChanges, (val) => {
 
 .wb-assistant-root .btn {
   display: inline-flex;
+  min-height: var(--wb-control-height-md);
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 8px 14px;
-  background: var(--wb-input-bg);
-  border: 1px solid var(--wb-border-subtle);
-  border-radius: 8px;
+  background: var(--wb-control-bg);
+  border: 1px solid var(--wb-control-border);
+  border-radius: var(--wb-control-radius);
   color: var(--wb-text-main);
   font-size: 13px;
   font-weight: 500;
@@ -14176,8 +14411,8 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .wb-assistant-root .btn:hover:not(:disabled) {
-  background: var(--wb-input-bg-hover);
-  border-color: var(--wb-border-main);
+  background: var(--wb-control-bg-hover);
+  border-color: var(--wb-control-border-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
@@ -14188,7 +14423,7 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .wb-assistant-root .btn:disabled {
-  opacity: 0.5;
+  opacity: var(--wb-control-disabled-opacity);
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
