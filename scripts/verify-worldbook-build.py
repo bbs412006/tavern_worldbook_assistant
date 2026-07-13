@@ -33,6 +33,7 @@ def main() -> None:
         # This guard intentionally stays early so missing inline utility pages
         # fail before domain tests or a production build can mask the regression.
         'scripts/check-settings-ai-modals.py',
+        'scripts/check-worldbook-performance.py',
         'scripts/check-worldbook-version-feature.py',
         'scripts/check-worldbook-debug-diagnostics.py',
     ]
