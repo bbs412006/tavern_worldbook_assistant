@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { mount, type VueWrapper } from '@vue/test-utils';
+import { readFileSync } from 'node:fs';
 import { defineComponent, nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -181,6 +182,48 @@ describe('App utility navigation', () => {
     expect(wrapper.get('[data-retained-draft]').element).toBe(retainedInput.element);
     expect((wrapper.get('[data-retained-draft]').element as HTMLInputElement).value).toBe('未保存编辑内容');
     expect((wrapper.vm as unknown as { mobileTab: string }).mobileTab).toBe('tags');
+
+    wrapper.unmount();
+  });
+
+  it('preserves the mobile workspace flex boundary and active tab across utility round trips', async () => {
+    Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
+    Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as { panelMode: string; mobileTab: string };
+    vm.panelMode = 'editor';
+    vm.mobileTab = 'tags';
+    await nextTick();
+
+    const workspace = wrapper.get('[data-main-workspace]');
+    const originalWorkspace = workspace.element;
+    const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
+    const workspaceRule = appSource.match(/\.main-workspace\s*\{([^}]*)\}/)?.[1] ?? '';
+    const assertMobileLayoutState = () => {
+      expect(workspace.classes()).toContain('main-workspace');
+      expect(workspaceRule).toMatch(/display:\s*flex;/);
+      expect(workspaceRule).toMatch(/flex:\s*1;/);
+      expect(workspaceRule).toMatch(/flex-direction:\s*column;/);
+      expect(workspaceRule).toMatch(/min-height:\s*0;/);
+      expect(workspaceRule).toMatch(/overflow:\s*hidden;/);
+      expect(workspaceRule).toMatch(/width:\s*100%;/);
+
+      const activeTab = wrapper.get('.mobile-tab-bar button.active');
+      expect(activeTab.text()).toContain('标签');
+      expect(wrapper.get('.mobile-tab-view').isVisible()).toBe(true);
+    };
+
+    assertMobileLayoutState();
+    await openUtility(wrapper, 'settings');
+    await returnToMain(wrapper);
+    expect(wrapper.get('[data-main-workspace]').element).toBe(originalWorkspace);
+    assertMobileLayoutState();
+
+    await openUtility(wrapper, 'ai-config');
+    await returnToMain(wrapper);
+    expect(wrapper.get('[data-main-workspace]').element).toBe(originalWorkspace);
+    assertMobileLayoutState();
 
     wrapper.unmount();
   });

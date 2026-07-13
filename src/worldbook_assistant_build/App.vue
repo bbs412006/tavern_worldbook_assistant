@@ -43,6 +43,7 @@
     />
     <div
       v-show="isMainWorkspaceActive"
+      class="main-workspace"
       data-main-workspace
       :aria-hidden="!isMainWorkspaceActive"
       :inert="!isMainWorkspaceActive || undefined"
@@ -10981,6 +10982,15 @@ watch(hasUnsavedChanges, (val) => {
   font-size: 13px;
   line-height: 1.5;
   border-radius: 12px;
+  overflow: hidden;
+}
+
+.main-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
   overflow: hidden;
 }
 
