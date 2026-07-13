@@ -55,13 +55,18 @@ const InlineUtilityHarness = defineComponent({
   },
   template: `
     <main data-testid="assistant-root">
-      <template v-if="page === 'main'">
+      <section
+        v-show="page === 'main'"
+        data-main-workspace
+        :aria-hidden="page !== 'main'"
+        :inert="page !== 'main'"
+      >
         <h1>助手主页面</h1>
         <button class="open-settings" @click="page = 'settings'">设置</button>
         <button class="open-ai-config" @click="page = 'ai-config'">AI配置</button>
-      </template>
+      </section>
       <SettingsPage
-        v-else-if="page === 'settings'"
+        v-if="page === 'settings'"
         :persisted-state="persistedState"
         :fab-visible="fabVisible"
         :floor-btn-visible="false"
@@ -76,7 +81,7 @@ const InlineUtilityHarness = defineComponent({
         @set-fab-visible="fabVisible = $event"
       />
       <AIConfigPage
-        v-else
+        v-if="page === 'ai-config'"
         :worldbook-names="['世界书 A']"
         target-worldbook="世界书 A"
         :input="instruction"
@@ -101,6 +106,7 @@ describe('inline settings and AI config flow', () => {
   it('navigates through settings inside the assistant root and returns to main', async () => {
     const wrapper = mountHarness();
     const root = wrapper.get('[data-testid="assistant-root"]');
+    const mainWorkspace = root.get('[data-main-workspace]').element;
 
     await wrapper.get('.open-settings').trigger('click');
     expect(root.findComponent(SettingsPage).exists()).toBe(true);
@@ -111,6 +117,7 @@ describe('inline settings and AI config flow', () => {
 
     await root.get('.utility-page-back').trigger('click');
     expect(root.text()).toContain('助手主页面');
+    expect(root.get('[data-main-workspace]').element).toBe(mainWorkspace);
   });
 
   it('accepts AI input, enters preview, returns to input, then returns to main', async () => {

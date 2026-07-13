@@ -24,7 +24,7 @@
       @copy-version-import-url="copyVersionImportUrl"
     />
     <AIConfigPage
-      v-else-if="utilityPage === 'ai-config'"
+      v-if="utilityPage === 'ai-config'"
       :worldbook-names="worldbookNames"
       :target-worldbook="aiConfigTargetWorldbook"
       :input="aiConfigInput"
@@ -41,7 +41,12 @@
       @generate="aiConfigGenerate"
       @apply="aiConfigApply"
     />
-    <template v-else>
+    <div
+      v-show="isMainWorkspaceActive"
+      data-main-workspace
+      :aria-hidden="!isMainWorkspaceActive"
+      :inert="!isMainWorkspaceActive || undefined"
+    >
 
     <!-- ═══ Mobile Tab View ═══ -->
     <template v-if="isMobile">
@@ -2871,7 +2876,7 @@
             </div>
           </div>
     </template><!-- end editor mode -->
-    </template>
+    </div>
   </div>
 </template>
 
@@ -3166,6 +3171,7 @@ const aiChatInputText = ref('');
 const aiUseContext = ref(true);
 type UtilityPage = 'main' | 'settings' | 'ai-config';
 const utilityPage = ref<UtilityPage>('main');
+const isMainWorkspaceActive = computed(() => utilityPage.value === 'main');
 
 function openSettingsPage(): void {
   utilityPage.value = 'settings';
