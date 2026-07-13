@@ -7,8 +7,9 @@ const props = withDefaults(
     type?: string;
     size?: 'sm' | 'md' | 'lg';
     disabled?: boolean;
+    error?: boolean;
   }>(),
-  { type: 'text', size: 'md', disabled: false },
+  { type: 'text', size: 'md', disabled: false, error: false },
 );
 
 const emit = defineEmits<{ 'update:modelValue': [value: string | number | null] }>();
@@ -20,13 +21,23 @@ function onInput(event: Event): void {
 </script>
 
 <template>
-  <input
-    v-bind="$attrs"
-    class="wb-control wb-control-input"
-    :class="`wb-control--${size}`"
-    :type="type"
-    :value="modelValue ?? ''"
-    :disabled="disabled"
-    @input="onInput"
-  />
+  <span
+    class="wb-control-input-shell"
+    :class="{ 'has-error': error, 'has-prefix': Boolean($slots.prefix), 'has-suffix': Boolean($slots.suffix) }"
+  >
+    <span v-if="$slots.prefix" class="wb-control-input-prefix" aria-hidden="true"><slot name="prefix" /></span>
+    <input
+      v-bind="$attrs"
+      class="wb-control wb-control-input"
+      :class="[
+        { 'has-error': error, 'has-prefix': Boolean($slots.prefix), 'has-suffix': Boolean($slots.suffix) },
+        `wb-control--${size}`,
+      ]"
+      :type="type"
+      :value="modelValue ?? ''"
+      :disabled="disabled"
+      @input="onInput"
+    />
+    <span v-if="$slots.suffix" class="wb-control-input-suffix" aria-hidden="true"><slot name="suffix" /></span>
+  </span>
 </template>

@@ -11119,6 +11119,10 @@ watch(hasUnsavedChanges, (val) => {
   --wb-control-menu-shadow: var(--wb-shadow-main);
   --wb-control-option-active: var(--wb-primary-hover);
   --wb-control-option-selected: var(--wb-primary-soft);
+  --wb-control-danger: var(--wb-danger, var(--wb-primary));
+  --wb-control-danger-soft: color-mix(in srgb, var(--wb-control-danger) 12%, var(--wb-control-bg));
+  --wb-control-danger-border: color-mix(in srgb, var(--wb-control-danger) 55%, transparent);
+  --wb-control-danger-contrast: var(--wb-danger-contrast, var(--wb-text-main));
   position: relative;
   flex: 1;
   min-height: 0;
@@ -11202,9 +11206,9 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .wb-assistant-root :deep(.wb-control-button--danger) {
-  border-color: color-mix(in srgb, #e11d48 55%, transparent);
-  background: color-mix(in srgb, #e11d48 12%, var(--wb-control-bg));
-  color: #f43f5e;
+  border-color: var(--wb-control-danger-border);
+  background: var(--wb-control-danger-soft);
+  color: var(--wb-control-danger-contrast);
 }
 
 .wb-assistant-root :deep(.wb-control-button--ghost) {
@@ -11213,8 +11217,55 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .wb-assistant-root :deep(.wb-control-button.is-icon-only) {
-  width: var(--wb-control-height-md);
   padding-inline: 0;
+}
+
+.wb-assistant-root :deep(.wb-control-button.wb-control--sm.is-icon-only) {
+  width: var(--wb-control-height-sm);
+  min-width: var(--wb-control-height-sm);
+}
+
+.wb-assistant-root :deep(.wb-control-button.wb-control--md.is-icon-only) {
+  width: var(--wb-control-height-md);
+  min-width: var(--wb-control-height-md);
+}
+
+.wb-assistant-root :deep(.wb-control-button.wb-control--lg.is-icon-only) {
+  width: var(--wb-control-height-lg);
+  min-width: var(--wb-control-height-lg);
+}
+
+.wb-assistant-root :deep(.wb-control-input-shell) {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+}
+
+.wb-assistant-root :deep(.wb-control-input-prefix),
+.wb-assistant-root :deep(.wb-control-input-suffix) {
+  position: absolute;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  color: var(--wb-text-muted);
+  pointer-events: none;
+}
+
+.wb-assistant-root :deep(.wb-control-input-prefix) { inset-inline-start: var(--wb-control-padding-x-md); }
+.wb-assistant-root :deep(.wb-control-input-suffix) { inset-inline-end: var(--wb-control-padding-x-md); }
+.wb-assistant-root :deep(.wb-control-input.has-prefix) { padding-inline-start: 2.25rem; }
+.wb-assistant-root :deep(.wb-control-input.has-suffix) { padding-inline-end: 2.75rem; }
+
+.wb-assistant-root :deep(.wb-control-input.has-error),
+.wb-assistant-root :deep(.wb-control-input-shell.has-error .wb-control-input) {
+  border-color: var(--wb-control-danger);
+}
+
+.wb-assistant-root :deep(.wb-control-input.has-error:focus-visible),
+.wb-assistant-root :deep(.wb-control-input-shell.has-error .wb-control-input:focus-visible) {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-control-danger) 34%, transparent);
 }
 
 .wb-assistant-root :deep(.wb-control-input),
@@ -11348,6 +11399,11 @@ watch(hasUnsavedChanges, (val) => {
   .wb-assistant-root :deep(.wb-control--md),
   .wb-assistant-root :deep(.wb-control-choice) {
     min-height: 40px;
+  }
+
+  .wb-assistant-root :deep(.wb-control-button.wb-control--md.is-icon-only) {
+    width: 40px;
+    min-width: 40px;
   }
 }
 
@@ -14454,6 +14510,22 @@ watch(hasUnsavedChanges, (val) => {
   box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .wb-assistant-root .btn {
+    transition: none;
+    transform: none;
+  }
+
+  .wb-assistant-root .btn:hover:not(:disabled),
+  .wb-assistant-root .btn:active:not(:disabled) {
+    transform: none;
+  }
+
+  .wb-assistant-root .btn.glow-pulse {
+    animation: none;
+  }
+}
+
 .wb-assistant-root .btn.mini {
   padding: 4px 10px;
   font-size: 12px;
@@ -15217,33 +15289,34 @@ watch(hasUnsavedChanges, (val) => {
 .wb-assistant-root textarea,
 .wb-assistant-root select,
 .wb-assistant-root option,
-.wb-assistant-root button {
+.wb-assistant-root button:not(.wb-control) {
   color: var(--wb-text-main) !important;
 }
 
-.wb-assistant-root input[type="text"],
-.wb-assistant-root input[type="number"],
-.wb-assistant-root textarea,
+.wb-assistant-root input[type="text"]:not(.wb-control),
+.wb-assistant-root input[type="number"]:not(.wb-control),
+.wb-assistant-root textarea:not(.wb-control),
 .wb-assistant-root select {
-  background: var(--wb-input-bg) !important;
-  border-color: transparent !important;
+  background: var(--wb-control-bg) !important;
+  border-color: var(--wb-control-border) !important;
 }
 
-.wb-assistant-root input[type="text"]:hover,
-.wb-assistant-root input[type="number"]:hover,
-.wb-assistant-root textarea:hover,
+.wb-assistant-root input[type="text"]:not(.wb-control):hover,
+.wb-assistant-root input[type="number"]:not(.wb-control):hover,
+.wb-assistant-root textarea:not(.wb-control):hover,
 .wb-assistant-root select:hover {
-  background: var(--wb-input-bg-hover) !important;
+  background: var(--wb-control-bg-hover) !important;
+  border-color: var(--wb-control-border-hover) !important;
 }
 
-.wb-assistant-root input[type="text"]:focus,
-.wb-assistant-root input[type="number"]:focus,
-.wb-assistant-root textarea:focus,
+.wb-assistant-root input[type="text"]:not(.wb-control):focus,
+.wb-assistant-root input[type="number"]:not(.wb-control):focus,
+.wb-assistant-root textarea:not(.wb-control):focus,
 .wb-assistant-root select:focus {
-  background: var(--wb-input-bg-focus) !important;
-  border-color: var(--wb-primary-glow) !important;
+  background: var(--wb-control-bg-active) !important;
+  border-color: var(--wb-control-border-hover) !important;
   outline: none !important;
-  box-shadow: 0 0 0 3px var(--wb-primary-soft) !important;
+  box-shadow: var(--wb-control-focus-ring) !important;
 }
 /* ═════════════════════════════════════════════════
    AI Generator Panel

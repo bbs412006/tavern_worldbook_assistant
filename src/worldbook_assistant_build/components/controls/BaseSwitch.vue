@@ -1,6 +1,8 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false });
 
+const attrs = useAttrs();
+
 withDefaults(
   defineProps<{
     modelValue: boolean;
@@ -17,7 +19,11 @@ function onChange(event: Event): void {
 </script>
 
 <template>
-  <label class="wb-control-choice wb-control-switch" :class="{ 'is-disabled': disabled }">
+  <label
+    class="wb-control-choice wb-control-switch"
+    :class="{ 'is-disabled': disabled }"
+    :for="attrs.id as string | undefined"
+  >
     <input
       v-bind="$attrs"
       class="wb-control-native"

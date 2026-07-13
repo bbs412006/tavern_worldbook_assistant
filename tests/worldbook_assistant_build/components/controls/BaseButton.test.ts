@@ -16,6 +16,16 @@ describe('BaseButton', () => {
     expect(wrapper.emitted('click')).toBeUndefined();
   });
 
+  it('keeps the explicit loading click guard effective for synthetic dispatched clicks', () => {
+    const wrapper = mount(BaseButton, { props: { loading: true } });
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+
+    wrapper.element.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(wrapper.emitted('click')).toBeUndefined();
+  });
+
   it('applies variant and size classes', () => {
     const wrapper = mount(BaseButton, { props: { variant: 'danger', size: 'sm' } });
 

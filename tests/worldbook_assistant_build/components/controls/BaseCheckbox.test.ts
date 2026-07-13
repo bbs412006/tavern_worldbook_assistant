@@ -30,6 +30,47 @@ describe('BaseCheckbox', () => {
     expect(input.disabled).toBe(true);
     expect(input.indeterminate).toBe(true);
   });
+
+  it('resyncs a controlled indeterminate state after click and model updates', async () => {
+    const wrapper = mount(BaseCheckbox, {
+      props: {
+        modelValue: false,
+        indeterminate: true,
+        'onUpdate:modelValue': async value => {
+          await wrapper.setProps({ modelValue: value });
+        },
+      },
+      attachTo: document.body,
+    });
+    const input = wrapper.get('input').element as HTMLInputElement;
+    await nextTick();
+    expect(input.indeterminate).toBe(true);
+
+    input.click();
+    await nextTick();
+    await nextTick();
+
+    expect(wrapper.props('modelValue')).toBe(true);
+    expect(wrapper.props('indeterminate')).toBe(true);
+    expect(input.indeterminate).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('forwards checkbox identity and aria attributes to the native input', () => {
+    const wrapper = mount(BaseCheckbox, {
+      props: { modelValue: false },
+      attrs: { id: 'enabled', name: 'enabled', value: 'yes', 'aria-describedby': 'enabled-help' },
+      slots: { default: '启用' },
+    });
+
+    expect(wrapper.get('input').attributes()).toMatchObject({
+      id: 'enabled',
+      name: 'enabled',
+      value: 'yes',
+      'aria-describedby': 'enabled-help',
+    });
+    expect(wrapper.get('label').attributes('for')).toBe('enabled');
+  });
 });
 
 describe('BaseSwitch', () => {
@@ -53,5 +94,21 @@ describe('BaseSwitch', () => {
     await nextTick();
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([true]);
     wrapper.unmount();
+  });
+
+  it('forwards switch attributes and exposes an accessible name', () => {
+    const wrapper = mount(BaseSwitch, {
+      props: { modelValue: true },
+      attrs: { id: 'auto-save', name: 'autoSave', 'aria-label': '自动保存', 'aria-describedby': 'save-help' },
+    });
+
+    expect(wrapper.get('input').attributes()).toMatchObject({
+      id: 'auto-save',
+      name: 'autoSave',
+      role: 'switch',
+      'aria-label': '自动保存',
+      'aria-describedby': 'save-help',
+    });
+    expect(wrapper.get('label').attributes('for')).toBe('auto-save');
   });
 });

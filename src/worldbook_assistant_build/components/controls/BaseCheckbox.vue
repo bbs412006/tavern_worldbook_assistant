@@ -10,6 +10,7 @@ const props = withDefaults(
   { indeterminate: false, disabled: false },
 );
 
+const attrs = useAttrs();
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 const inputRef = ref<HTMLInputElement | null>(null);
 
@@ -18,7 +19,7 @@ function syncIndeterminate(): void {
 }
 
 watch(
-  () => props.indeterminate,
+  () => [props.modelValue, props.indeterminate],
   syncIndeterminate,
   { flush: 'post' },
 );
@@ -26,11 +27,12 @@ onMounted(syncIndeterminate);
 
 function onChange(event: Event): void {
   emit('update:modelValue', (event.target as HTMLInputElement).checked);
+  nextTick(syncIndeterminate);
 }
 </script>
 
 <template>
-  <label class="wb-control-choice" :class="{ 'is-disabled': disabled }">
+  <label class="wb-control-choice" :class="{ 'is-disabled': disabled }" :for="attrs.id as string | undefined">
     <input
       ref="inputRef"
       v-bind="$attrs"
