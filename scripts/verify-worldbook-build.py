@@ -30,6 +30,8 @@ def main() -> None:
     checks = [
         'scripts/check-worldbook-build-hygiene.py',
         'scripts/check-domain-modules.py',
+        # This guard intentionally stays early so missing inline utility pages
+        # fail before domain tests or a production build can mask the regression.
         'scripts/check-settings-ai-modals.py',
         'scripts/check-worldbook-version-feature.py',
         'scripts/check-worldbook-debug-diagnostics.py',
