@@ -274,16 +274,28 @@ defineEmits<{
 
 @media (max-width: 640px) {
   .utility-page-header {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     padding: 10px 12px;
   }
 
   .utility-page-title {
     justify-self: end;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .utility-page-body {
     padding: 12px;
+  }
+
+  .utility-page-content > div,
+  .utility-page-content label,
+  .field,
+  .text-input {
+    min-width: 0;
+    max-width: 100%;
   }
 }
 </style>

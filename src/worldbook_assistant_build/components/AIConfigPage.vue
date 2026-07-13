@@ -139,8 +139,8 @@ defineEmits<{
   width: 100%;
   height: 100%;
   min-height: 0;
-  color: var(--wb-text-main);
-  background: var(--wb-bg);
+  color: var(--wb-text-main, #e2e8f0);
+  background: var(--wb-bg-root, #0f172a);
 }
 
 .utility-page-header {
@@ -150,17 +150,18 @@ defineEmits<{
   gap: 12px;
   flex: 0 0 auto;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--wb-border);
+  border-bottom: 1px solid var(--wb-border-subtle, #334155);
+  background: var(--wb-bg-panel, #111827);
 }
 
 .utility-page-back {
   justify-self: start;
   min-height: 36px;
   padding: 7px 12px;
-  border: 1px solid var(--wb-border);
+  border: 1px solid var(--wb-border-subtle, #334155);
   border-radius: 8px;
-  color: var(--wb-text-main);
-  background: var(--wb-surface);
+  color: var(--wb-text-main, #e2e8f0);
+  background: var(--wb-input-bg, #1e293b);
   cursor: pointer;
 }
 
@@ -176,7 +177,7 @@ defineEmits<{
 }
 
 .ai-config-input-stage { display: flex; flex-direction: column; gap: 14px; }
-.custom-prompt-section summary { cursor: pointer; color: var(--wb-text-dim); font-size: 12px; user-select: none; }
+.custom-prompt-section summary { cursor: pointer; color: var(--wb-text-muted, #94a3b8); font-size: 12px; user-select: none; }
 .custom-prompt-content { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .custom-prompt-input { font-family: monospace; font-size: 12px; }
 .utility-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -184,9 +185,9 @@ defineEmits<{
 .generating-stage { display: grid; place-content: center; text-align: center; }
 .generating-icon { margin-bottom: 12px; font-size: 28px; }
 .preview-stage { display: flex; flex-direction: column; gap: 14px; }
-.preview-table-wrap { overflow: auto; border: 1px solid var(--wb-border); border-radius: 8px; }
+.preview-table-wrap { overflow: auto; border: 1px solid var(--wb-border-subtle, #334155); border-radius: 8px; }
 .preview-table { width: 100%; min-width: 650px; border-collapse: collapse; font-size: 13px; }
-.preview-table th, .preview-table td { padding: 8px; border-bottom: 1px solid var(--wb-border); text-align: left; }
+.preview-table th, .preview-table td { padding: 8px; border-bottom: 1px solid var(--wb-border-subtle, #334155); text-align: left; }
 .preview-table tbody tr:last-child td { border-bottom: 0; }
 .preview-table tr.unselected { opacity: 0.4; }
 .selection-column { width: 34px; }
