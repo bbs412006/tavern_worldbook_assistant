@@ -3025,6 +3025,7 @@ import { getHostWindow } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
 import { useCrossCopyResize } from './composables/useCrossCopyResize';
+import { useCoalescedFrame } from './composables/useCoalescedFrame';
 import { useWorkspaceActivity } from './composables/useWorkspaceActivity';
 import { useCrossCopyMobileSteps } from './composables/useCrossCopyMobileSteps';
 import { useCrossCopyPersistence } from './composables/useCrossCopyPersistence';
@@ -3036,6 +3037,11 @@ import { dedupeExtractedTags, extractAiTags, markExtractedTagDuplicates } from '
 import { collectTagSubtreeIds, isTagDescendantOf, normalizeTagNameKey } from './domain/tags';
 import { compareEntriesByPositionThenOrder, parseImportedPayload } from './domain/worldbook';
 import { buildEditorShellStyle, buildMainLayoutStyle, isCompactLayoutWidth, isDesktopFocusLayout } from './domain/layout';
+import {
+  createPerformanceDiagnostics,
+  type PerformanceMetricName,
+  type PerformanceSnapshot,
+} from './domain/performanceDiagnostics';
 import {
   CROSS_COPY_ACTION_LABELS,
   CROSS_COPY_STATUS_LABELS,
@@ -3102,6 +3108,44 @@ const BROWSE_RENDER_BATCH = 30;
 const browseRenderLimit = ref(BROWSE_RENDER_BATCH);
 const browseLoadMoreSentinelRef = ref<HTMLElement | null>(null);
 const rootRef = ref<HTMLElement | null>(null);
+const performanceDiagnosticsEnabled = (() => {
+  const target = globalThis as Record<string, unknown>;
+  return target.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__ === true
+    || __WB_ASSISTANT_BUILD_BRANCH__.includes('debug');
+})();
+const performanceDiagnostics = createPerformanceDiagnostics(performanceDiagnosticsEnabled);
+const navigationMeasurementFrame = useCoalescedFrame();
+const performanceSnapshotKey = '__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__';
+const localPerformanceSnapshot = (): PerformanceSnapshot => performanceDiagnostics.snapshot();
+
+if (performanceDiagnosticsEnabled) {
+  (globalThis as Record<string, unknown>)[performanceSnapshotKey] = localPerformanceSnapshot;
+}
+
+function measureNavigation(
+  metric: PerformanceMetricName,
+  targetSelector: string,
+  mount: 'settings' | 'ai-config' | null,
+): void {
+  if (!performanceDiagnosticsEnabled) {
+    return;
+  }
+  const finish = performanceDiagnostics.start(metric);
+  void nextTick().then(() => {
+    performanceDiagnostics.setResourceCount('navigation-frame', 1);
+    navigationMeasurementFrame.schedule(() => {
+      performanceDiagnostics.setResourceCount('navigation-frame', 0);
+      const target = rootRef.value?.querySelector(targetSelector);
+      if (!target) {
+        return;
+      }
+      if (mount) {
+        performanceDiagnostics.incrementMount(mount);
+      }
+      finish();
+    });
+  });
+}
 const isFocusEditing = ref(false);
 const focusWorldbookMenuOpen = ref(false);
 const focusToolsExpanded = ref(false);
@@ -3176,10 +3220,12 @@ const utilityPage = ref<UtilityPage>('main');
 const isMainWorkspaceActive = computed(() => utilityPage.value === 'main');
 
 function openSettingsPage(): void {
+  measureNavigation('open-settings', '[data-settings-page], .utility-page', 'settings');
   utilityPage.value = 'settings';
 }
 
 function closeUtilityPage(): void {
+  measureNavigation('return-main', '[data-main-workspace]:not([style*="display: none"])', null);
   utilityPage.value = 'main';
 }
 
@@ -3204,6 +3250,7 @@ const aiConfigTargetWorldbook = ref('');
 const aiConfigCustomPrompt = ref('');
 
 function openAiConfigPage(): void {
+  measureNavigation('open-ai-config', '[data-ai-config-page], .utility-page', 'ai-config');
   aiConfigPreview.value = false;
   aiConfigChanges.value = [];
   aiConfigTargetWorldbook.value = selectedWorldbookName.value || '';
@@ -10444,6 +10491,7 @@ function onPanelDiscard(): void {
 let _mobileResizeHandler: (() => void) | null = null;
 
 onMounted(() => {
+  performanceDiagnostics.incrementMount('main');
   // Fix mobile height: compute exact pixel height based on viewport position
   if (isMobile.value && rootRef.value) {
     const hostWin = (() => { try { return window.parent || window; } catch { return window; } })();
@@ -10533,6 +10581,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  navigationMeasurementFrame.dispose();
+  performanceDiagnostics.setResourceCount('navigation-frame', 0);
+  const globalTarget = globalThis as Record<string, unknown>;
+  if (globalTarget[performanceSnapshotKey] === localPerformanceSnapshot) {
+    delete globalTarget[performanceSnapshotKey];
+  }
   focusCineToken += 1;
   focusCineLocked.value = false;
   focusCinePhase.value = 'idle';

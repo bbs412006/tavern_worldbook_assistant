@@ -30,6 +30,8 @@ const EmptyStub = defineComponent({ template: '<div />' });
 function installHostBoundaryStubs(): void {
   const globals = globalThis as Record<string, any>;
   globals.__WB_ASSISTANT_BUILD_COMMIT__ = 'test-commit';
+  globals.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__ = false;
+  delete globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__;
   globals.__WB_ASSISTANT_BUILD_BRANCH__ = 'test-branch';
   globals.__WB_ASSISTANT_BUILD_TIME__ = '2026-07-13T00:00:00Z';
   globals.getScriptId = vi.fn(() => 'worldbook-test');
@@ -103,6 +105,27 @@ async function openUtility(wrapper: VueWrapper, page: 'settings' | 'ai-config'):
 async function returnToMain(wrapper: VueWrapper): Promise<void> {
   await wrapper.get('[data-utility-back]').trigger('click');
   await nextTick();
+}
+
+function installFrameQueue() {
+  let nextId = 1;
+  const callbacks = new Map<number, FrameRequestCallback>();
+  vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => {
+    const id = nextId++;
+    callbacks.set(id, callback);
+    return id;
+  });
+  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(id => {
+    callbacks.delete(id);
+  });
+  return {
+    flush() {
+      const queued = [...callbacks.entries()];
+      callbacks.clear();
+      queued.forEach(([id, callback]) => callback(id));
+    },
+    pending: () => callbacks.size,
+  };
 }
 
 describe('App utility navigation', () => {
@@ -222,6 +245,102 @@ describe('App utility navigation', () => {
     await openUtility(wrapper, 'ai-config');
     await returnToMain(wrapper);
     expect(wrapper.get('[data-main-workspace]').element).toBe(originalWorkspace);
+
+    wrapper.unmount();
+  });
+
+  it('records navigation metrics after nextTick and one coalesced frame only when locally enabled', async () => {
+    const globals = globalThis as Record<string, any>;
+    globals.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__ = true;
+    const frames = installFrameQueue();
+    const wrapper = mountApp();
+    await nextTick();
+
+    const initial = globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__();
+    expect(initial.mainWorkspaceMounts).toBe(1);
+
+    (wrapper.vm as unknown as { openSettingsPage(): void }).openSettingsPage();
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().metrics['open-settings'].count).toBe(0);
+    await nextTick();
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
+    frames.flush();
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__()).toMatchObject({
+      metrics: { 'open-settings': { count: 1 } },
+      resources: { 'navigation-frame': 0 },
+      utilityPageMounts: { settings: 1 },
+    });
+
+    await wrapper.get('[data-utility-back]').trigger('click');
+    await nextTick();
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
+    frames.flush();
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().metrics['return-main'].count).toBe(1);
+
+    wrapper.unmount();
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__).toBeUndefined();
+  });
+
+  it('keeps diagnostics disabled without exposing a local snapshot', async () => {
+    const wrapper = mountApp();
+
+    expect((globalThis as Record<string, any>).__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__).toBeUndefined();
+    await openUtility(wrapper, 'settings');
+    await returnToMain(wrapper);
+    expect((globalThis as Record<string, any>).__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__).toBeUndefined();
+
+    wrapper.unmount();
+  });
+
+  it('survives 20 settings and AI config round trips with stable DOM, state, and bounded navigation frames', async () => {
+    const globals = globalThis as Record<string, any>;
+    globals.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__ = true;
+    const frames = installFrameQueue();
+    const wrapper = mountApp();
+    const originalWorkspace = wrapper.get('[data-main-workspace]').element;
+    const retainedInput = wrapper.get('[data-retained-draft]');
+    await retainedInput.setValue('循环后仍保留');
+    (wrapper.vm as unknown as { mobileTab: string }).mobileTab = 'tags';
+
+    for (let cycle = 0; cycle < 20; cycle += 1) {
+      (wrapper.vm as unknown as { openSettingsPage(): void }).openSettingsPage();
+      await nextTick();
+      expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
+      expect(wrapper.find('[data-settings-page]').exists()).toBe(true);
+      frames.flush();
+      await wrapper.get('[data-utility-back]').trigger('click');
+      await nextTick();
+      expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
+      frames.flush();
+      expect(wrapper.find('[data-settings-page]').exists()).toBe(false);
+
+      (wrapper.vm as unknown as { openAiConfigPage(): void }).openAiConfigPage();
+      await nextTick();
+      expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
+      expect(wrapper.find('[data-ai-config-page]').exists()).toBe(true);
+      frames.flush();
+      await wrapper.get('[data-utility-back]').trigger('click');
+      await nextTick();
+      expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
+      frames.flush();
+      expect(wrapper.find('[data-ai-config-page]').exists()).toBe(false);
+
+      expect(wrapper.get('[data-main-workspace]').element).toBe(originalWorkspace);
+    }
+
+    expect(wrapper.get('[data-retained-draft]').element).toBe(retainedInput.element);
+    expect((wrapper.get('[data-retained-draft]').element as HTMLInputElement).value).toBe('循环后仍保留');
+    expect((wrapper.vm as unknown as { mobileTab: string }).mobileTab).toBe('tags');
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(0);
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__()).toMatchObject({
+      metrics: {
+        'open-settings': { count: 20 },
+        'open-ai-config': { count: 20 },
+        'return-main': { count: 40 },
+      },
+      resources: { 'navigation-frame': 0 },
+      mainWorkspaceMounts: 1,
+      utilityPageMounts: { settings: 20, 'ai-config': 20 },
+    });
 
     wrapper.unmount();
   });
