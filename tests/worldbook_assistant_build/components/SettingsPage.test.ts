@@ -59,6 +59,13 @@ describe('SettingsPage', () => {
     expect(wrapper.text()).toContain('API 设置');
   });
 
+  it('uses the page body as its single internal scroll container', () => {
+    const wrapper = mountPage();
+
+    expect(wrapper.findAll('.utility-page-scroll')).toHaveLength(1);
+    expect(wrapper.get('.utility-page-scroll').classes()).toContain('utility-page-body');
+  });
+
   it('emits back when the page back button is clicked', async () => {
     const wrapper = mountPage();
 

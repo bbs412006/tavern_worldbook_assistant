@@ -48,6 +48,13 @@ describe('AIConfigPage', () => {
     expect(wrapper.emitted('update:customPrompt')).toEqual([['新的系统提示词']]);
   });
 
+  it('uses the active stage as its single internal scroll container', () => {
+    const wrapper = mountPage();
+
+    expect(wrapper.findAll('.utility-page-scroll')).toHaveLength(1);
+    expect(wrapper.get('.utility-page-scroll').classes()).toContain('utility-page-body');
+  });
+
   it('emits back from the input stage', async () => {
     const wrapper = mountPage();
 

@@ -13,7 +13,7 @@
       <h2 class="utility-page-title">{{ stage === 'preview' ? '📋 配置变更预览' : '🔧 AI 配置世界书' }}</h2>
     </header>
 
-    <div v-if="stage === 'input'" class="utility-page-body ai-config-input-stage">
+    <div v-if="stage === 'input'" class="utility-page-body utility-page-scroll ai-config-input-stage">
       <label class="field">
         <span>目标世界书</span>
         <select :value="targetWorldbook" class="text-input" @change="$emit('update:targetWorldbook', ($event.target as HTMLSelectElement).value)">
@@ -60,12 +60,12 @@
       </button>
     </div>
 
-    <div v-else-if="stage === 'generating'" class="utility-page-body generating-stage" aria-live="polite">
+    <div v-else-if="stage === 'generating'" class="utility-page-body utility-page-scroll generating-stage" aria-live="polite">
       <div class="generating-icon">⏳</div>
       <div>AI 正在分析配置指令...</div>
     </div>
 
-    <div v-else class="utility-page-body preview-stage">
+    <div v-else class="utility-page-body utility-page-scroll preview-stage">
       <div class="preview-table-wrap">
         <table class="preview-table">
           <thead>
@@ -139,6 +139,7 @@ defineEmits<{
   width: 100%;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
   color: var(--wb-text-main, #e2e8f0);
   background: var(--wb-bg-root, #0f172a);
 }
@@ -174,6 +175,8 @@ defineEmits<{
   margin: 0 auto;
   padding: 18px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ai-config-input-stage { display: flex; flex-direction: column; gap: 14px; }
@@ -185,7 +188,15 @@ defineEmits<{
 .generating-stage { display: grid; place-content: center; text-align: center; }
 .generating-icon { margin-bottom: 12px; font-size: 28px; }
 .preview-stage { display: flex; flex-direction: column; gap: 14px; }
-.preview-table-wrap { overflow: auto; border: 1px solid var(--wb-border-subtle, #334155); border-radius: 8px; }
+.preview-table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--wb-border-subtle, #334155);
+  border-radius: 8px;
+}
 .preview-table { width: 100%; min-width: 650px; border-collapse: collapse; font-size: 13px; }
 .preview-table th, .preview-table td { padding: 8px; border-bottom: 1px solid var(--wb-border-subtle, #334155); text-align: left; }
 .preview-table tbody tr:last-child td { border-bottom: 0; }
@@ -207,5 +218,14 @@ defineEmits<{
   .preview-actions { justify-content: stretch; }
   .preview-actions .btn { flex: 1 1 auto; }
   .apply-action { flex-basis: 100% !important; margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .utility-page,
+  .utility-page * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>

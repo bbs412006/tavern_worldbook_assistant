@@ -4,7 +4,7 @@
       <button class="utility-page-back" type="button" @click="$emit('back')">← 返回</button>
       <h2 class="utility-page-title">⚙️ 设置中心</h2>
     </header>
-    <div class="utility-page-body">
+    <div class="utility-page-body utility-page-scroll">
       <div class="utility-page-content">
         <div style="border:1px solid var(--wb-border-subtle,#334155);border-radius:8px;padding:10px;">
           <div style="font-size:13px;font-weight:600;margin-bottom:8px;">体验设置</div>
@@ -261,6 +261,7 @@ defineEmits<{
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 16px;
 }
 
@@ -296,6 +297,15 @@ defineEmits<{
   .text-input {
     min-width: 0;
     max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .utility-page,
+  .utility-page * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 </style>
