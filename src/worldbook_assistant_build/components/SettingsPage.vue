@@ -257,6 +257,7 @@ defineEmits<{
 }
 
 .utility-page-body {
+  box-sizing: border-box;
   min-height: 0;
   flex: 1;
   overflow-y: auto;

@@ -169,6 +169,7 @@ defineEmits<{
 .utility-page-back-placeholder { min-width: 88px; }
 .utility-page-title { margin: 0; font-size: 16px; white-space: nowrap; }
 .utility-page-body {
+  box-sizing: border-box;
   flex: 1 1 auto;
   min-height: 0;
   width: min(100%, 900px);
