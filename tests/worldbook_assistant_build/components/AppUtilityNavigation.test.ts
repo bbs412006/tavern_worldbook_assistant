@@ -60,9 +60,9 @@ function installHostBoundaryStubs(): void {
   globals.prompt = vi.fn(() => null);
 }
 
-function mountApp(): VueWrapper {
+function mountApp(attachTo: HTMLElement = document.body): VueWrapper {
   return mount(App, {
-    attachTo: document.body,
+    attachTo,
     global: {
       stubs: {
         SettingsPage: SettingsPageStub,
@@ -114,6 +114,26 @@ describe('App utility navigation', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     vi.restoreAllMocks();
+  });
+
+  it('binds workspace resize work to the mounted document window', () => {
+    const iframe = document.createElement('iframe');
+    document.body.append(iframe);
+    const foreignDocument = iframe.contentDocument!;
+    const foreignWindow = iframe.contentWindow!;
+    const host = foreignDocument.createElement('div');
+    foreignDocument.body.append(host);
+    const foreignAdd = vi.spyOn(foreignWindow, 'addEventListener');
+    const localAdd = vi.spyOn(window, 'addEventListener');
+
+    const wrapper = mountApp(host);
+
+    const foreignResizeListeners = foreignAdd.mock.calls.filter(([type]) => type === 'resize');
+    const localResizeListeners = localAdd.mock.calls.filter(([type]) => type === 'resize');
+    expect(foreignResizeListeners).toHaveLength(1);
+    expect(localResizeListeners).toHaveLength(1);
+    wrapper.unmount();
+    iframe.remove();
   });
 
   it('keeps the same main workspace element across settings and AI config round trips', async () => {

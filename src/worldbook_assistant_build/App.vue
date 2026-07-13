@@ -3025,6 +3025,7 @@ import { getHostWindow } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
 import { useCrossCopyResize } from './composables/useCrossCopyResize';
+import { useWorkspaceActivity } from './composables/useWorkspaceActivity';
 import { useCrossCopyMobileSteps } from './composables/useCrossCopyMobileSteps';
 import { useCrossCopyPersistence } from './composables/useCrossCopyPersistence';
 import { useCrossCopySelection } from './composables/useCrossCopySelection';
@@ -3100,7 +3101,7 @@ const expandedBrowseCardUids = ref<Set<number>>(new Set());
 const BROWSE_RENDER_BATCH = 30;
 const browseRenderLimit = ref(BROWSE_RENDER_BATCH);
 const browseLoadMoreSentinelRef = ref<HTMLElement | null>(null);
-let _browseIntersectionObserver: IntersectionObserver | null = null;
+const rootRef = ref<HTMLElement | null>(null);
 const isFocusEditing = ref(false);
 const focusWorldbookMenuOpen = ref(false);
 const focusToolsExpanded = ref(false);
@@ -5665,35 +5666,10 @@ function browseLoadMore(): void {
   browseRenderLimit.value = Math.min(browseRenderLimit.value + BROWSE_RENDER_BATCH, filteredEntries.value.length);
 }
 
-function setupBrowseIntersectionObserver(): void {
-  teardownBrowseIntersectionObserver();
-  const sentinel = browseLoadMoreSentinelRef.value;
-  if (!sentinel) return;
-  _browseIntersectionObserver = new IntersectionObserver(
-    (entries) => {
-      if (entries[0]?.isIntersecting && browseHasMoreEntries.value) {
-        browseLoadMore();
-      }
-    },
-    { rootMargin: '200px' },
-  );
-  _browseIntersectionObserver.observe(sentinel);
-}
-
-function teardownBrowseIntersectionObserver(): void {
-  _browseIntersectionObserver?.disconnect();
-  _browseIntersectionObserver = null;
-}
-
 watch(
   () => filteredEntries.value.length,
   () => { browseRenderLimit.value = BROWSE_RENDER_BATCH; },
 );
-
-watch(browseLoadMoreSentinelRef, (el) => {
-  if (el) setupBrowseIntersectionObserver();
-  else teardownBrowseIntersectionObserver();
-});
 
 function normalizeCrossCopyWorldbookSelection(): void {
   const names = worldbookNames.value;
@@ -10063,6 +10039,24 @@ function handleFloatingWindowResize(): void {
   }
 }
 
+const workspaceActivity = useWorkspaceActivity({
+  active: isMainWorkspaceActive,
+  getBrowseSentinel: () => browseLoadMoreSentinelRef.value,
+  hasMoreBrowseEntries: () => browseHasMoreEntries.value,
+  loadMoreBrowseEntries: browseLoadMore,
+  getResizeTarget: () => rootRef.value?.ownerDocument?.defaultView ?? null,
+  stopResizeSessions: () => {
+    stopPaneResize();
+    stopCrossCopyPaneResize();
+    stopHistorySectionResize();
+  },
+  refreshLayout: handleFloatingWindowResize,
+});
+
+watch(browseLoadMoreSentinelRef, () => {
+  workspaceActivity.refreshBrowseObservation();
+});
+
 function bringFloatingToFront(key: FloatingPanelKey): void {
   floatingZCounter.value += 1;
   floatingPanels[key].z = floatingZCounter.value;
@@ -10382,7 +10376,6 @@ function onPanelDiscard(): void {
   discardUnsavedDraft();
 }
 
-const rootRef = ref<HTMLElement | null>(null);
 let _mobileResizeHandler: (() => void) | null = null;
 
 onMounted(() => {
@@ -10460,10 +10453,10 @@ onMounted(() => {
   window.addEventListener(FAB_VISIBLE_CHANGED_EVENT, onFabVisibleChanged);
   window.dispatchEvent(new CustomEvent(FAB_VISIBLE_SET_EVENT, { detail: fabVisible.value }));
   hostResizeWindow.value = resolveHostWindow();
+  workspaceActivity.refreshResizeTarget();
   const hostDoc = hostResizeWindow.value.document;
   hostDoc.addEventListener('pointerdown', onHostPointerDownForWorldbookPicker, true);
   hostDoc.addEventListener('keydown', onHostKeyDownForWorldbookPicker, true);
-  hostResizeWindow.value.addEventListener('resize', handleFloatingWindowResize);
 
   handleFloatingWindowResize();
   updateHostPanelTheme();
@@ -10524,7 +10517,6 @@ onUnmounted(() => {
   window.removeEventListener(FAB_VISIBLE_CHANGED_EVENT, onFabVisibleChanged);
   hostResizeWindow.value?.document.removeEventListener('pointerdown', onHostPointerDownForWorldbookPicker, true);
   hostResizeWindow.value?.document.removeEventListener('keydown', onHostKeyDownForWorldbookPicker, true);
-  hostResizeWindow.value?.removeEventListener('resize', handleFloatingWindowResize);
   hostResizeWindow.value = null;
   _screenSyncCleanup?.();
   _screenSyncCleanup = null;
