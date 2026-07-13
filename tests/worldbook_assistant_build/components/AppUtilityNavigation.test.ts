@@ -234,6 +234,45 @@ describe('App utility navigation', () => {
     wrapper.unmount();
   });
 
+  it('tears down active floating drag listeners when the workspace hides', async () => {
+    const globals = globalThis as Record<string, any>;
+    globals.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__ = true;
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      startFloatingDrag(key: 'find', event: PointerEvent): void;
+    };
+    const handle = document.createElement('div');
+    const addDocumentListener = vi.spyOn(document, 'addEventListener');
+    const removeDocumentListener = vi.spyOn(document, 'removeEventListener');
+    const addWindowListener = vi.spyOn(window, 'addEventListener');
+    const removeWindowListener = vi.spyOn(window, 'removeEventListener');
+    handle.setPointerCapture = vi.fn();
+
+    vm.startFloatingDrag('find', {
+      button: 0,
+      pointerId: 12,
+      pointerType: 'mouse',
+      clientX: 120,
+      clientY: 80,
+      currentTarget: handle,
+      preventDefault: vi.fn(),
+    } as unknown as PointerEvent);
+
+    expect(addDocumentListener.mock.calls.filter(([type]) => type === 'pointermove')).toHaveLength(1);
+    expect(addDocumentListener.mock.calls.filter(([type]) => type === 'pointerup')).toHaveLength(1);
+    expect(addDocumentListener.mock.calls.filter(([type]) => type === 'pointercancel')).toHaveLength(1);
+    expect(addWindowListener.mock.calls.filter(([type]) => type === 'blur')).toHaveLength(1);
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['floating-session']).toBe(1);
+
+    await openUtility(wrapper, 'settings');
+
+    expect(removeDocumentListener.mock.calls.filter(([type]) => type === 'pointermove')).toHaveLength(1);
+    expect(removeDocumentListener.mock.calls.filter(([type]) => type === 'pointerup')).toHaveLength(1);
+    expect(removeDocumentListener.mock.calls.filter(([type]) => type === 'pointercancel')).toHaveLength(1);
+    expect(removeWindowListener.mock.calls.filter(([type]) => type === 'blur')).toHaveLength(1);
+    wrapper.unmount();
+  });
+
   it('keeps the same main workspace element across settings and AI config round trips', async () => {
     const wrapper = mountApp();
     const originalWorkspace = wrapper.get('[data-main-workspace]').element;
@@ -291,7 +330,7 @@ describe('App utility navigation', () => {
     wrapper.unmount();
   });
 
-  it('survives 20 settings and AI config round trips with stable DOM, state, and bounded navigation frames', async () => {
+  it('survives 20 settings and AI config round trips with stable DOM, state, and bounded owned resources', async () => {
     const globals = globalThis as Record<string, any>;
     globals.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__ = true;
     const frames = installFrameQueue();
@@ -300,29 +339,49 @@ describe('App utility navigation', () => {
     const retainedInput = wrapper.get('[data-retained-draft]');
     await retainedInput.setValue('循环后仍保留');
     (wrapper.vm as unknown as { mobileTab: string }).mobileTab = 'tags';
+    const activeResourceBaseline = {
+      'browse-observer': 0,
+      'resize-listener': 1,
+      'workspace-frame': 0,
+      'pane-session': 0,
+      'content-session': 0,
+      'top-session': 0,
+      'floating-session': 0,
+    };
+    expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources).toMatchObject(activeResourceBaseline);
 
     for (let cycle = 0; cycle < 20; cycle += 1) {
       (wrapper.vm as unknown as { openSettingsPage(): void }).openSettingsPage();
       await nextTick();
       expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
       expect(wrapper.find('[data-settings-page]').exists()).toBe(true);
+      expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources).toMatchObject({
+        ...activeResourceBaseline,
+        'resize-listener': 0,
+      });
       frames.flush();
       await wrapper.get('[data-utility-back]').trigger('click');
       await nextTick();
       expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
       frames.flush();
       expect(wrapper.find('[data-settings-page]').exists()).toBe(false);
+      expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources).toMatchObject(activeResourceBaseline);
 
       (wrapper.vm as unknown as { openAiConfigPage(): void }).openAiConfigPage();
       await nextTick();
       expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
       expect(wrapper.find('[data-ai-config-page]').exists()).toBe(true);
+      expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources).toMatchObject({
+        ...activeResourceBaseline,
+        'resize-listener': 0,
+      });
       frames.flush();
       await wrapper.get('[data-utility-back]').trigger('click');
       await nextTick();
       expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources['navigation-frame']).toBe(1);
       frames.flush();
       expect(wrapper.find('[data-ai-config-page]').exists()).toBe(false);
+      expect(globals.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__().resources).toMatchObject(activeResourceBaseline);
 
       expect(wrapper.get('[data-main-workspace]').element).toBe(originalWorkspace);
     }
@@ -337,7 +396,7 @@ describe('App utility navigation', () => {
         'open-ai-config': { count: 20 },
         'return-main': { count: 40 },
       },
-      resources: { 'navigation-frame': 0 },
+      resources: { 'navigation-frame': 0, ...activeResourceBaseline },
       mainWorkspaceMounts: 1,
       utilityPageMounts: { settings: 20, 'ai-config': 20 },
     });

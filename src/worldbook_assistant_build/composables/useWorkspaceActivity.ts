@@ -18,12 +18,25 @@ export interface WorkspaceActivityOptions {
   refreshLayout: () => void;
   requestFrame?: typeof requestAnimationFrame;
   cancelFrame?: typeof cancelAnimationFrame;
+  onResourceCountChange?: (counts: WorkspaceOwnedResourceCounts) => void;
+}
+
+export interface WorkspaceOwnedResourceCounts {
+  browseObserverActive: number;
+  resizeListenerActive: number;
+  workspaceFramePending: number;
 }
 
 export function useWorkspaceActivity(options: WorkspaceActivityOptions) {
   const frame = useCoalescedFrame({ request: options.requestFrame, cancel: options.cancelFrame });
   const createObserver = options.createIntersectionObserver
     ?? (callback => new IntersectionObserver(callback, { rootMargin: '200px' }));
+  const resourceCounts: WorkspaceOwnedResourceCounts = {
+    browseObserverActive: 0,
+    resizeListenerActive: 0,
+    workspaceFramePending: 0,
+  };
+  const reportResourceCounts = () => options.onResourceCountChange?.({ ...resourceCounts });
 
   let refreshBrowseObservation = () => {};
   let refreshResizeTarget = () => {};
@@ -41,11 +54,15 @@ export function useWorkspaceActivity(options: WorkspaceActivityOptions) {
       resizeTarget?.removeEventListener('resize', onResize);
       resizeTarget = nextTarget;
       resizeTarget?.addEventListener('resize', onResize);
+      resourceCounts.resizeListenerActive = resizeTarget ? 1 : 0;
+      reportResourceCounts();
     };
 
     refreshBrowseObservation = () => {
       observer?.disconnect();
+      resourceCounts.browseObserverActive = 0;
       if (!active) {
+        reportResourceCounts();
         return;
       }
       const sentinel = options.getBrowseSentinel();
@@ -56,7 +73,9 @@ export function useWorkspaceActivity(options: WorkspaceActivityOptions) {
           }
         });
         observer.observe(sentinel);
+        resourceCounts.browseObserverActive = 1;
       }
+      reportResourceCounts();
     };
 
     const onResize = () => {
@@ -64,10 +83,14 @@ export function useWorkspaceActivity(options: WorkspaceActivityOptions) {
         return;
       }
       frame.schedule(() => {
+        resourceCounts.workspaceFramePending = 0;
+        reportResourceCounts();
         if (toValue(options.active)) {
           options.refreshLayout();
         }
       });
+      resourceCounts.workspaceFramePending = frame.pending.value ? 1 : 0;
+      reportResourceCounts();
     };
 
     return {
@@ -92,15 +115,21 @@ export function useWorkspaceActivity(options: WorkspaceActivityOptions) {
         }
         active = false;
         observer?.disconnect();
+        resourceCounts.browseObserverActive = 0;
         refreshResizeTarget();
         frame.cancel();
+        resourceCounts.workspaceFramePending = 0;
+        reportResourceCounts();
         options.stopResizeSessions();
       },
       dispose() {
         active = false;
         observer?.disconnect();
+        resourceCounts.browseObserverActive = 0;
         refreshResizeTarget();
         frame.dispose();
+        resourceCounts.workspaceFramePending = 0;
+        reportResourceCounts();
         options.stopResizeSessions();
       },
     };

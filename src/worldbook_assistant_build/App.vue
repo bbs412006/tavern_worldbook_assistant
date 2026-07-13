@@ -3115,6 +3115,12 @@ const performanceDiagnosticsEnabled = (() => {
 })();
 const performanceDiagnostics = createPerformanceDiagnostics(performanceDiagnosticsEnabled);
 const navigationMeasurementFrame = useCoalescedFrame();
+const setOwnedResourceCount = (name: string, active: boolean | number) => {
+  performanceDiagnostics.setResourceCount(name, typeof active === 'number' ? active : Number(active));
+};
+for (const sessionName of ['pane-session', 'content-session', 'top-session', 'floating-session']) {
+  setOwnedResourceCount(sessionName, 0);
+}
 const performanceSnapshotKey = '__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__';
 const localPerformanceSnapshot = (): PerformanceSnapshot => performanceDiagnostics.snapshot();
 
@@ -10108,8 +10114,14 @@ const workspaceActivity = useWorkspaceActivity({
     stopHistorySectionResize();
     stopContentResize();
     stopContentTopDrag();
+    stopFloatingDrag();
   },
   refreshLayout: handleFloatingWindowResize,
+  onResourceCountChange: counts => {
+    performanceDiagnostics.setResourceCount('browse-observer', counts.browseObserverActive);
+    performanceDiagnostics.setResourceCount('resize-listener', counts.resizeListenerActive);
+    performanceDiagnostics.setResourceCount('workspace-frame', counts.workspaceFramePending);
+  },
 });
 
 watch(browseLoadMoreSentinelRef, () => {
@@ -10181,6 +10193,7 @@ function startFloatingDrag(key: FloatingPanelKey, event: PointerEvent): void {
     win: hostWin,
   };
   activeFloatingDrag.value = dragState;
+  setOwnedResourceCount('floating-session', 1);
   target.setPointerCapture?.(event.pointerId);
   hostDoc.addEventListener('pointermove', onFloatingDragMove);
   hostDoc.addEventListener('pointerup', stopFloatingDrag);
@@ -10213,6 +10226,7 @@ function stopFloatingDrag(): void {
     drag.win.removeEventListener('blur', stopFloatingDrag);
   }
   activeFloatingDrag.value = null;
+  setOwnedResourceCount('floating-session', 0);
 }
 
 function clampPaneWidths(): void {
@@ -10261,8 +10275,10 @@ function stopContentDragSession(kind: 'resize' | 'top'): void {
   session.cleanupTransientState();
   if (kind === 'resize') {
     contentResizeSession = null;
+    setOwnedResourceCount('content-session', 0);
   } else {
     contentTopDragSession = null;
+    setOwnedResourceCount('top-session', 0);
   }
 }
 
@@ -10325,6 +10341,7 @@ function startContentResize(e: PointerEvent): void {
       textarea.style.willChange = '';
     },
   };
+  setOwnedResourceCount('content-session', 1);
   target.addEventListener('pointermove', onMove);
   target.addEventListener('pointerup', onStop);
   target.addEventListener('pointercancel', onStop);
@@ -10381,6 +10398,7 @@ function startContentTopDrag(e: PointerEvent): void {
       block.style.marginTop = `${-contentTopDragOffset}px`;
     },
   };
+  setOwnedResourceCount('top-session', 1);
   target.addEventListener('pointermove', onMove);
   target.addEventListener('pointerup', onStop);
   target.addEventListener('pointercancel', onStop);
@@ -10405,6 +10423,7 @@ function startPaneResize(key: PaneResizeKey, event: PointerEvent): void {
     doc: hostDoc,
     win: hostWin,
   };
+  setOwnedResourceCount('pane-session', 1);
   target?.setPointerCapture?.(event.pointerId);
   hostDoc.addEventListener('pointermove', onPaneResizeMove);
   hostDoc.addEventListener('pointerup', stopPaneResize);
@@ -10458,6 +10477,7 @@ function stopPaneResize(): void {
   state.doc.removeEventListener('pointercancel', stopPaneResize);
   state.win.removeEventListener('blur', stopPaneResize);
   paneResizeState.value = null;
+  setOwnedResourceCount('pane-session', 0);
   if (!isCompactLayout.value) {
     persistLayoutState();
   }

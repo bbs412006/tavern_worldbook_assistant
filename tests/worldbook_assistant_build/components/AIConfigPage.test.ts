@@ -7,6 +7,7 @@ import AIConfigPage from '../../../src/worldbook_assistant_build/components/AICo
 
 type Change = {
   name: string;
+  field: string;
   label: string;
   oldValue: string;
   newValue: string;
@@ -30,8 +31,8 @@ function mountPage(overrides: Record<string, unknown> = {}) {
 
 function previewChanges(): Change[] {
   return [
-    { name: '条目一', label: '常驻', oldValue: '否', newValue: '是', selected: false },
-    { name: '条目二', label: '顺序', oldValue: '2', newValue: '1', selected: true },
+    { name: '条目一', field: 'sticky', label: '常驻', oldValue: '否', newValue: '是', selected: false },
+    { name: '条目二', field: 'position_order', label: '顺序', oldValue: '2', newValue: '1', selected: true },
   ];
 }
 
@@ -107,5 +108,15 @@ describe('AIConfigPage', () => {
     await wrapper.get('.apply-action').trigger('click');
 
     expect(wrapper.emitted('apply')).toHaveLength(1);
+  });
+
+  it('keeps preview row DOM identity with the intrinsic change when rows reorder', async () => {
+    const changes = previewChanges();
+    const wrapper = mountPage({ preview: true, changes });
+    const firstRow = wrapper.findAll('tbody tr')[0].element;
+
+    await wrapper.setProps({ changes: [changes[1], changes[0]] });
+
+    expect(wrapper.findAll('tbody tr')[1].element).toBe(firstRow);
   });
 });

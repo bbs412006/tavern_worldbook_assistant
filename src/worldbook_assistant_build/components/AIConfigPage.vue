@@ -79,7 +79,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(change, index) in changes" :key="index" :class="{ unselected: !change.selected }">
+            <tr v-for="change in changes" :key="getConfigChangeKey(change)" :class="{ unselected: !change.selected }">
               <td><input v-model="change.selected" type="checkbox" /></td>
               <td class="entry-name">{{ change.name }}</td>
               <td>{{ change.label }}</td>
@@ -119,6 +119,10 @@ const stage = computed<'input' | 'generating' | 'preview'>(() => {
   if (props.preview) return 'preview';
   return 'input';
 });
+
+function getConfigChangeKey(change: { name: string; field: string }): string {
+  return `${change.name}\u0000${change.field}`;
+}
 
 defineEmits<{
   back: [];

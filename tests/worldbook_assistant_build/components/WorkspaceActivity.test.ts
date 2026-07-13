@@ -55,6 +55,11 @@ function createHarness(initiallyActive = true) {
   const loadMore = vi.fn();
   const stopResizeSessions = vi.fn();
   const refreshLayout = vi.fn();
+  let resourceCounts = {
+    browseObserverActive: 0,
+    resizeListenerActive: 0,
+    workspaceFramePending: 0,
+  };
   const scope = effectScope();
   let activity!: ReturnType<typeof useWorkspaceActivity>;
 
@@ -70,6 +75,9 @@ function createHarness(initiallyActive = true) {
       refreshLayout,
       requestFrame: frames.request,
       cancelFrame: frames.cancel,
+      onResourceCountChange: counts => {
+        resourceCounts = counts;
+      },
     });
   });
 
@@ -93,6 +101,9 @@ function createHarness(initiallyActive = true) {
     loadMore,
     stopResizeSessions,
     refreshLayout,
+    get resourceCounts() {
+      return resourceCounts;
+    },
     scope,
   };
 }
@@ -221,5 +232,29 @@ describe('workspace visibility activity', () => {
     harness.scope.stop();
     expect(harness.listeners.size).toBe(0);
     expect(harness.observed.size).toBe(0);
+  });
+
+  it('reports current owned observer, resize listener, and pending frame counts on transitions', () => {
+    const harness = createHarness();
+
+    expect(harness.resourceCounts).toEqual({
+      browseObserverActive: 1,
+      resizeListenerActive: 1,
+      workspaceFramePending: 0,
+    });
+
+    harness.resizeTarget.dispatchResize();
+    expect(harness.resourceCounts.workspaceFramePending).toBe(1);
+    harness.frames.flush();
+    expect(harness.resourceCounts.workspaceFramePending).toBe(0);
+
+    harness.active.value = false;
+    expect(harness.resourceCounts).toEqual({
+      browseObserverActive: 0,
+      resizeListenerActive: 0,
+      workspaceFramePending: 0,
+    });
+
+    harness.scope.stop();
   });
 });
