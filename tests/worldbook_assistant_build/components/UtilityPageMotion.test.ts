@@ -95,4 +95,27 @@ describe('utility page motion and scrolling contracts', () => {
       '-webkit-overflow-scrolling': 'touch',
     });
   });
+
+  it.each([
+    ['SettingsPage', settingsSource, '.utility-page-content'],
+    ['AIConfigPage', aiConfigSource, '.utility-page-body'],
+  ])('%s keeps utility content constrained against horizontal clipping', (_name, source, selector) => {
+    expectDeclarations(getRule(source, selector), {
+      width: 'min\\(100%,\\s*\\d+px\\)',
+      'min-width': '0',
+    });
+  });
+
+  it('keeps primary AI mobile actions at least 40px tall with unified buttons', () => {
+    expect(aiConfigSource).toMatch(
+      /@media\s*\(max-width:\s*640px\)[\s\S]*?\.utility-actions \.wb-control-button\s*\{[^}]*min-height:\s*40px;/,
+    );
+  });
+
+  it('keeps the AI target worldbook on the custom select layer', () => {
+    const input = mountAIConfigPage();
+
+    expect(input.find('[role="combobox"]').exists()).toBe(true);
+    expect(input.find('select').exists()).toBe(false);
+  });
 });

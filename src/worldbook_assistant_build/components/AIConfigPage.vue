@@ -1,14 +1,13 @@
 <template>
   <section class="utility-page ai-config-page">
     <header class="utility-page-header">
-      <button
+      <BaseButton
         v-if="stage !== 'generating'"
         class="utility-page-back"
-        type="button"
         @click="$emit(stage === 'preview' ? 'back-to-input' : 'back')"
       >
         ← 返回
-      </button>
+      </BaseButton>
       <span v-else class="utility-page-back-placeholder" aria-hidden="true"></span>
       <h2 class="utility-page-title">{{ stage === 'preview' ? '📋 配置变更预览' : '🔧 AI 配置世界书' }}</h2>
     </header>
@@ -16,17 +15,17 @@
     <div v-if="stage === 'input'" class="utility-page-body utility-page-scroll ai-config-input-stage">
       <label class="field">
         <span>目标世界书</span>
-        <select :value="targetWorldbook" class="text-input" @change="$emit('update:targetWorldbook', ($event.target as HTMLSelectElement).value)">
-          <option value="">请选择</option>
-          <option v-for="name in worldbookNames" :key="`cfg-wb-${name}`" :value="name">{{ name }}</option>
-        </select>
+        <BaseSelect
+          :model-value="targetWorldbook"
+          :options="worldbookOptions"
+          @update:model-value="$emit('update:targetWorldbook', String($event ?? ''))"
+        />
       </label>
 
       <label class="field">
         <span>配置指令（自然语言描述）</span>
-        <textarea
-          :value="input"
-          class="text-input"
+        <BaseTextarea
+          :model-value="input"
           rows="8"
           placeholder="例如：
 将以下条目设为蓝灯常驻，位置设为角色定义前：
@@ -34,30 +33,38 @@
 - 角色速览（顺序2）
 
 所有条目启用不可递归和防止进一步递归"
-          @input="$emit('update:input', ($event.target as HTMLTextAreaElement).value)"
-        ></textarea>
+          @update:model-value="$emit('update:input', $event)"
+        />
       </label>
 
       <details class="custom-prompt-section">
         <summary>📝 查看/修改系统提示词</summary>
         <div class="custom-prompt-content">
-          <textarea
-            :value="customPrompt"
-            class="text-input custom-prompt-input"
+          <BaseTextarea
+            :model-value="customPrompt"
+            class="custom-prompt-input"
             rows="10"
             :placeholder="'留空则使用默认提示词。\n当前默认提示词会在选择世界书后自动填入条目名。'"
-            @input="$emit('update:customPrompt', ($event.target as HTMLTextAreaElement).value)"
-          ></textarea>
+            @update:model-value="$emit('update:customPrompt', $event)"
+          />
           <div class="utility-actions">
-            <button class="btn" type="button" @click="$emit('update:customPrompt', '')">🔄 恢复默认</button>
-            <button class="btn" type="button" @click="$emit('load-default-config-prompt')">📋 加载默认提示词</button>
+            <BaseButton class="reset-prompt-action" @click="$emit('update:customPrompt', '')">🔄 恢复默认</BaseButton>
+            <BaseButton class="load-default-prompt-action" @click="$emit('load-default-config-prompt')">
+              📋 加载默认提示词
+            </BaseButton>
           </div>
         </div>
       </details>
 
-      <button class="btn primary generate-action" type="button" :disabled="!input.trim() || !targetWorldbook || generating" @click="$emit('generate')">
+      <BaseButton
+        class="generate-action"
+        variant="primary"
+        size="lg"
+        :disabled="!input.trim() || !targetWorldbook || generating"
+        @click="$emit('generate')"
+      >
         🤖 发送给 AI 分析
-      </button>
+      </BaseButton>
     </div>
 
     <div v-else-if="stage === 'generating'" class="utility-page-body utility-page-scroll generating-stage" aria-live="polite">
@@ -80,7 +87,13 @@
           </thead>
           <tbody>
             <tr v-for="change in changes" :key="getConfigChangeKey(change)" :class="{ unselected: !change.selected }">
-              <td><input v-model="change.selected" type="checkbox" /></td>
+              <td>
+                <BaseCheckbox
+                  :model-value="change.selected"
+                  :aria-label="`选择 ${change.name} ${change.label}`"
+                  @update:model-value="change.selected = $event"
+                />
+              </td>
               <td class="entry-name">{{ change.name }}</td>
               <td>{{ change.label }}</td>
               <td class="old-value">{{ change.oldValue }}</td>
@@ -91,11 +104,17 @@
         </table>
       </div>
       <div class="utility-actions preview-actions">
-        <button class="btn select-all" type="button" @click="changes.forEach(change => change.selected = true)">全选</button>
-        <button class="btn select-none" type="button" @click="changes.forEach(change => change.selected = false)">全不选</button>
-        <button class="btn primary apply-action" type="button" :disabled="!changes.some(change => change.selected)" @click="$emit('apply')">
+        <BaseButton class="select-all" @click="changes.forEach(change => change.selected = true)">全选</BaseButton>
+        <BaseButton class="select-none" @click="changes.forEach(change => change.selected = false)">全不选</BaseButton>
+        <BaseButton
+          class="apply-action"
+          variant="primary"
+          size="lg"
+          :disabled="!changes.some(change => change.selected)"
+          @click="$emit('apply')"
+        >
           应用选中变更（{{ changes.filter(change => change.selected).length }}）
-        </button>
+        </BaseButton>
       </div>
     </div>
   </section>
@@ -103,6 +122,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+
+import BaseButton from './controls/BaseButton.vue';
+import BaseCheckbox from './controls/BaseCheckbox.vue';
+import BaseSelect, { type BaseSelectOption } from './controls/BaseSelect.vue';
+import BaseTextarea from './controls/BaseTextarea.vue';
 
 const props = defineProps<{
   worldbookNames: string[];
@@ -119,6 +143,10 @@ const stage = computed<'input' | 'generating' | 'preview'>(() => {
   if (props.preview) return 'preview';
   return 'input';
 });
+const worldbookOptions = computed<BaseSelectOption[]>(() => [
+  { value: '', label: '请选择' },
+  ...props.worldbookNames.map(name => ({ value: name, label: name })),
+]);
 
 function getConfigChangeKey(change: { name: string; field: string }): string {
   return `${change.name}\u0000${change.field}`;
@@ -159,23 +187,14 @@ defineEmits<{
   background: var(--wb-bg-panel, #111827);
 }
 
-.utility-page-back {
-  justify-self: start;
-  min-height: 36px;
-  padding: 7px 12px;
-  border: 1px solid var(--wb-border-subtle, #334155);
-  border-radius: 8px;
-  color: var(--wb-text-main, #e2e8f0);
-  background: var(--wb-input-bg, #1e293b);
-  cursor: pointer;
-}
-
+.utility-page-back { justify-self: start; }
 .utility-page-back-placeholder { min-width: 88px; }
 .utility-page-title { margin: 0; font-size: 16px; white-space: nowrap; }
 .utility-page-body {
   box-sizing: border-box;
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   width: min(100%, 900px);
   margin: 0 auto;
   padding: 18px;
@@ -219,9 +238,9 @@ defineEmits<{
   .utility-page-title { justify-self: end; font-size: 14px; }
   .utility-page-back-placeholder { min-width: 72px; }
   .utility-page-body { padding: 12px; }
-  .utility-actions .btn { min-height: 40px; }
+  .utility-actions .wb-control-button { min-height: 40px; }
   .preview-actions { justify-content: stretch; }
-  .preview-actions .btn { flex: 1 1 auto; }
+  .preview-actions .wb-control-button { flex: 1 1 auto; }
   .apply-action { flex-basis: 100% !important; margin-left: 0; }
 }
 

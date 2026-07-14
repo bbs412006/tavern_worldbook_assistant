@@ -4,6 +4,10 @@ import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 
 import AIConfigPage from '../../../src/worldbook_assistant_build/components/AIConfigPage.vue';
+import BaseButton from '../../../src/worldbook_assistant_build/components/controls/BaseButton.vue';
+import BaseCheckbox from '../../../src/worldbook_assistant_build/components/controls/BaseCheckbox.vue';
+import BaseSelect from '../../../src/worldbook_assistant_build/components/controls/BaseSelect.vue';
+import BaseTextarea from '../../../src/worldbook_assistant_build/components/controls/BaseTextarea.vue';
 
 type Change = {
   name: string;
@@ -37,10 +41,19 @@ function previewChanges(): Change[] {
 }
 
 describe('AIConfigPage', () => {
+  it('uses unified controls without a native select', () => {
+    const wrapper = mountPage();
+
+    expect(wrapper.find('select').exists()).toBe(false);
+    expect(wrapper.findComponent(BaseSelect).exists()).toBe(true);
+    expect(wrapper.findAllComponents(BaseTextarea)).toHaveLength(2);
+    expect(wrapper.findAllComponents(BaseButton).length).toBeGreaterThanOrEqual(4);
+  });
+
   it('emits target, instruction, and custom prompt input updates', async () => {
     const wrapper = mountPage();
 
-    await wrapper.get('select').setValue('世界书 B');
+    wrapper.getComponent(BaseSelect).vm.$emit('update:modelValue', '世界书 B');
     await wrapper.get('.ai-config-input-stage > .field textarea').setValue('新的配置指令');
     await wrapper.get('.custom-prompt-input').setValue('新的系统提示词');
 
@@ -73,6 +86,27 @@ describe('AIConfigPage', () => {
     expect(wrapper.get('.utility-page-back-placeholder').attributes('aria-hidden')).toBe('true');
   });
 
+  it('disables generate for incomplete input and emits generate only when enabled', async () => {
+    const incomplete = mountPage({ input: '   ' });
+    expect(incomplete.get('.generate-action').attributes()).toHaveProperty('disabled');
+    await incomplete.get('.generate-action').trigger('click');
+    expect(incomplete.emitted('generate')).toBeUndefined();
+
+    const complete = mountPage();
+    await complete.get('.generate-action').trigger('click');
+    expect(complete.emitted('generate')).toHaveLength(1);
+  });
+
+  it('preserves prompt reset and default loading flows', async () => {
+    const wrapper = mountPage();
+
+    await wrapper.get('.reset-prompt-action').trigger('click');
+    await wrapper.get('.load-default-prompt-action').trigger('click');
+
+    expect(wrapper.emitted('update:customPrompt')).toEqual([['']]);
+    expect(wrapper.emitted('load-default-config-prompt')).toHaveLength(1);
+  });
+
   it('emits back-to-input from the preview stage', async () => {
     const wrapper = mountPage({ preview: true, changes: previewChanges() });
 
@@ -80,6 +114,15 @@ describe('AIConfigPage', () => {
 
     expect(wrapper.emitted('back-to-input')).toHaveLength(1);
     expect(wrapper.emitted('back')).toBeUndefined();
+  });
+
+  it('mutates the selected flag through BaseCheckbox', () => {
+    const changes = previewChanges();
+    const wrapper = mountPage({ preview: true, changes });
+
+    wrapper.findAllComponents(BaseCheckbox)[0].vm.$emit('update:modelValue', true);
+
+    expect(changes[0].selected).toBe(true);
   });
 
   it('selects all preview changes', async () => {
