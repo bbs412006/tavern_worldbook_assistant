@@ -4,6 +4,7 @@
       :model-value="modelValue"
       :options="worldbookOptions"
       :placeholder="placeholder"
+      :selected-label="selectedWorldbookLabel"
       :search-placeholder="searchPlaceholder"
       :no-match-text="noMatchText"
       searchable="auto"
@@ -175,6 +176,7 @@ function matchesTagFilter(name: string): boolean {
 }
 const filteredWorldbookNames = computed(() => props.names.filter(matchesTagFilter));
 const worldbookOptions = computed<BaseSelectOption<string>[]>(() => filteredWorldbookNames.value.map(name => ({ value: name, label: name })));
+const selectedWorldbookLabel = computed(() => props.names.includes(props.modelValue) ? props.modelValue : undefined);
 const tagFilterLogicOptions: BaseSelectOption<string>[] = [
   { value: 'or', label: 'OR' },
   { value: 'and', label: 'AND' },

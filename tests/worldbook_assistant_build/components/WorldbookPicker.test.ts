@@ -107,6 +107,14 @@ describe('WorldbookPicker', () => {
     wrapper.unmount();
   });
 
+  it('keeps the selected worldbook label visible when tag filtering removes it from the menu choices', () => {
+    const wrapper = mountPicker({ selectedTagIds: ['tag-b'] });
+    expect((wrapper.vm as unknown as { filteredWorldbookNames: string[] }).filteredWorldbookNames).toEqual(['世界书 B']);
+    expect(wrapper.get('.wb-control-select-value').text()).toBe('世界书 A');
+    expect(wrapper.get('.wb-control-select-value').classes()).not.toContain('is-placeholder');
+    wrapper.unmount();
+  });
+
   it('returns menu DOM and owner listeners to baseline after 20 open-close cycles', async () => {
     const addDocument = vi.spyOn(document, 'addEventListener');
     const removeDocument = vi.spyOn(document, 'removeEventListener');

@@ -33,6 +33,7 @@ const props = withDefaults(
     disabled?: boolean;
     size?: 'sm' | 'md' | 'lg';
     placeholder?: string;
+    selectedLabel?: string;
     searchPlaceholder?: string;
     noMatchText?: string;
   }>(),
@@ -43,6 +44,7 @@ const props = withDefaults(
     disabled: false,
     size: 'md',
     placeholder: '请选择',
+    selectedLabel: undefined,
     searchPlaceholder: '搜索',
     noMatchText: '无匹配选项',
   },
@@ -88,6 +90,7 @@ const searchEnabled = computed(() =>
   props.searchable === true || (props.searchable === 'auto' && props.options.length > props.searchThreshold),
 );
 const selectedOption = computed(() => props.options.find(option => option.value === props.modelValue) ?? null);
+const displayedSelectedLabel = computed(() => selectedOption.value?.label ?? props.selectedLabel ?? null);
 const filteredOptions = computed(() => {
   const normalizedQuery = query.value.trim().toLocaleLowerCase();
   if (!normalizedQuery) return indexedOptions.value;
@@ -380,8 +383,8 @@ onBeforeUnmount(() => {
         @click="onTriggerClick"
         @keydown="handleKey"
       >
-        <span class="wb-control-select-value" :class="{ 'is-placeholder': !selectedOption }">
-          {{ selectedOption?.label ?? placeholder }}
+        <span class="wb-control-select-value" :class="{ 'is-placeholder': !displayedSelectedLabel }">
+          {{ displayedSelectedLabel ?? placeholder }}
         </span>
         <span class="wb-control-select-chevron" aria-hidden="true">⌄</span>
       </div>
