@@ -49,6 +49,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string | number | null] 
 let idSeed = 0;
 const instanceId = `wb-base-select-${++idSeed}`;
 const listboxId = `${instanceId}-listbox`;
+const searchLabelId = `${instanceId}-search-label`;
 const open = ref(false);
 const query = ref('');
 const activeIndex = ref(-1);
@@ -98,6 +99,18 @@ const triggerAttrs = computed(() => Object.fromEntries(
     || name.startsWith('aria-')
     || name.startsWith('data-')),
 ));
+const searchAttrs = computed(() => {
+  const labelledby = typeof attrs['aria-labelledby'] === 'string' ? attrs['aria-labelledby'].trim() : '';
+  const label = typeof attrs['aria-label'] === 'string' ? attrs['aria-label'].trim() : '';
+  return {
+    'aria-labelledby': labelledby ? `${labelledby} ${searchLabelId}` : undefined,
+    'aria-label': labelledby ? (label || undefined) : `${label ? `${label} ` : ''}搜索选项`,
+    'aria-describedby': attrs['aria-describedby'],
+    'aria-description': attrs['aria-description'],
+    'aria-details': attrs['aria-details'],
+    title: attrs.title,
+  };
+});
 const menuStyle = computed(() => ({
   left: `${placement.value.left}px`,
   top: `${placement.value.top}px`,
@@ -387,14 +400,15 @@ onBeforeUnmount(() => {
       :style="menuStyle"
     >
       <div v-if="searchEnabled" class="wb-control-select-search-wrap">
+        <span :id="searchLabelId" class="wb-control-visually-hidden">搜索选项</span>
         <input
           ref="searchRef"
           v-model="query"
+          v-bind="searchAttrs"
           type="search"
           role="combobox"
           class="wb-control wb-control-input wb-control-select-search"
           placeholder="搜索"
-          aria-label="搜索选项"
           :aria-controls="listboxId"
           aria-expanded="true"
           aria-haspopup="listbox"
@@ -509,6 +523,17 @@ onBeforeUnmount(() => {
 .wb-control-select-search-wrap {
   padding: 8px;
   border-bottom: 1px solid var(--wb-control-border);
+}
+
+.wb-control-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .wb-control-select-search {

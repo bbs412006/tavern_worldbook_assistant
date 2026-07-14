@@ -227,6 +227,52 @@ describe('BaseSelect keyboard and accessibility', () => {
     wrapper.unmount();
   });
 
+  it('composes consumer naming and description semantics onto the focused searchable combobox without duplicating the trigger ID', async () => {
+    const label = document.createElement('span');
+    label.id = 'model-label';
+    label.textContent = '选择模型';
+    const help = document.createElement('span');
+    help.id = 'model-help';
+    help.textContent = '从已加载模型中选择';
+    document.body.append(label, help);
+    const wrapper = mountSelect({
+      id: 'model-select',
+      searchable: true,
+      'aria-labelledby': 'model-label',
+      'aria-describedby': 'model-help',
+      'aria-description': '模型列表',
+      title: '选择模型',
+    });
+
+    await open(wrapper);
+    const trigger = wrapper.get('[data-select-trigger]');
+    const search = rootOf(wrapper).querySelector<HTMLInputElement>('input[type="search"]')!;
+    const labelledby = search.getAttribute('aria-labelledby')!.split(/\s+/);
+
+    expect(document.activeElement).toBe(search);
+    expect(labelledby[0]).toBe('model-label');
+    expect(labelledby.map(id => document.getElementById(id)?.textContent?.trim()).join(' ')).toBe('选择模型 搜索选项');
+    expect(search.getAttribute('aria-describedby')).toBe('model-help');
+    expect(search.getAttribute('aria-description')).toBe('模型列表');
+    expect(search.title).toBe('选择模型');
+    expect(search.id).not.toBe('model-select');
+    expect(document.querySelectorAll('#model-select')).toHaveLength(1);
+    expect(trigger.attributes('id')).toBe('model-select');
+    expect(trigger.attributes('aria-labelledby')).toBe('model-label');
+    wrapper.unmount();
+  });
+
+  it('composes an aria-label fallback for the focused searchable combobox', async () => {
+    const wrapper = mountSelect({ searchable: true, 'aria-label': '目标世界书' });
+
+    await open(wrapper);
+    const search = rootOf(wrapper).querySelector<HTMLInputElement>('input[type="search"]')!;
+
+    expect(search.getAttribute('aria-label')).toBe('目标世界书 搜索选项');
+    expect(search.hasAttribute('aria-labelledby')).toBe(false);
+    wrapper.unmount();
+  });
+
   it('uses the focused element as combobox owner and keeps options out of the Tab order', async () => {
     const nonSearch = mountSelect({ modelValue: 1, searchable: false });
     const trigger = nonSearch.get<HTMLElement>('[data-select-trigger]');

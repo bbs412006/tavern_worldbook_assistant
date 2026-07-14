@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { mount, type VueWrapper } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import { describe, expect, it } from 'vitest';
 
 import SettingsPage from '../../../src/worldbook_assistant_build/components/SettingsPage.vue';
@@ -186,12 +187,37 @@ describe('SettingsPage', () => {
     ]);
   });
 
-  it('preserves model selection strings from the custom select', () => {
-    const wrapper = mountPage({ apiModelList: ['model-a', 'model-b'] });
+  it('names the focused searchable model combobox from visible field text and preserves the real option payload', async () => {
+    const root = document.createElement('div');
+    root.className = 'wb-assistant-root';
+    document.body.append(root);
+    const models = Array.from({ length: 9 }, (_, index) => `model-${index + 1}`);
+    const probe = mountPage();
+    const wrapper = mount(SettingsPage, {
+      props: { ...probe.props(), apiModelList: models },
+      attachTo: root,
+    });
+    probe.unmount();
+    const modelSelect = selectWithLabel(wrapper, 'model-9');
 
-    selectWithLabel(wrapper, 'model-b').vm.$emit('update:modelValue', 'model-b');
+    await modelSelect.get('[data-select-trigger]').trigger('click');
+    await nextTick();
+    await nextTick();
+    const search = root.querySelector<HTMLInputElement>('input[type="search"][role="combobox"]')!;
+    const labelledText = search.getAttribute('aria-labelledby')!
+      .split(/\s+/)
+      .map(id => document.getElementById(id)?.textContent?.trim())
+      .join(' ');
 
-    expect(wrapper.emitted('update-api-config')).toEqual([[{ model: 'model-b' }]]);
+    expect(document.activeElement).toBe(search);
+    expect(labelledText).toContain('选择模型');
+    const target = [...root.querySelectorAll<HTMLElement>('[role="option"]')]
+      .find(option => option.textContent?.trim() === 'model-9')!;
+    target.click();
+    await nextTick();
+    expect(wrapper.emitted('update-api-config')).toEqual([[{ model: 'model-9' }]]);
+    wrapper.unmount();
+    root.remove();
   });
 
   it('keeps version and model actions disabled or loading and emits action flows', async () => {
