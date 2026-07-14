@@ -2,40 +2,35 @@
   <div class="tag-editor-tree-item" :style="itemStyle">
     <span class="tag-editor-indent"></span>
     <span class="tag-editor-dot" :style="{ background: row.color }"></span>
-    <input
-      :value="name"
+    <BaseInput
+      :model-value="name"
       class="tag-editor-name-input"
-      @blur="$emit('rename', ($event.target as HTMLInputElement).value)"
-      @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
+      @update:model-value="draftName = String($event ?? '')"
+      @blur="$emit('rename', draftName)"
+      @keydown.enter.prevent="blurCurrentTarget"
     />
-    <select
+    <BaseSelect
       class="text-input tag-parent-select"
-      :value="parentId ?? ''"
-      @change="$emit('set-parent', ($event.target as HTMLSelectElement).value || null)"
-    >
-      <option value="">根级</option>
-      <option
-        v-for="option in parentOptions"
-        :key="`${idPrefix}-parent-${row.id}-${option.id}`"
-        :value="option.id"
-        :disabled="disabledParentIds.has(option.id)"
-      >
-        {{ option.path }}
-      </option>
-    </select>
+      :model-value="parentId ?? ''"
+      :options="selectOptions"
+      @update:model-value="$emit('set-parent', String($event ?? '') || null)"
+    />
     <TagColorPicker
       :value="row.color"
       :colors="colors"
       :id-prefix="`${idPrefix}-color-${row.id}`"
       @select="$emit('set-color', $event)"
     />
-    <button class="tag-delete-btn" type="button" @click="$emit('delete')">×</button>
+    <BaseButton class="tag-delete-btn" variant="ghost" size="sm" icon-only aria-label="删除标签" @click="$emit('delete')">×</BaseButton>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import TagColorPicker from './TagColorPicker.vue';
+import BaseButton from './controls/BaseButton.vue';
+import BaseInput from './controls/BaseInput.vue';
+import BaseSelect from './controls/BaseSelect.vue';
 
 interface TagTreeItemRow {
   id: string;
@@ -64,8 +59,24 @@ defineEmits<{
   delete: [];
 }>();
 
+const draftName = ref(props.name);
 const itemStyle = computed(() => ({
   '--tag-color': props.row.color,
   '--depth': props.row.depth,
 }));
+const selectOptions = computed(() => [
+  { value: '', label: '根级' },
+  ...props.parentOptions.map(option => ({
+    value: option.id,
+    label: option.path,
+    disabled: props.disabledParentIds.has(option.id),
+  })),
+]);
+
+watch(() => props.name, value => { draftName.value = value; });
+
+function blurCurrentTarget(event: KeyboardEvent): void {
+  const target = event.target as HTMLElement | null;
+  target?.blur();
+}
 </script>

@@ -4,53 +4,39 @@
     <div class="tag-assign-controls">
       <label class="field">
         <span>当前分配标签</span>
-        <select :value="targetId" class="text-input" @change="$emit('update:target-id', ($event.target as HTMLSelectElement).value)">
-          <option value="">请选择标签</option>
-          <option v-for="option in options" :key="`assign-${idPrefix}-${option.id}`" :value="option.id">
-            {{ option.path }}
-          </option>
-        </select>
+        <BaseSelect :model-value="targetId" :options="selectOptions" class="text-input" @update:model-value="$emit('update:target-id', String($event ?? ''))" />
       </label>
       <label v-if="!compact" class="field">
         <span>搜索世界书</span>
-        <input
-          :value="search"
-          type="text"
-          class="text-input"
-          placeholder="搜索世界书..."
-          @input="$emit('update:search', ($event.target as HTMLInputElement).value)"
-        />
+        <BaseInput :model-value="search" class="text-input" placeholder="搜索世界书..." @update:model-value="$emit('update:search', String($event ?? ''))" />
       </label>
-      <input
-        v-else
-        :value="search"
-        type="text"
-        class="text-input"
-        placeholder="搜索世界书..."
-        @input="$emit('update:search', ($event.target as HTMLInputElement).value)"
-      />
+      <BaseInput v-else :model-value="search" class="text-input" placeholder="搜索世界书..." @update:model-value="$emit('update:search', String($event ?? ''))" />
     </div>
     <div class="tag-assign-list" :class="{ compact }">
-      <button
+      <BaseButton
         v-for="name in worldbooks"
         :key="`assign-${idPrefix}-wb-${name}`"
         class="tag-assign-row toggle"
         :class="{ active: targetId ? (assignments[name] ?? []).includes(targetId) : false }"
-        type="button"
         :disabled="!targetId"
         @click="$emit('toggle', name)"
       >
         <span class="tag-assign-name" :title="name">{{ name }}</span>
         <span class="tag-assign-state">{{ targetId && (assignments[name] ?? []).includes(targetId) ? '已分配' : '未分配' }}</span>
         <span class="tag-assign-paths">{{ pathSummary(name) }}</span>
-      </button>
+      </BaseButton>
       <div v-if="!worldbooks.length" class="empty-note">没有匹配的世界书</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+import BaseButton from './controls/BaseButton.vue';
+import BaseInput from './controls/BaseInput.vue';
+import BaseSelect from './controls/BaseSelect.vue';
+
+const props = defineProps<{
   targetId: string;
   search: string;
   options: Array<{ id: string; path: string }>;
@@ -60,6 +46,11 @@ defineProps<{
   idPrefix: string;
   compact?: boolean;
 }>();
+
+const selectOptions = computed(() => [
+  { value: '', label: '请选择标签' },
+  ...props.options.map(option => ({ value: option.id, label: option.path })),
+]);
 
 defineEmits<{
   'update:target-id': [value: string];

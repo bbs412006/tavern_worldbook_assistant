@@ -1,46 +1,42 @@
 <template>
   <div class="tag-create-panel" :class="{ desktop }">
     <div class="tag-create-row">
-      <input
-        :value="name"
-        type="text"
+      <BaseInput
+        :model-value="name"
         class="text-input"
         placeholder="新标签名称"
-        @input="$emit('update:name', ($event.target as HTMLInputElement).value)"
+        @update:model-value="$emit('update:name', String($event ?? ''))"
         @keydown.enter.prevent="$emit('create')"
       />
-      <select
+      <BaseSelect
         v-if="showParentSelect"
-        :value="parentId"
+        :model-value="parentId"
+        :options="selectOptions"
         class="text-input tag-parent-select"
-        @change="$emit('update:parent-id', ($event.target as HTMLSelectElement).value)"
-      >
-        <option value="">根级</option>
-        <option v-for="option in parentOptions" :key="`new-parent-${option.id}`" :value="option.id">
-          {{ option.path }}
-        </option>
-      </select>
-      <button class="btn" type="button" @click="$emit('create')">创建</button>
-      <button class="btn danger" type="button" :disabled="!hasTags" @click="$emit('reset-all')">清除全部</button>
+        @update:model-value="$emit('update:parent-id', String($event ?? ''))"
+      />
+      <BaseButton class="btn" @click="$emit('create')">创建</BaseButton>
+      <BaseButton class="btn danger" variant="danger" :disabled="!hasTags" @click="$emit('reset-all')">清除全部</BaseButton>
     </div>
     <label v-if="!showParentSelect" class="field tag-parent-field">
       <span>父标签（可选）</span>
-      <select
-        :value="parentId"
+      <BaseSelect
+        :model-value="parentId"
+        :options="selectOptions"
         class="text-input"
-        @change="$emit('update:parent-id', ($event.target as HTMLSelectElement).value)"
-      >
-        <option value="">根级</option>
-        <option v-for="option in parentOptions" :key="`new-parent-mobile-${option.id}`" :value="option.id">
-          {{ option.path }}
-        </option>
-      </select>
+        @update:model-value="$emit('update:parent-id', String($event ?? ''))"
+      />
     </label>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+import BaseButton from './controls/BaseButton.vue';
+import BaseInput from './controls/BaseInput.vue';
+import BaseSelect from './controls/BaseSelect.vue';
+
+const props = defineProps<{
   name: string;
   parentId: string;
   parentOptions: Array<{ id: string; path: string }>;
@@ -48,6 +44,11 @@ defineProps<{
   desktop?: boolean;
   showParentSelect?: boolean;
 }>();
+
+const selectOptions = computed(() => [
+  { value: '', label: '根级' },
+  ...props.parentOptions.map(option => ({ value: option.id, label: option.path })),
+]);
 
 defineEmits<{
   'update:name': [value: string];

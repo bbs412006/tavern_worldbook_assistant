@@ -85,10 +85,15 @@
                 <div class="browse-card-header" @click="toggleBrowseCard(entry.uid)">
                   <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
                   <span class="browse-card-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
-                  <label class="browse-toggle-wrap" @click.stop>
-                    <input type="checkbox" :checked="entry.enabled" @change="browseToggleEnabled(entry)" />
+                  <BaseCheckbox
+                    :model-value="entry.enabled"
+                    class="browse-toggle-wrap"
+                    :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
+                    @click.stop
+                    @update:model-value="browseToggleEnabled(entry)"
+                  >
                     <span class="browse-toggle-label">{{ entry.enabled ? 'ON' : 'OFF' }}</span>
-                  </label>
+                  </BaseCheckbox>
                 </div>
                 <div v-if="!expandedBrowseCardUids.has(entry.uid) && entry.strategy.keys.length" class="browse-card-keys" @click="toggleBrowseCard(entry.uid)">
                   <span v-for="(k, ki) in entry.strategy.keys.slice(0, 4)" :key="`mbk-${entry.uid}-${ki}`" class="browse-key-chip">{{ String(k) }}</span>
@@ -106,25 +111,21 @@
                 <div v-if="expandedBrowseCardUids.has(entry.uid)" class="browse-card-expanded">
                   <label class="field">
                     <span>备注</span>
-                    <input class="text-input" type="text" v-model="entry.name" placeholder="名称" />
+                    <BaseInput v-model="entry.name" placeholder="名称" />
                   </label>
                   <label class="field">
                     <span>主要关键词</span>
-                    <textarea
-                      class="text-input browse-keys-input"
-                      :value="entry.strategy.keys.map(k => String(k)).join(', ')"
-                      @change="entry.strategy.keys = ($event.target as HTMLTextAreaElement).value.split(',').map(s => s.trim()).filter(Boolean) as any"
+                    <BaseTextarea
+                      class="browse-keys-input"
+                      :model-value="entry.strategy.keys.map(k => String(k)).join(', ')"
                       placeholder="逗号分隔"
                       rows="1"
-                    ></textarea>
+                      @change="entry.strategy.keys = ($event.target as HTMLTextAreaElement).value.split(',').map(s => s.trim()).filter(Boolean) as any"
+                    />
                   </label>
                   <label class="field">
                     <span>内容</span>
-                    <textarea
-                      class="text-input browse-content-input"
-                      v-model="entry.content"
-                      placeholder="条目内容..."
-                    ></textarea>
+                    <BaseTextarea v-model="entry.content" class="browse-content-input" placeholder="条目内容..." />
                   </label>
                   <div class="browse-config-grid mobile-config-grid">
                     <label class="field">
@@ -137,23 +138,17 @@
                     </label>
                     <label class="field">
                       <span>权重</span>
-                      <input class="text-input" type="number" v-model.number="entry.position.order" />
+                      <BaseInput v-model="entry.position.order" type="number" />
                     </label>
                   </div>
                   <div class="browse-recursion-row">
-                    <label class="checkbox-inline">
-                      <input type="checkbox" v-model="entry.recursion.prevent_incoming" />
-                      <span>🚫 不可递归命中</span>
-                    </label>
-                    <label class="checkbox-inline">
-                      <input type="checkbox" v-model="entry.recursion.prevent_outgoing" />
-                      <span>🚫 阻止后续递归</span>
-                    </label>
+                    <BaseCheckbox v-model="entry.recursion.prevent_incoming">🚫 不可递归命中</BaseCheckbox>
+                    <BaseCheckbox v-model="entry.recursion.prevent_outgoing">🚫 阻止后续递归</BaseCheckbox>
                   </div>
                   <div class="browse-card-actions">
-                    <button class="btn mini danger" type="button" @click="removeSelectedEntry" @mousedown="selectEntry(entry.uid)">🗑</button>
-                    <button class="btn mini utility-btn" type="button" @click="switchToEditorForEntry(entry.uid)">✏️ 完整编辑</button>
-                    <button class="btn mini" type="button" @click="toggleBrowseCard(entry.uid)">收起</button>
+                    <BaseButton variant="danger" size="sm" icon-only aria-label="删除条目" @click="removeSelectedEntry" @mousedown="selectEntry(entry.uid)">🗑</BaseButton>
+                    <BaseButton variant="secondary" size="sm" @click="switchToEditorForEntry(entry.uid)">✏️ 完整编辑</BaseButton>
+                    <BaseButton variant="ghost" size="sm" @click="toggleBrowseCard(entry.uid)">收起</BaseButton>
                   </div>
                 </div>
               </article>
@@ -774,10 +769,15 @@
             <div class="browse-card-header" @click="toggleBrowseCard(entry.uid)">
               <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
               <span class="browse-card-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
-              <label class="browse-toggle-wrap" @click.stop>
-                <input type="checkbox" :checked="entry.enabled" @change="browseToggleEnabled(entry)" />
+              <BaseCheckbox
+                :model-value="entry.enabled"
+                class="browse-toggle-wrap"
+                :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
+                @click.stop
+                @update:model-value="browseToggleEnabled(entry)"
+              >
                 <span class="browse-toggle-label">{{ entry.enabled ? 'ON' : 'OFF' }}</span>
-              </label>
+              </BaseCheckbox>
             </div>
 
             <!-- Keywords preview (collapsed) -->
@@ -802,38 +802,34 @@
             <div v-if="expandedBrowseCardUids.has(entry.uid)" class="browse-card-expanded">
               <label class="field">
                 <span>备注 (Comment)</span>
-                <input class="text-input" type="text" v-model="entry.name" placeholder="条目名称" />
+                <BaseInput v-model="entry.name" placeholder="条目名称" />
               </label>
               <label class="field">
                 <span>主要关键词</span>
-                <textarea
-                  class="text-input browse-keys-input"
-                  :value="entry.strategy.keys.map(k => String(k)).join(', ')"
-                  @change="entry.strategy.keys = ($event.target as HTMLTextAreaElement).value.split(',').map(s => s.trim()).filter(Boolean) as any"
+                <BaseTextarea
+                  class="browse-keys-input"
+                  :model-value="entry.strategy.keys.map(k => String(k)).join(', ')"
                   placeholder="关键词, 用逗号分隔"
                   rows="1"
-                ></textarea>
+                  @change="entry.strategy.keys = ($event.target as HTMLTextAreaElement).value.split(',').map(s => s.trim()).filter(Boolean) as any"
+                />
               </label>
               <label class="field">
                 <span>次要关键词</span>
                 <div class="browse-secondary-keys-row">
                   <BaseSelect v-model="entry.strategy.keys_secondary.logic" :options="secondaryLogicSelectOptions" :searchable="false" size="sm" aria-label="次要逻辑" />
-                  <textarea
-                    class="text-input browse-keys-input"
-                    :value="entry.strategy.keys_secondary.keys.map(k => String(k)).join(', ')"
-                    @change="entry.strategy.keys_secondary.keys = ($event.target as HTMLTextAreaElement).value.split(',').map(s => s.trim()).filter(Boolean) as any"
+                  <BaseTextarea
+                    class="browse-keys-input"
+                    :model-value="entry.strategy.keys_secondary.keys.map(k => String(k)).join(', ')"
                     placeholder="次要关键词, 用逗号分隔"
                     rows="1"
-                  ></textarea>
+                    @change="entry.strategy.keys_secondary.keys = ($event.target as HTMLTextAreaElement).value.split(',').map(s => s.trim()).filter(Boolean) as any"
+                  />
                 </div>
               </label>
               <label class="field">
                 <span>内容 (Content)</span>
-                <textarea
-                  class="text-input browse-content-input"
-                  v-model="entry.content"
-                  placeholder="世界书条目内容..."
-                ></textarea>
+                <BaseTextarea v-model="entry.content" class="browse-content-input" placeholder="世界书条目内容..." />
               </label>
               <div class="browse-config-grid">
                 <label class="field">
@@ -846,28 +842,22 @@
                 </label>
                 <label class="field">
                   <span>权重 (Order)</span>
-                  <input class="text-input" type="number" v-model.number="entry.position.order" />
+                  <BaseInput v-model="entry.position.order" type="number" />
                 </label>
                 <label v-if="entry.position.type === 'at_depth'" class="field">
                   <span>深度 (Depth)</span>
-                  <input class="text-input" type="number" v-model.number="entry.position.depth" min="0" />
+                  <BaseInput v-model="entry.position.depth" type="number" min="0" />
                 </label>
               </div>
               <div class="browse-recursion-row">
-                <label class="checkbox-inline">
-                  <input type="checkbox" v-model="entry.recursion.prevent_incoming" />
-                  <span>🚫 不可递归命中</span>
-                </label>
-                <label class="checkbox-inline">
-                  <input type="checkbox" v-model="entry.recursion.prevent_outgoing" />
-                  <span>🚫 阻止后续递归</span>
-                </label>
+                <BaseCheckbox v-model="entry.recursion.prevent_incoming">🚫 不可递归命中</BaseCheckbox>
+                <BaseCheckbox v-model="entry.recursion.prevent_outgoing">🚫 阻止后续递归</BaseCheckbox>
               </div>
               <div class="browse-card-actions">
-                <button class="btn mini" type="button" @click="duplicateSelectedEntry" @mouseenter="selectEntry(entry.uid)">📋 复制</button>
-                <button class="btn mini danger" type="button" @click="removeSelectedEntry" @mouseenter="selectEntry(entry.uid)">🗑 删除</button>
-                <button class="btn mini utility-btn" type="button" @click="switchToEditorForEntry(entry.uid)">✏️ 完整编辑</button>
-                <button class="btn mini" type="button" @click="toggleBrowseCard(entry.uid)">收起</button>
+                <BaseButton variant="secondary" size="sm" @click="duplicateSelectedEntry" @mouseenter="selectEntry(entry.uid)">📋 复制</BaseButton>
+                <BaseButton variant="danger" size="sm" @click="removeSelectedEntry" @mouseenter="selectEntry(entry.uid)">🗑 删除</BaseButton>
+                <BaseButton variant="secondary" size="sm" @click="switchToEditorForEntry(entry.uid)">✏️ 完整编辑</BaseButton>
+                <BaseButton variant="ghost" size="sm" @click="toggleBrowseCard(entry.uid)">收起</BaseButton>
               </div>
             </div>
           </article>
@@ -2688,7 +2678,9 @@ import TagEditorPanel from './components/TagEditorPanel.vue';
 import SettingsPage from './components/SettingsPage.vue';
 import AIConfigPage from './components/AIConfigPage.vue';
 import BaseButton from './components/controls/BaseButton.vue';
+import BaseCheckbox from './components/controls/BaseCheckbox.vue';
 import BaseInput from './components/controls/BaseInput.vue';
+import BaseTextarea from './components/controls/BaseTextarea.vue';
 import BaseSelect, { type BaseSelectOption } from './components/controls/BaseSelect.vue';
 import { APP_VERSION } from './domain/version';
 import {

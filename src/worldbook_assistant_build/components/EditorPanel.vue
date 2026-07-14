@@ -1,10 +1,11 @@
 <template>
+  <!-- eslint-disable vue/no-mutating-props -- preserves the existing in-place draft contract -->
   <div class="editor-panel-root">
     <template v-if="selectedEntry">
       <header class="editor-head">
         <label class="field editor-comment">
           <span>备注 (COMMENT)</span>
-          <input v-model="selectedEntry.name" type="text" class="text-input" tabindex="-1" />
+          <BaseInput v-model="selectedEntry.name" class="text-input" tabindex="-1" />
         </label>
         <div class="editor-badges">
           <span class="editor-badge" :class="selectedEntry.enabled ? 'on' : 'off'">{{ selectedEntry.enabled ? 'EN' : 'OFF' }}</span>
@@ -15,24 +16,24 @@
       <section class="editor-grid two-cols editor-keyword-grid">
         <label class="field">
           <span>主要关键词 (KEYS)</span>
-          <textarea :value="keysRaw" @input="keysRaw = ($event.target as HTMLTextAreaElement).value" @blur="commitKeys" class="text-area compact"></textarea>
+          <BaseTextarea v-model="keysRaw" class="text-area compact" :min-rows="3" @blur="commitKeys" />
         </label>
         <label class="field">
           <span>次要关键词 (SECONDARY)</span>
-          <textarea :value="secondaryKeysRaw" @input="secondaryKeysRaw = ($event.target as HTMLTextAreaElement).value" @blur="commitSecondaryKeys" class="text-area compact"></textarea>
+          <BaseTextarea v-model="secondaryKeysRaw" class="text-area compact" :min-rows="3" @blur="commitSecondaryKeys" />
         </label>
       </section>
 
-      <section class="editor-content-block" ref="contentBlockRef">
+      <section ref="contentBlockRef" class="editor-content-block">
         <div class="editor-content-title">世界观设定 / 内容 (CONTENT)</div>
-        <textarea v-model="selectedEntry.content" class="text-area large editor-content-area" :disabled="multiSelectMode"></textarea>
+        <BaseTextarea v-model="selectedEntry.content" class="text-area large editor-content-area" :disabled="multiSelectMode" :min-rows="6" />
       </section>
 
       <section class="editor-strategy-section">
         <div class="strategy-switch">
-          <button type="button" class="strategy-pill constant" :class="{ active: selectedEntry.strategy.type === 'constant' }" @click="selectedEntry.strategy.type = 'constant'">🔵 常驻</button>
-          <button type="button" class="strategy-pill vector" :class="{ active: selectedEntry.strategy.type === 'vectorized' }" @click="selectedEntry.strategy.type = 'vectorized'">📎 向量化</button>
-          <button type="button" class="strategy-pill selective" :class="{ active: selectedEntry.strategy.type === 'selective' }" @click="selectedEntry.strategy.type = 'selective'">🟢 关键词</button>
+          <BaseButton variant="ghost" size="sm" class="strategy-pill constant" :class="{ active: selectedEntry.strategy.type === 'constant' }" :aria-pressed="selectedEntry.strategy.type === 'constant'" @click="selectedEntry.strategy.type = 'constant'">🔵 常驻</BaseButton>
+          <BaseButton variant="ghost" size="sm" class="strategy-pill vector" :class="{ active: selectedEntry.strategy.type === 'vectorized' }" :aria-pressed="selectedEntry.strategy.type === 'vectorized'" @click="selectedEntry.strategy.type = 'vectorized'">📎 向量化</BaseButton>
+          <BaseButton variant="ghost" size="sm" class="strategy-pill selective" :class="{ active: selectedEntry.strategy.type === 'selective' }" :aria-pressed="selectedEntry.strategy.type === 'selective'" @click="selectedEntry.strategy.type = 'selective'">🟢 关键词</BaseButton>
         </div>
       </section>
     </template>
@@ -41,14 +42,18 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable vue/no-mutating-props -- this editor intentionally preserves the existing in-place draft contract */
 import { ref, watch } from 'vue';
+import BaseButton from './controls/BaseButton.vue';
+import BaseInput from './controls/BaseInput.vue';
+import BaseTextarea from './controls/BaseTextarea.vue';
 
 const props = defineProps<{
   selectedEntry: any;
   multiSelectMode?: boolean;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   'update:selectedEntry': [entry: any];
 }>();
 
