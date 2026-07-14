@@ -57,7 +57,7 @@
         <div class="mobile-browse-view">
           <!-- Mobile browse toolbar -->
           <section class="wb-toolbar browse-toolbar mobile-browse-toolbar">
-            <WorldbookPicker v-model="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择" />
+            <WorldbookPicker :model-value="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择" @update:model-value="handleWorldbookSelectionUpdate" />
             <BaseInput v-model="searchText" class="browse-search" placeholder="🔍 搜索..." aria-label="搜索世界书条目" />
             <BaseButton size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾</BaseButton>
           </section>
@@ -189,7 +189,25 @@
               <section class="wb-toolbar">
                 <label class="toolbar-label">
                   <span>世界书</span>
-                  <WorldbookPicker v-model="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择世界书" />
+                  <WorldbookPicker
+                    :model-value="selectedWorldbookName"
+                    :names="selectableWorldbookNames"
+                    placeholder="请选择世界书"
+                    search-placeholder="搜索世界书..."
+                    no-match-text="没有匹配的世界书"
+                    show-tag-filter
+                    :tag-definitions="tagDefinitions"
+                    :tag-assignments="tagAssignments"
+                    :tag-path-map="tagPathMap"
+                    :selected-tag-ids="selectedTagFilterIds"
+                    :tag-filter-logic="tagFilterLogic"
+                    :tag-filter-match-mode="tagFilterMatchMode"
+                    mobile-tag-view
+                    @update:model-value="handleWorldbookSelectionUpdate"
+                    @update:selected-tag-ids="updateSelectedTagFilterIds"
+                    @update:tag-filter-logic="updateTagFilterLogic"
+                    @update:tag-filter-match-mode="updateTagFilterMatchMode"
+                  />
               </label>
               <div class="toolbar-btns" style="display:flex;gap:6px;flex-wrap:wrap;">
                 <BaseButton size="sm" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾 保存</BaseButton>
@@ -662,7 +680,7 @@
     <!-- ═══ Desktop Browse Mode (via BrowsePanel) ═══ -->
     <template v-if="panelMode === 'browse'">
       <BrowsePanel
-        v-model="selectedWorldbookName"
+        :model-value="selectedWorldbookName"
         :entries="draftEntries"
         :worldbookNames="selectableWorldbookNames"
         :bindings="bindings"
@@ -678,6 +696,7 @@
         @switch-mode="switchPanelMode"
         @add-entry="addEntry"
         @toggle-global="toggleGlobalMode"
+        @update:model-value="handleWorldbookSelectionUpdate"
       />
 
       <!-- Global Mode Panel (reuse existing) -->
@@ -874,8 +893,8 @@
     <section v-if="!isDesktopFocusMode" class="wb-toolbar">
             <label class="toolbar-label">
               <span>世界书</span>
-              <div ref="worldbookPickerRef" class="worldbook-picker">
-                <BaseSelect v-model="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="世界书" />
+              <div class="worldbook-picker">
+                <BaseSelect :model-value="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="世界书" @update:model-value="handleWorldbookSelectionUpdate" />
                   <div v-if="tagDefinitions.length" class="worldbook-picker-tags tree-mode">
                     <div class="tag-filter-toolbar">
                       <button class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</button>
@@ -918,17 +937,17 @@
                   </div>
               </div>
             </label>
-            <button class="btn" data-focus-hero="wb_new" type="button" @click="createNewWorldbook">新建</button>
-            <button class="btn" data-focus-hero="wb_duplicate" type="button" :disabled="!selectedWorldbookName" @click="duplicateWorldbook">
+            <BaseButton class="btn" size="sm" data-focus-hero="wb_new" @click="createNewWorldbook">新建</BaseButton>
+            <BaseButton class="btn" size="sm" data-focus-hero="wb_duplicate" :disabled="!selectedWorldbookName" @click="duplicateWorldbook">
               另存为
-            </button>
-            <button class="btn danger" data-focus-hero="wb_delete" type="button" :disabled="!selectedWorldbookName" @click="deleteCurrentWorldbook">
+            </BaseButton>
+            <BaseButton class="btn danger" size="sm" variant="danger" data-focus-hero="wb_delete" :disabled="!selectedWorldbookName" @click="deleteCurrentWorldbook">
               删除
-            </button>
-            <button class="btn" data-focus-hero="wb_export" type="button" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook">
+            </BaseButton>
+            <BaseButton class="btn" size="sm" data-focus-hero="wb_export" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook">
               导出
-            </button>
-            <button class="btn" data-focus-hero="wb_import" type="button" @click="triggerImport">导入</button>
+            </BaseButton>
+            <BaseButton class="btn" size="sm" data-focus-hero="wb_import" @click="triggerImport">导入</BaseButton>
             <div class="focus-cine-sink-row" aria-hidden="true">
               <span class="focus-cine-sink" data-focus-sink="save_btn"></span>
               <span class="focus-cine-sink" data-focus-sink="more_btn"></span>
@@ -941,8 +960,8 @@
               <div class="wb-focus-core-group">
                 <label class="toolbar-label focus-toolbar-label">
                   <span class="focus-toolbar-label-text">世界书</span>
-                  <div ref="worldbookPickerRef" class="worldbook-picker">
-                    <BaseSelect v-model="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="世界书" size="sm" />
+                  <div class="worldbook-picker">
+                    <BaseSelect :model-value="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="世界书" size="sm" @update:model-value="handleWorldbookSelectionUpdate" />
                       <div v-if="tagDefinitions.length" class="worldbook-picker-tags tree-mode">
                         <div class="tag-filter-toolbar">
                           <button class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</button>
@@ -985,16 +1004,16 @@
                       </div>
                   </div>
                 </label>
-                <button class="btn" data-focus-hero="save_btn" data-copy-hero="save_btn" type="button" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges || isAnyCineLocked" @click="saveCurrentWorldbook">
+                <BaseButton class="btn" size="sm" data-focus-hero="save_btn" data-copy-hero="save_btn" aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges || isAnyCineLocked" @click="saveCurrentWorldbook">
                   {{ isFocusToolbarCompact ? '💾' : '💾 保存' }}
-                </button>
-                <button class="btn utility-btn" data-focus-hero="focus_toggle" data-copy-hero="focus_toggle" type="button" :class="{ active: isDesktopFocusMode }" :disabled="isAnyCineLocked" @click="toggleFocusEditing">
+                </BaseButton>
+                <BaseButton class="btn utility-btn" size="sm" data-focus-hero="focus_toggle" data-copy-hero="focus_toggle" aria-label="切换专注编辑" :class="{ active: isDesktopFocusMode }" :disabled="isAnyCineLocked" @click="toggleFocusEditing">
                   {{ isFocusToolbarCompact ? '🎯' : '🎯 专注开关' }}
-                </button>
+                </BaseButton>
                 <div ref="focusWorldbookMenuRef" class="focus-menu-wrap">
-                  <button class="btn utility-btn" data-focus-hero="more_btn" data-copy-hero="more_btn" type="button" :disabled="isAnyCineLocked" @click="toggleFocusWorldbookMenu">
+                  <BaseButton class="btn utility-btn" size="sm" data-focus-hero="more_btn" data-copy-hero="more_btn" aria-label="更多世界书操作" :disabled="isAnyCineLocked" @click="toggleFocusWorldbookMenu">
                     {{ isFocusToolbarCompact ? '⋯' : '更多' }}
-                  </button>
+                  </BaseButton>
                   <div class="focus-cine-sink-cluster menu" aria-hidden="true">
                     <span class="focus-cine-sink" data-focus-sink="wb_new"></span>
                     <span class="focus-cine-sink" data-focus-sink="wb_duplicate"></span>
@@ -1004,17 +1023,18 @@
                   </div>
                   <Transition name="focus-menu-pop">
                     <div v-if="focusWorldbookMenuOpen" class="focus-menu-panel">
-                      <button class="btn mini" type="button" @click="runFocusWorldbookAction('create')">新建</button>
-                      <button class="btn mini" type="button" :disabled="!selectedWorldbookName" @click="runFocusWorldbookAction('duplicate')">另存为</button>
-                      <button class="btn mini danger" type="button" :disabled="!selectedWorldbookName" @click="runFocusWorldbookAction('delete')">删除</button>
-                      <button class="btn mini" type="button" @click="runFocusWorldbookAction('import')">导入</button>
-                      <button class="btn mini" type="button" :disabled="!selectedWorldbookName" @click="runFocusWorldbookAction('export')">导出</button>
+                      <BaseButton class="btn mini" size="sm" @click="runFocusWorldbookAction('create')">新建</BaseButton>
+                      <BaseButton class="btn mini" size="sm" :disabled="!selectedWorldbookName" @click="runFocusWorldbookAction('duplicate')">另存为</BaseButton>
+                      <BaseButton class="btn mini danger" size="sm" variant="danger" :disabled="!selectedWorldbookName" @click="runFocusWorldbookAction('delete')">删除</BaseButton>
+                      <BaseButton class="btn mini" size="sm" @click="runFocusWorldbookAction('import')">导入</BaseButton>
+                      <BaseButton class="btn mini" size="sm" :disabled="!selectedWorldbookName" @click="runFocusWorldbookAction('export')">导出</BaseButton>
                     </div>
                   </Transition>
                 </div>
               </div>
               <div class="wb-focus-tool-entry">
-                <button
+                <BaseButton
+                  size="sm"
                   class="btn history-btn utility-btn focus-search-btn"
                   data-focus-hero="find_btn"
                   data-copy-hero="find_btn"
@@ -1022,13 +1042,14 @@
                   :class="{ active: floatingPanels.find.visible }"
                   :disabled="!draftEntries.length || isAnyCineLocked"
                   @click="toggleFloatingPanel('find')"
+                  aria-label="查找替换"
                 >
                   {{ isFocusToolbarCompact ? '🔎' : '🔎 查找替换' }}
-                </button>
+                </BaseButton>
                 <Transition name="focus-tools-trigger">
-                  <button v-if="focusToolsTriggerVisible" class="btn history-btn utility-btn" data-focus-hero="tools_btn" data-copy-hero="tools_btn" type="button" :disabled="focusToolsExpanded || isAnyCineLocked" @click="openFocusToolsBand">
+                  <BaseButton v-if="focusToolsTriggerVisible" class="btn history-btn utility-btn" size="sm" data-focus-hero="tools_btn" data-copy-hero="tools_btn" :disabled="focusToolsExpanded || isAnyCineLocked" @click="openFocusToolsBand">
                     {{ isFocusToolbarCompact ? '工具' : '更多工具' }}
-                  </button>
+                  </BaseButton>
                 </Transition>
                 <div class="focus-cine-sink-cluster tools" aria-hidden="true">
                   <span class="focus-cine-sink" data-focus-sink="tool_global"></span>
@@ -1046,17 +1067,17 @@
             </div>
             <Transition name="focus-tools-band" @after-leave="onFocusToolsBandAfterLeave">
               <div v-if="focusToolsExpanded" class="wb-focus-tools-band">
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_global" data-copy-hero="tool_global" type="button" :class="{ active: globalWorldbookMode }" @click="toggleGlobalMode">🌐 全局模式</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_entry_history" data-copy-hero="tool_entry_history" type="button" :disabled="!selectedEntry" @click="openEntryHistoryModal">🕰️ 条目时光机</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_worldbook_history" data-copy-hero="tool_worldbook_history" type="button" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal">⏪ 整本时光机</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_activation" data-copy-hero="tool_activation" type="button" :class="{ active: floatingPanels.activation.visible }" @click="toggleFloatingPanel('activation')">📡 激活监控</button>
-                <button v-if="persistedState.show_ai_chat" class="btn history-btn utility-btn" data-focus-hero="tool_ai_generate" data-copy-hero="tool_ai_generate" type="button" :class="{ active: aiGeneratorMode }" @click="aiToggleMode">🤖 AI 生成</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_extract" data-copy-hero="tool_extract" type="button" @click="extractFromChat">📥 从聊天提取</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_tag" data-copy-hero="tool_tag" type="button" :class="{ active: tagEditorMode }" @click="tagToggleMode">🏷️ 标签管理</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_copy" data-copy-hero="tool_copy" type="button" :class="{ active: crossCopyMode }" :disabled="isAnyCineLocked" @click="toggleCrossCopyMode">📚 跨书复制</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_settings" data-copy-hero="tool_settings" type="button" @click="openSettingsPage">⚙️ 设置</button>
-                <button class="btn history-btn utility-btn" data-focus-hero="tool_ai_config" data-copy-hero="tool_ai_config" type="button" @click="openAiConfigPage">🔧 AI配置</button>
-                <button class="btn history-btn utility-btn focus-tools-collapse" type="button" @click="closeFocusToolsBand">收起工具</button>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_global" data-copy-hero="tool_global" :class="{ active: globalWorldbookMode }" @click="toggleGlobalMode">🌐 全局模式</BaseButton>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_entry_history" data-copy-hero="tool_entry_history" :disabled="!selectedEntry" @click="openEntryHistoryModal">🕰️ 条目时光机</BaseButton>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_worldbook_history" data-copy-hero="tool_worldbook_history" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal">⏪ 整本时光机</BaseButton>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_activation" data-copy-hero="tool_activation" :class="{ active: floatingPanels.activation.visible }" @click="toggleFloatingPanel('activation')">📡 激活监控</BaseButton>
+                <BaseButton v-if="persistedState.show_ai_chat" class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_ai_generate" data-copy-hero="tool_ai_generate" :class="{ active: aiGeneratorMode }" @click="aiToggleMode">🤖 AI 生成</BaseButton>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_extract" data-copy-hero="tool_extract" @click="extractFromChat">📥 从聊天提取</BaseButton>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_tag" data-copy-hero="tool_tag" :class="{ active: tagEditorMode }" @click="tagToggleMode">🏷️ 标签管理</BaseButton>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_copy" data-copy-hero="tool_copy" :class="{ active: crossCopyMode }" :disabled="isAnyCineLocked" @click="toggleCrossCopyMode">📚 跨书复制</BaseButton>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_settings" data-copy-hero="tool_settings" @click="openSettingsPage">⚙️ 设置</BaseButton>
+                <BaseButton class="btn history-btn utility-btn" size="sm" data-focus-hero="tool_ai_config" data-copy-hero="tool_ai_config" @click="openAiConfigPage">🔧 AI配置</BaseButton>
+                <BaseButton class="btn history-btn utility-btn focus-tools-collapse" size="sm" @click="closeFocusToolsBand">收起工具</BaseButton>
               </div>
             </Transition>
           </section>
@@ -2851,10 +2872,6 @@ const CROSS_COPY_STATUS_PRIORITY: CrossCopyRowStatus[] = [
 ];
 const worldbookNames = ref<string[]>([]);
 const selectedWorldbookName = ref('');
-const worldbookPickerOpen = ref(false);
-const worldbookPickerSearchText = ref('');
-const worldbookPickerRef = ref<HTMLElement | null>(null);
-const worldbookPickerSearchInputRef = ref<HTMLInputElement | null>(null);
 const focusToolbarRef = ref<HTMLElement | null>(null);
 const focusWorldbookMenuRef = ref<HTMLElement | null>(null);
 const rolePickerOpen = ref(false);
@@ -3748,18 +3765,6 @@ function isWorldbookMatchedByTagFilter(worldbookName: string): boolean {
   return candidateSets.some(set => hasIntersection(set));
 }
 
-const filteredSelectableWorldbookNames = computed(() => {
-  let names = selectableWorldbookNames.value;
-  if (selectedTagFilterIds.value.length) {
-    names = names.filter(name => isWorldbookMatchedByTagFilter(name));
-  }
-  const keyword = worldbookPickerSearchText.value.trim().toLowerCase();
-  if (keyword) {
-    names = names.filter(name => name.toLowerCase().includes(keyword));
-  }
-  return names;
-});
-
 const tagAssignWorldbooks = computed(() => {
   const keyword = tagAssignSearch.value.trim().toLowerCase();
   const names = worldbookNames.value;
@@ -4575,6 +4580,28 @@ function switchWorldbookSelection(nextName: string, options: WorldbookSwitchOpti
   return true;
 }
 
+function handleWorldbookSelectionUpdate(value: string | number | null): void {
+  if (typeof value !== 'string') {
+    return;
+  }
+  switchWorldbookSelection(value, {
+    source: 'manual',
+    reason: '手动切换世界书',
+  });
+}
+
+function updateSelectedTagFilterIds(value: string[]): void {
+  selectedTagFilterIds.value = value;
+}
+
+function updateTagFilterLogic(value: TagFilterLogic): void {
+  tagFilterLogic.value = value;
+}
+
+function updateTagFilterMatchMode(value: TagFilterMatchMode): void {
+  tagFilterMatchMode.value = value;
+}
+
 function ensureRefreshAllowed(options: HardRefreshOptions = {}): boolean {
   const ok = confirmDiscardUnsavedChanges({ source: options.source, reason: options.reason ?? '刷新数据' });
   if (!ok) {
@@ -4611,7 +4638,6 @@ watch([draftEntries, originalEntries], () => {
 }, { deep: true, immediate: true, flush: 'post' });
 
 watch(selectedWorldbookName, name => {
-  closeWorldbookPicker();
   mobileMultiSelectMode.value = false;
   clearMobileLongPressState();
   mobileSuppressNextTap.value = false;
@@ -4777,17 +4803,6 @@ watch(mobileTab, tab => {
   tagEditorMode.value = false;
   normalizeCrossCopyWorldbookSelection();
   resetCrossCopyMobileStep();
-});
-
-watch(worldbookPickerOpen, opened => {
-  if (opened) {
-    if (!tagTreeExpandedIds.value.length) {
-      tagTreeExpandedIds.value = [...tagRootIds.value];
-    }
-    return;
-  }
-  tagFilterPanelOpen.value = false;
-  tagFilterSearchText.value = '';
 });
 
 watch(tagDefinitions, () => {
@@ -8800,20 +8815,8 @@ function deleteSelectedGlobalPreset(): void {
   setStatus(`已删除预设: ${preset.name}`);
 }
 
-function closeWorldbookPicker(): void {
-  worldbookPickerOpen.value = false;
-}
-
 function closeRolePicker(): void {
   rolePickerOpen.value = false;
-}
-
-function openWorldbookPicker(): void {
-  worldbookPickerSearchText.value = '';
-  worldbookPickerOpen.value = true;
-  void nextTick(() => {
-    worldbookPickerSearchInputRef.value?.focus();
-  });
 }
 
 function openRolePicker(): void {
@@ -9507,14 +9510,6 @@ function toggleFocusEditing(): void {
   void runFocusCinematicTransition(nextFocus);
 }
 
-function toggleWorldbookPicker(): void {
-  if (worldbookPickerOpen.value) {
-    closeWorldbookPicker();
-    return;
-  }
-  openWorldbookPicker();
-}
-
 function toggleRolePicker(): void {
   if (rolePickerOpen.value) {
     closeRolePicker();
@@ -9544,19 +9539,6 @@ function onSetThemeEvent(event: Event): void {
   }
 }
 
-function selectWorldbookFromPicker(name: string): void {
-  if (!name) {
-    return;
-  }
-  const switched = switchWorldbookSelection(name, {
-    source: 'manual',
-    reason: '手动切换世界书',
-  });
-  if (switched) {
-    closeWorldbookPicker();
-  }
-}
-
 function bindFirstRoleCandidate(): void {
   const first = roleBindingCandidates.value.find(item => !item.bound);
   if (!first) {
@@ -9565,24 +9547,16 @@ function bindFirstRoleCandidate(): void {
   bindRoleCandidateToSelectedPreset(first);
 }
 
-function onHostPointerDownForWorldbookPicker(event: PointerEvent): void {
-  if (!worldbookPickerOpen.value && !rolePickerOpen.value && !themePickerOpen.value && !focusWorldbookMenuOpen.value) {
+function onHostPointerDownForOpenMenus(event: PointerEvent): void {
+  if (!rolePickerOpen.value && !themePickerOpen.value && !focusWorldbookMenuOpen.value) {
     return;
   }
   const target = event.target as Node | null;
   if (!target) {
-    closeWorldbookPicker();
     closeRolePicker();
     closeFocusWorldbookMenu();
     themePickerOpen.value = false;
     return;
-  }
-
-  if (worldbookPickerOpen.value) {
-    const worldbookRoot = worldbookPickerRef.value;
-    if (!worldbookRoot || !worldbookRoot.contains(target)) {
-      closeWorldbookPicker();
-    }
   }
 
   if (rolePickerOpen.value) {
@@ -9604,12 +9578,11 @@ function onHostPointerDownForWorldbookPicker(event: PointerEvent): void {
   }
 }
 
-function onHostKeyDownForWorldbookPicker(event: KeyboardEvent): void {
-  if (!worldbookPickerOpen.value && !rolePickerOpen.value && !focusWorldbookMenuOpen.value) {
+function onHostKeyDownForOpenMenus(event: KeyboardEvent): void {
+  if (!rolePickerOpen.value && !focusWorldbookMenuOpen.value) {
     return;
   }
   if (event.key === 'Escape') {
-    closeWorldbookPicker();
     closeRolePicker();
     closeFocusWorldbookMenu();
   }
@@ -10402,8 +10375,8 @@ onMounted(() => {
   hostResizeWindow.value = resolveHostWindow();
   workspaceActivity.refreshResizeTarget();
   const hostDoc = hostResizeWindow.value.document;
-  hostDoc.addEventListener('pointerdown', onHostPointerDownForWorldbookPicker, true);
-  hostDoc.addEventListener('keydown', onHostKeyDownForWorldbookPicker, true);
+  hostDoc.addEventListener('pointerdown', onHostPointerDownForOpenMenus, true);
+  hostDoc.addEventListener('keydown', onHostKeyDownForOpenMenus, true);
 
   handleFloatingWindowResize();
   updateHostPanelTheme();
@@ -10470,8 +10443,8 @@ onUnmounted(() => {
   window.removeEventListener('wb-helper:toggle-theme', toggleTheme);
   window.removeEventListener('wb-helper:set-theme', onSetThemeEvent);
   window.removeEventListener(FAB_VISIBLE_CHANGED_EVENT, onFabVisibleChanged);
-  hostResizeWindow.value?.document.removeEventListener('pointerdown', onHostPointerDownForWorldbookPicker, true);
-  hostResizeWindow.value?.document.removeEventListener('keydown', onHostKeyDownForWorldbookPicker, true);
+  hostResizeWindow.value?.document.removeEventListener('pointerdown', onHostPointerDownForOpenMenus, true);
+  hostResizeWindow.value?.document.removeEventListener('keydown', onHostKeyDownForOpenMenus, true);
   hostResizeWindow.value = null;
   _screenSyncCleanup?.();
   _screenSyncCleanup = null;

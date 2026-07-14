@@ -151,6 +151,24 @@ describe('BaseSelect values, identity, and search', () => {
     wrapper.unmount();
   });
 
+  it('renders consumer search and empty-result text without changing existing defaults', async () => {
+    const custom = mountSelect({ searchable: true, searchPlaceholder: '搜索世界书...', noMatchText: '没有匹配的世界书' });
+    await open(custom);
+    const customSearch = rootOf(custom).querySelector<HTMLInputElement>('input[type="search"]')!;
+    expect(customSearch.placeholder).toBe('搜索世界书...');
+    await setInput(customSearch, '不存在');
+    expect(rootOf(custom).querySelector('.wb-control-select-empty')?.textContent).toBe('没有匹配的世界书');
+    custom.unmount();
+
+    const defaults = mountSelect({ searchable: true });
+    await open(defaults);
+    const defaultSearch = rootOf(defaults).querySelector<HTMLInputElement>('input[type="search"]')!;
+    expect(defaultSearch.placeholder).toBe('搜索');
+    await setInput(defaultSearch, '不存在');
+    expect(rootOf(defaults).querySelector('.wb-control-select-empty')?.textContent).toBe('无匹配选项');
+    defaults.unmount();
+  });
+
   it('allows spaces in search without selecting the active option', async () => {
     const wrapper = mountSelect({
       searchable: true,

@@ -33,6 +33,8 @@ const props = withDefaults(
     disabled?: boolean;
     size?: 'sm' | 'md' | 'lg';
     placeholder?: string;
+    searchPlaceholder?: string;
+    noMatchText?: string;
   }>(),
   {
     searchable: 'auto',
@@ -41,6 +43,8 @@ const props = withDefaults(
     disabled: false,
     size: 'md',
     placeholder: '请选择',
+    searchPlaceholder: '搜索',
+    noMatchText: '无匹配选项',
   },
 );
 
@@ -408,7 +412,7 @@ onBeforeUnmount(() => {
           type="search"
           role="combobox"
           class="wb-control wb-control-input wb-control-select-search"
-          placeholder="搜索"
+          :placeholder="searchPlaceholder"
           :aria-controls="listboxId"
           aria-expanded="true"
           aria-haspopup="listbox"
@@ -435,7 +439,7 @@ onBeforeUnmount(() => {
         >
           {{ entry.option.label }}
         </button>
-        <div v-if="filteredOptions.length === 0" class="wb-control-select-empty">无匹配选项</div>
+        <div v-if="filteredOptions.length === 0" class="wb-control-select-empty">{{ noMatchText }}</div>
       </div>
     </div>
   </div>

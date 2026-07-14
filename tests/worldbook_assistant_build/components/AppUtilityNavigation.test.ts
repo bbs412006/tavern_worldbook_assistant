@@ -72,7 +72,6 @@ function mountApp(attachTo: HTMLElement = document.body): VueWrapper {
         SettingsPage: SettingsPageStub,
         AIConfigPage: AIConfigPageStub,
         BrowsePanel: BrowsePanelStub,
-        WorldbookPicker: EmptyStub,
         EditorPanel: EmptyStub,
         CrossCopyPanel: EmptyStub,
         CrossCopyControls: EmptyStub,
@@ -352,6 +351,56 @@ describe('App utility navigation', () => {
     expect(wrapper.find('.wb-focus-toolbar select').exists()).toBe(false);
     expect(wrapper.find('.mobile-browse-toolbar select').exists()).toBe(false);
 
+    wrapper.unmount();
+  });
+
+  it('keeps the current worldbook when dirty-switch confirmation is cancelled and switches when accepted', async () => {
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      selectedWorldbookName: string;
+      draftEntries: ReturnType<typeof normalizeEntry>[];
+      originalEntries: ReturnType<typeof normalizeEntry>[];
+      syncEntriesDigestNow(): void;
+      handleWorldbookSelectionUpdate(value: string): void;
+    };
+    vm.selectedWorldbookName = '世界书 A';
+    await nextTick();
+    await Promise.resolve();
+    vm.originalEntries = [normalizeEntry({ uid: 1, comment: 'Entry', content: 'saved' }, 1)];
+    vm.draftEntries = [normalizeEntry({ uid: 1, comment: 'Entry', content: 'dirty' }, 1)];
+    vm.syncEntriesDigestNow();
+    await nextTick();
+    const confirm = vi.mocked((globalThis as Record<string, any>).confirm);
+
+    confirm.mockReturnValueOnce(false);
+    vm.handleWorldbookSelectionUpdate('世界书 B');
+    await nextTick();
+    expect(vm.selectedWorldbookName).toBe('世界书 A');
+
+    confirm.mockReturnValueOnce(true);
+    vm.handleWorldbookSelectionUpdate('世界书 B');
+    await nextTick();
+    expect(vm.selectedWorldbookName).toBe('世界书 B');
+    expect(confirm).toHaveBeenCalledTimes(2);
+    wrapper.unmount();
+  });
+
+  it('renders Task 5 desktop main and focus toolbar actions through small BaseButtons', async () => {
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as { panelMode: string; isFocusEditing: boolean; focusToolsExpanded: boolean };
+    vm.panelMode = 'editor';
+    await nextTick();
+    const mainActions = wrapper.findAll('[data-focus-hero^="wb_"]');
+    expect(mainActions).toHaveLength(5);
+    expect(mainActions.every(button => button.classes().includes('wb-control--sm'))).toBe(true);
+
+    vm.isFocusEditing = true;
+    vm.focusToolsExpanded = true;
+    await nextTick();
+    const focusActions = wrapper.findAll('.wb-focus-toolbar button')
+      .filter(button => !button.classes().includes('wb-control-select-option'));
+    expect(focusActions.length).toBeGreaterThan(5);
+    expect(focusActions.every(button => button.classes().includes('wb-control--sm') || button.classes().includes('tag-tree-toggle'))).toBe(true);
     wrapper.unmount();
   });
 
