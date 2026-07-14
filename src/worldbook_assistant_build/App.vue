@@ -57,39 +57,9 @@
         <div class="mobile-browse-view">
           <!-- Mobile browse toolbar -->
           <section class="wb-toolbar browse-toolbar mobile-browse-toolbar">
-            <div ref="worldbookPickerRef" class="worldbook-picker">
-              <button class="worldbook-picker-trigger" type="button" @click="toggleWorldbookPicker">
-                <span class="worldbook-picker-trigger-text" :title="selectedWorldbookName || '请选择世界书'">
-                  {{ selectedWorldbookName || '请选择' }}
-                </span>
-                <span class="worldbook-picker-trigger-arrow">▾</span>
-              </button>
-              <div v-if="worldbookPickerOpen" class="worldbook-picker-dropdown">
-                <input
-                  ref="worldbookPickerSearchInputRef"
-                  v-model="worldbookPickerSearchText"
-                  type="text"
-                  class="text-input worldbook-picker-search"
-                  placeholder="搜索..."
-                  @keydown.enter.prevent="filteredSelectableWorldbookNames[0] && selectWorldbookFromPicker(filteredSelectableWorldbookNames[0])"
-                />
-                <div class="worldbook-picker-list">
-                  <button
-                    v-for="name in filteredSelectableWorldbookNames"
-                    :key="`mbrowse-wb-${name}`"
-                    class="worldbook-picker-item"
-                    :class="{ active: name === selectedWorldbookName }"
-                    type="button"
-                    @click="selectWorldbookFromPicker(name)"
-                  >
-                    {{ name }}
-                  </button>
-                  <div v-if="!filteredSelectableWorldbookNames.length" class="empty-note">无匹配</div>
-                </div>
-              </div>
-            </div>
-            <input v-model="searchText" type="text" class="text-input browse-search" placeholder="🔍 搜索..." />
-            <button class="btn" type="button" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾</button>
+            <WorldbookPicker v-model="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择" />
+            <BaseInput v-model="searchText" class="browse-search" placeholder="🔍 搜索..." aria-label="搜索世界书条目" />
+            <BaseButton size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾</BaseButton>
           </section>
 
           <!-- Mobile browse card list -->
@@ -99,7 +69,7 @@
               <span v-if="bindings.charPrimary" class="binding-tag char">🔵 角色</span>
               <span v-if="bindings.chat" class="binding-tag chat">🟡 聊天</span>
               <span class="browse-entry-count">{{ filteredEntries.length }} / {{ draftEntries.length }}</span>
-              <button class="btn mini" type="button" :disabled="!selectedWorldbookName" @click="addEntry">+</button>
+              <BaseButton size="sm" icon-only aria-label="新增条目" :disabled="!selectedWorldbookName" @click="addEntry">+</BaseButton>
             </section>
             <div class="browse-grid mobile-browse-grid">
               <article
@@ -159,17 +129,11 @@
                   <div class="browse-config-grid mobile-config-grid">
                     <label class="field">
                       <span>策略</span>
-                      <select class="text-input" v-model="entry.strategy.type">
-                        <option value="constant">🔵 常驻</option>
-                        <option value="selective">🟢 关键词</option>
-                        <option value="vectorized">🔗 向量化</option>
-                      </select>
+                      <BaseSelect v-model="entry.strategy.type" :options="strategySelectOptions" :searchable="false" size="sm" aria-label="策略" />
                     </label>
                     <label class="field">
                       <span>位置</span>
-                      <select class="text-input" :value="(() => { const opt = positionSelectOptions.find(o => o.type === entry.position.type && (o.type !== 'at_depth' || o.role === entry.position.role)); return opt?.value ?? entry.position.type; })()" @change="(() => { const v = ($event.target as HTMLSelectElement).value as PositionSelectValue; const opt = positionSelectOptions.find(o => o.value === v); if (opt) { entry.position.type = opt.type; if (opt.role) entry.position.role = opt.role; } })()">
-                        <option v-for="opt in positionSelectOptions" :key="`mbrowse-pos-${entry.uid}-${opt.value}`" :value="opt.value">{{ opt.label }}</option>
-                      </select>
+                      <BaseSelect :model-value="getEntryPositionSelectValue(entry)" :options="positionSelectControlOptions" :searchable="false" size="sm" aria-label="位置" @update:model-value="setEntryPositionSelectValue(entry, $event)" />
                     </label>
                     <label class="field">
                       <span>权重</span>
@@ -224,106 +188,21 @@
             <div v-show="mobileTab === 'list'" class="mobile-pane">
               <section class="wb-toolbar">
                 <label class="toolbar-label">
-                <span>世界书</span>
-                <div ref="worldbookPickerRef" class="worldbook-picker">
-                  <button class="worldbook-picker-trigger" type="button" @click="toggleWorldbookPicker">
-                    <span class="worldbook-picker-trigger-text" :title="selectedWorldbookName || '请选择世界书'">
-                      {{ selectedWorldbookName || '请选择世界书' }}
-                    </span>
-                    <span class="worldbook-picker-arrow">▾</span>
-                  </button>
-                  <div v-if="worldbookPickerOpen" class="worldbook-picker-dropdown">
-                    <div v-if="tagDefinitions.length" class="worldbook-picker-tags tree-mode">
-                      <div class="tag-filter-toolbar">
-                        <button class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</button>
-                        <span class="tag-filter-summary">{{ tagFilterSummary }}</span>
-                        <select v-model="tagFilterLogic" class="text-input tag-filter-select">
-                          <option value="or">OR</option>
-                          <option value="and">AND</option>
-                        </select>
-                        <select v-model="tagFilterMatchMode" class="text-input tag-filter-select">
-                          <option value="descendants">子树</option>
-                          <option value="exact">精确</option>
-                        </select>
-                        <button class="btn mini" type="button" :disabled="!selectedTagFilterIds.length" @click="clearTagFilterSelection">清空</button>
-                      </div>
-                      <Transition name="tag-filter-panel">
-                        <div v-if="tagFilterPanelOpen" class="tag-filter-panel" :class="{ mobile: isMobile }">
-                          <input v-model="tagFilterSearchText" type="text" class="text-input tag-filter-search" placeholder="搜索标签名称 / 路径..." />
-                          <div v-if="selectedTagFilterIds.length" class="tag-filter-selected-list">
-                            <button
-                              v-for="tagId in selectedTagFilterIds"
-                              :key="`tag-selected-mobile-${tagId}`"
-                              class="tag-filter-selected-chip"
-                              type="button"
-                              @click="toggleTagFilterSelection(tagId)"
-                            >
-                              {{ tagPathMap.get(tagId) ?? tagId }} ×
-                            </button>
-                          </div>
-                          <div v-if="isMobile" class="tag-flat-list">
-                            <label
-                              v-for="tag in tagAssignOptions.filter(item => !tagFilterSearchText.trim() || item.path.toLowerCase().includes(tagFilterSearchText.trim().toLowerCase()))"
-                              :key="`tag-flat-mobile-${tag.id}`"
-                              class="tag-flat-item"
-                              :style="{ '--tag-color': tag.color }"
-                            >
-                              <input type="checkbox" :checked="selectedTagFilterIdSet.has(tag.id)" @change="toggleTagFilterSelection(tag.id)" />
-                              <span>{{ tag.path }}</span>
-                            </label>
-                            <div v-if="!tagAssignOptions.length" class="empty-note">暂无标签</div>
-                          </div>
-                          <div v-else class="tag-tree-list">
-                            <div v-for="row in tagTreeRows" :key="`tag-tree-mobile-${row.id}`" class="tag-tree-row" :style="{ '--depth': row.depth, '--tag-color': row.color }">
-                              <button
-                                v-if="row.hasChildren"
-                                class="tag-tree-toggle"
-                                type="button"
-                                @click.stop="toggleTagTreeExpanded(row.id)"
-                              >{{ tagTreeExpandedIds.includes(row.id) || tagFilterSearchText.trim() ? '▾' : '▸' }}</button>
-                              <span v-else class="tag-tree-toggle placeholder"></span>
-                              <input type="checkbox" :checked="selectedTagFilterIdSet.has(row.id)" @change="toggleTagFilterSelection(row.id)" />
-                              <span class="tag-tree-name">{{ row.name }}</span>
-                              <span class="tag-tree-path">{{ row.path }}</span>
-                            </div>
-                            <div v-if="!tagTreeRows.length" class="empty-note">没有匹配的标签</div>
-                          </div>
-                        </div>
-                      </Transition>
-                    </div>
-                    <input
-                      v-model="worldbookPickerSearchText"
-                      type="text"
-                      class="text-input worldbook-picker-search"
-                      placeholder="搜索世界书..."
-                      @keydown.enter.prevent="filteredSelectableWorldbookNames[0] && selectWorldbookFromPicker(filteredSelectableWorldbookNames[0])"
-                    />
-                    <div class="worldbook-picker-list">
-                      <button
-                        v-for="name in filteredSelectableWorldbookNames"
-                        :key="`wb-pick-m-${name}`"
-                        class="worldbook-picker-item"
-                        :class="{ active: name === selectedWorldbookName }"
-                        type="button"
-                        @click="selectWorldbookFromPicker(name)"
-                      >{{ name }}</button>
-                      <div v-if="!filteredSelectableWorldbookNames.length" class="empty-note">没有匹配的世界书</div>
-                    </div>
-                  </div>
-                </div>
+                  <span>世界书</span>
+                  <WorldbookPicker v-model="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择世界书" />
               </label>
               <div class="toolbar-btns" style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="btn" type="button" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook" style="padding:8px 14px;font-size:13px;">💾 保存</button>
-                <button class="btn" type="button" @click="addEntry" style="padding:8px 14px;font-size:13px;">+ 新条目</button>
-                <button class="btn" type="button" @click="triggerImport" style="padding:8px 14px;font-size:13px;">📥 导入</button>
-                <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook" style="padding:8px 14px;font-size:13px;">📤 导出</button>
-                <button class="btn" type="button" @click="toggleGlobalMode" :style="{ padding:'8px 14px', fontSize:'13px', background: globalWorldbookMode ? 'var(--wb-primary)' : '', color: globalWorldbookMode ? '#fff' : '' }">🌐 全局</button>
-                <button class="btn" type="button" @click="extractFromChat" style="padding:8px 14px;font-size:13px;">📥 提取</button>
-                <button class="btn" type="button" @click="openSettingsPage" style="padding:8px 14px;font-size:13px;">⚙️ 设置</button>
-                <button class="btn" type="button" @click="openAiConfigPage" style="padding:8px 14px;font-size:13px;">🔧 AI配置</button>
-                <button class="btn" type="button" :disabled="!draftEntries.length" @click="sortEntries" :class="{ active: viewSortActive }" style="padding:8px 14px;font-size:13px;">🔢 排序</button>
-                <button class="btn" type="button" :disabled="!selectedEntry" @click="openEntryHistoryModal" style="padding:8px 14px;font-size:13px;">🕰️ 条目时光机</button>
-                <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal" style="padding:8px 14px;font-size:13px;">⏪ 整本时光机</button>
+                <BaseButton size="sm" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾 保存</BaseButton>
+                <BaseButton size="sm" @click="addEntry">+ 新条目</BaseButton>
+                <BaseButton size="sm" @click="triggerImport">📥 导入</BaseButton>
+                <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook">📤 导出</BaseButton>
+                <BaseButton size="sm" :class="{ active: globalWorldbookMode }" @click="toggleGlobalMode">🌐 全局</BaseButton>
+                <BaseButton size="sm" @click="extractFromChat">📥 提取</BaseButton>
+                <BaseButton size="sm" @click="openSettingsPage">⚙️ 设置</BaseButton>
+                <BaseButton size="sm" @click="openAiConfigPage">🔧 AI配置</BaseButton>
+                <BaseButton size="sm" :disabled="!draftEntries.length" :class="{ active: viewSortActive }" @click="sortEntries">🔢 排序</BaseButton>
+                <BaseButton size="sm" :disabled="!selectedEntry" @click="openEntryHistoryModal">🕰️ 条目时光机</BaseButton>
+                <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal">⏪ 整本时光机</BaseButton>
               </div>
             </section>
             <div class="wb-bindings" v-if="bindings.global.length || bindings.charPrimary || bindings.charAdditional.length || bindings.chat">
@@ -340,12 +219,7 @@
               </div>
               <label class="field" style="margin-bottom:6px;">
                 <span style="font-size:12px;">预设（切换即应用）</span>
-                <select v-model="selectedGlobalPresetId" class="text-input" @change="onGlobalPresetSelectionChanged" style="font-size:12px;">
-                  <option value="">默认预设（清空全局世界书）</option>
-                  <option v-for="preset in globalWorldbookPresets" :key="preset.id" :value="preset.id">
-                    {{ preset.name }}（{{ preset.worldbooks.length }}）
-                  </option>
-                </select>
+                <BaseSelect v-model="selectedGlobalPresetId" :options="globalPresetOptions" :searchable="false" size="sm" aria-label="全局预设" @update:model-value="onGlobalPresetSelectionChanged" />
               </label>
               <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
                 <button class="btn mini" type="button" :disabled="!bindings.global.length" @click="saveCurrentAsGlobalPreset" style="font-size:11px;">保存组合</button>
@@ -526,9 +400,7 @@
                   <summary>高级策略设置</summary>
                   <label class="field">
                     <span>次要逻辑 (LOGIC)</span>
-                    <select v-model="selectedEntry.strategy.keys_secondary.logic" class="text-input">
-                      <option v-for="item in secondaryLogicOptions" :key="`ml-${item}`" :value="item">{{ getSecondaryLogicLabel(item) }}</option>
-                    </select>
+                    <BaseSelect v-model="selectedEntry.strategy.keys_secondary.logic" :options="secondaryLogicSelectOptions" :searchable="false" size="sm" aria-label="次要逻辑" />
                   </label>
                   <label class="field">
                     <span>扫描深度</span>
@@ -544,9 +416,7 @@
                 <h4>插入设置 (INSERTION)</h4>
                 <label class="field">
                   <span>位置 (Position)</span>
-                  <select v-model="selectedPositionSelectValue" class="text-input">
-                    <option v-for="item in positionSelectOptions" :key="`mp-${item.value}`" :value="item.value">{{ item.label }}</option>
-                  </select>
+                  <BaseSelect v-model="selectedPositionSelectValue" :options="positionSelectControlOptions" :searchable="false" size="sm" aria-label="位置" />
                 </label>
                 <label class="field">
                   <span>权重 (Order)</span>
@@ -555,11 +425,7 @@
                 <div class="editor-grid two-cols">
                   <label class="field" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
                     <span>深度角色</span>
-                    <select v-model="selectedEntry.position.role" class="text-input" :disabled="selectedEntry.position.type !== 'at_depth'">
-                      <option value="system">system</option>
-                      <option value="assistant">assistant</option>
-                      <option value="user">user</option>
-                    </select>
+                    <BaseSelect v-model="selectedEntry.position.role" :options="positionRoleOptions" :searchable="false" size="sm" aria-label="深度角色" :disabled="selectedEntry.position.type !== 'at_depth'" />
                   </label>
                   <label class="field" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
                     <span>深度层级</span>
@@ -932,12 +798,7 @@
               <label class="field">
                 <span>次要关键词</span>
                 <div class="browse-secondary-keys-row">
-                  <select class="text-input" v-model="entry.strategy.keys_secondary.logic">
-                    <option value="and_any">AND_ANY</option>
-                    <option value="and_all">AND_ALL</option>
-                    <option value="not_all">NOT_ALL</option>
-                    <option value="not_any">NOT_ANY</option>
-                  </select>
+                  <BaseSelect v-model="entry.strategy.keys_secondary.logic" :options="secondaryLogicSelectOptions" :searchable="false" size="sm" aria-label="次要逻辑" />
                   <textarea
                     class="text-input browse-keys-input"
                     :value="entry.strategy.keys_secondary.keys.map(k => String(k)).join(', ')"
@@ -958,17 +819,11 @@
               <div class="browse-config-grid">
                 <label class="field">
                   <span>策略</span>
-                  <select class="text-input" v-model="entry.strategy.type">
-                    <option value="constant">🔵 常驻</option>
-                    <option value="selective">🟢 关键词</option>
-                    <option value="vectorized">🔗 向量化</option>
-                  </select>
+                  <BaseSelect v-model="entry.strategy.type" :options="strategySelectOptions" :searchable="false" size="sm" aria-label="策略" />
                 </label>
                 <label class="field">
                   <span>位置</span>
-                  <select class="text-input" :value="(() => { const opt = positionSelectOptions.find(o => o.type === entry.position.type && (o.type !== 'at_depth' || o.role === entry.position.role)); return opt?.value ?? entry.position.type; })()" @change="(() => { const v = ($event.target as HTMLSelectElement).value as PositionSelectValue; const opt = positionSelectOptions.find(o => o.value === v); if (opt) { entry.position.type = opt.type; if (opt.role) entry.position.role = opt.role; } })()">
-                    <option v-for="opt in positionSelectOptions" :key="`browse-pos-${entry.uid}-${opt.value}`" :value="opt.value">{{ opt.label }}</option>
-                  </select>
+                  <BaseSelect :model-value="getEntryPositionSelectValue(entry)" :options="positionSelectControlOptions" :searchable="false" size="sm" aria-label="位置" @update:model-value="setEntryPositionSelectValue(entry, $event)" />
                 </label>
                 <label class="field">
                   <span>权重 (Order)</span>
@@ -1020,25 +875,13 @@
             <label class="toolbar-label">
               <span>世界书</span>
               <div ref="worldbookPickerRef" class="worldbook-picker">
-                <button class="worldbook-picker-trigger" type="button" @click="toggleWorldbookPicker">
-                  <span class="worldbook-picker-trigger-text" :title="selectedWorldbookName || '请选择世界书'">
-                    {{ selectedWorldbookName || '请选择世界书' }}
-                  </span>
-                  <span class="worldbook-picker-trigger-arrow">{{ worldbookPickerOpen ? '▴' : '▾' }}</span>
-                </button>
-                <div v-if="worldbookPickerOpen" class="worldbook-picker-dropdown">
+                <BaseSelect v-model="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="世界书" />
                   <div v-if="tagDefinitions.length" class="worldbook-picker-tags tree-mode">
                     <div class="tag-filter-toolbar">
                       <button class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</button>
                       <span class="tag-filter-summary">{{ tagFilterSummary }}</span>
-                      <select v-model="tagFilterLogic" class="text-input tag-filter-select">
-                        <option value="or">OR</option>
-                        <option value="and">AND</option>
-                      </select>
-                      <select v-model="tagFilterMatchMode" class="text-input tag-filter-select">
-                        <option value="descendants">子树</option>
-                        <option value="exact">精确</option>
-                      </select>
+                      <BaseSelect v-model="tagFilterLogic" class="tag-filter-select" :options="tagFilterLogicOptions" :searchable="false" size="sm" aria-label="标签筛选逻辑" />
+                      <BaseSelect v-model="tagFilterMatchMode" class="tag-filter-select" :options="tagFilterMatchModeOptions" :searchable="false" size="sm" aria-label="标签匹配模式" />
                       <button class="btn mini" type="button" :disabled="!selectedTagFilterIds.length" @click="clearTagFilterSelection">清空</button>
                     </div>
                     <Transition name="tag-filter-panel">
@@ -1073,28 +916,6 @@
                       </div>
                     </Transition>
                   </div>
-                  <input
-                    ref="worldbookPickerSearchInputRef"
-                    v-model="worldbookPickerSearchText"
-                    type="text"
-                    class="text-input worldbook-picker-search"
-                    placeholder="搜索世界书..."
-                    @keydown.enter.prevent="filteredSelectableWorldbookNames[0] && selectWorldbookFromPicker(filteredSelectableWorldbookNames[0])"
-                  />
-                  <div class="worldbook-picker-list">
-                    <button
-                      v-for="name in filteredSelectableWorldbookNames"
-                      :key="`worldbook-${name}`"
-                      class="worldbook-picker-item"
-                      :class="{ active: name === selectedWorldbookName }"
-                      type="button"
-                      @click="selectWorldbookFromPicker(name)"
-                    >
-                      {{ name }}
-                    </button>
-                    <div v-if="!filteredSelectableWorldbookNames.length" class="empty-note">没有匹配的世界书</div>
-                  </div>
-                </div>
               </div>
             </label>
             <button class="btn" data-focus-hero="wb_new" type="button" @click="createNewWorldbook">新建</button>
@@ -1121,25 +942,13 @@
                 <label class="toolbar-label focus-toolbar-label">
                   <span class="focus-toolbar-label-text">世界书</span>
                   <div ref="worldbookPickerRef" class="worldbook-picker">
-                    <button class="worldbook-picker-trigger" type="button" @click="toggleWorldbookPicker">
-                      <span class="worldbook-picker-trigger-text" :title="selectedWorldbookName || '请选择世界书'">
-                        {{ selectedWorldbookName || '请选择世界书' }}
-                      </span>
-                      <span class="worldbook-picker-trigger-arrow">{{ worldbookPickerOpen ? '▴' : '▾' }}</span>
-                    </button>
-                    <div v-if="worldbookPickerOpen" class="worldbook-picker-dropdown">
+                    <BaseSelect v-model="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="世界书" size="sm" />
                       <div v-if="tagDefinitions.length" class="worldbook-picker-tags tree-mode">
                         <div class="tag-filter-toolbar">
                           <button class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</button>
                           <span class="tag-filter-summary">{{ tagFilterSummary }}</span>
-                          <select v-model="tagFilterLogic" class="text-input tag-filter-select">
-                            <option value="or">OR</option>
-                            <option value="and">AND</option>
-                          </select>
-                          <select v-model="tagFilterMatchMode" class="text-input tag-filter-select">
-                            <option value="descendants">子树</option>
-                            <option value="exact">精确</option>
-                          </select>
+                          <BaseSelect v-model="tagFilterLogic" class="tag-filter-select" :options="tagFilterLogicOptions" :searchable="false" size="sm" aria-label="标签筛选逻辑" />
+                          <BaseSelect v-model="tagFilterMatchMode" class="tag-filter-select" :options="tagFilterMatchModeOptions" :searchable="false" size="sm" aria-label="标签匹配模式" />
                           <button class="btn mini" type="button" :disabled="!selectedTagFilterIds.length" @click="clearTagFilterSelection">清空</button>
                         </div>
                         <Transition name="tag-filter-panel">
@@ -1174,28 +983,6 @@
                           </div>
                         </Transition>
                       </div>
-                      <input
-                        ref="worldbookPickerSearchInputRef"
-                        v-model="worldbookPickerSearchText"
-                        type="text"
-                        class="text-input worldbook-picker-search"
-                        placeholder="搜索世界书..."
-                        @keydown.enter.prevent="filteredSelectableWorldbookNames[0] && selectWorldbookFromPicker(filteredSelectableWorldbookNames[0])"
-                      />
-                      <div class="worldbook-picker-list">
-                        <button
-                          v-for="name in filteredSelectableWorldbookNames"
-                          :key="`focus-worldbook-${name}`"
-                          class="worldbook-picker-item"
-                          :class="{ active: name === selectedWorldbookName }"
-                          type="button"
-                          @click="selectWorldbookFromPicker(name)"
-                        >
-                          {{ name }}
-                        </button>
-                        <div v-if="!filteredSelectableWorldbookNames.length" class="empty-note">没有匹配的世界书</div>
-                      </div>
-                    </div>
                   </div>
                 </label>
                 <button class="btn" data-focus-hero="save_btn" data-copy-hero="save_btn" type="button" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges || isAnyCineLocked" @click="saveCurrentWorldbook">
@@ -1448,12 +1235,7 @@
                   <div class="global-mode-section-body global-preset-panel">
                     <label class="field">
                       <span>选择预设</span>
-                      <select v-model="selectedGlobalPresetId" class="text-input" @change="onGlobalPresetSelectionChanged">
-                        <option value="">默认预设（清空全局世界书）</option>
-                        <option v-for="preset in globalWorldbookPresets" :key="preset.id" :value="preset.id">
-                          {{ preset.name }}（{{ preset.worldbooks.length }}）
-                        </option>
-                      </select>
+                      <BaseSelect v-model="selectedGlobalPresetId" :options="globalPresetOptions" :searchable="false" aria-label="全局预设" @update:model-value="onGlobalPresetSelectionChanged" />
                     </label>
                     <div class="global-mode-actions">
                       <button class="btn" type="button" :disabled="!bindings.global.length" @click="saveCurrentAsGlobalPreset">
@@ -2001,11 +1783,7 @@
                           <summary>高级设置</summary>
                           <label class="field">
                             <span>次要逻辑 (LOGIC)</span>
-                            <select v-model="selectedEntry.strategy.keys_secondary.logic" class="text-input">
-                              <option v-for="item in secondaryLogicOptions" :key="item" :value="item">
-                                {{ getSecondaryLogicLabel(item) }}
-                              </option>
-                            </select>
+                            <BaseSelect v-model="selectedEntry.strategy.keys_secondary.logic" :options="secondaryLogicSelectOptions" :searchable="false" size="sm" aria-label="次要逻辑" />
                           </label>
                           <label class="field">
                             <span>扫描深度</span>
@@ -2043,14 +1821,7 @@
                       <div class="focus-side-content" :class="{ hidden: isDesktopFocusMode && !focusSidePanelState.insertion }">
                         <label class="field">
                           <span>位置 (Position)</span>
-                          <select
-                            v-model="selectedPositionSelectValue"
-                            class="text-input"
-                          >
-                            <option v-for="item in positionSelectOptions" :key="item.value" :value="item.value">
-                              {{ item.label }}
-                            </option>
-                          </select>
+                          <BaseSelect v-model="selectedPositionSelectValue" :options="positionSelectControlOptions" :searchable="false" size="sm" aria-label="位置" />
                         </label>
                         <label class="field">
                           <span>权重 (Order)</span>
@@ -2065,15 +1836,7 @@
                               </span>
                             </summary>
                             <div class="editor-mini-collapse-body">
-                              <select
-                                v-model="selectedEntry.position.role"
-                                class="text-input"
-                                :disabled="selectedEntry.position.type !== 'at_depth'"
-                              >
-                                <option value="system">system</option>
-                                <option value="assistant">assistant</option>
-                                <option value="user">user</option>
-                              </select>
+                              <BaseSelect v-model="selectedEntry.position.role" :options="positionRoleOptions" :searchable="false" size="sm" aria-label="深度角色" :disabled="selectedEntry.position.type !== 'at_depth'" />
                             </div>
                           </details>
                           <details class="editor-mini-collapse" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
@@ -2219,10 +1982,7 @@
         <div class="ai-tag-review-target">
           <label class="field">
             <span>目标世界书</span>
-            <select v-model="aiTargetWorldbook" class="text-input" @change="markDuplicatesInTags">
-              <option value="">请选择目标世界书</option>
-              <option v-for="name in worldbookNames" :key="`ai-wb-${name}`" :value="name">{{ name }}</option>
-            </select>
+            <BaseSelect v-model="aiTargetWorldbook" :options="aiTargetWorldbookOptions" aria-label="AI 目标世界书" @update:model-value="markDuplicatesInTags" />
           </label>
         </div>
         <details class="ai-tag-ignore-config">
@@ -2906,6 +2666,9 @@ import SettingPanel from './components/SettingPanel.vue';
 import TagEditorPanel from './components/TagEditorPanel.vue';
 import SettingsPage from './components/SettingsPage.vue';
 import AIConfigPage from './components/AIConfigPage.vue';
+import BaseButton from './components/controls/BaseButton.vue';
+import BaseInput from './components/controls/BaseInput.vue';
+import BaseSelect, { type BaseSelectOption } from './components/controls/BaseSelect.vue';
 import { APP_VERSION } from './domain/version';
 import {
   type ThemeKey,
@@ -3654,6 +3417,42 @@ const globalWorldbookPresets = computed(() => persistedState.value.global_preset
 const selectedGlobalPreset = computed(() => {
   return globalWorldbookPresets.value.find(item => item.id === selectedGlobalPresetId.value) ?? null;
 });
+
+const strategySelectOptions: BaseSelectOption<string>[] = strategyTypeOptions.map(value => ({
+  value,
+  label: value === 'constant' ? '🔵 常驻' : value === 'selective' ? '🟢 关键词' : '🔗 向量化',
+}));
+const secondaryLogicSelectOptions: BaseSelectOption<string>[] = secondaryLogicOptions.map(value => ({
+  value,
+  label: getSecondaryLogicLabel(value),
+}));
+const positionSelectControlOptions: BaseSelectOption<string>[] = positionSelectOptions.map(item => ({
+  value: item.value,
+  label: item.label,
+}));
+const positionRoleOptions: BaseSelectOption<string>[] = ['system', 'assistant', 'user'].map(value => ({ value, label: value }));
+const tagFilterLogicOptions: BaseSelectOption<string>[] = [
+  { value: 'or', label: 'OR' },
+  { value: 'and', label: 'AND' },
+];
+const tagFilterMatchModeOptions: BaseSelectOption<string>[] = [
+  { value: 'descendants', label: '子树' },
+  { value: 'exact', label: '精确' },
+];
+const globalPresetOptions = computed<BaseSelectOption<string>[]>(() => [
+  { value: '', label: '默认预设（清空全局世界书）' },
+  ...globalWorldbookPresets.value.map(preset => ({
+    value: preset.id,
+    label: `${preset.name}（${preset.worldbooks.length}）`,
+  })),
+]);
+const aiTargetWorldbookOptions = computed<BaseSelectOption<string>[]>(() => [
+  { value: '', label: '请选择目标世界书' },
+  ...worldbookNames.value.map(name => ({ value: name, label: name })),
+]);
+const worldbookSelectOptions = computed<BaseSelectOption<string>[]>(() =>
+  selectableWorldbookNames.value.map(name => ({ value: name, label: name })),
+);
 
 const selectedGlobalPresetRoleBindings = computed(() => selectedGlobalPreset.value?.role_bindings ?? []);
 
@@ -5315,6 +5114,21 @@ function applySelectedPositionSelectValue(value: PositionSelectValue): void {
   selectedEntry.value.position.type = value as PositionType;
   selectedEntry.value.position.role = 'system';
   selectedEntry.value.position.depth = 4;
+}
+
+function getEntryPositionSelectValue(entry: WorldbookEntry): PositionSelectValue {
+  if (entry.position.type === 'at_depth') {
+    return `at_depth_as_${entry.position.role}` as PositionSelectValue;
+  }
+  return entry.position.type;
+}
+
+function setEntryPositionSelectValue(entry: WorldbookEntry, value: string | number | null): void {
+  if (typeof value !== 'string') return;
+  const option = positionSelectOptions.find(item => item.value === value);
+  if (!option) return;
+  entry.position.type = option.type;
+  if (option.role) entry.position.role = option.role;
 }
 
 function getEntryVisualStatus(entry: WorldbookEntry): EntryVisualStatus {

@@ -6,6 +6,7 @@ import { defineComponent, nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from '../../../src/worldbook_assistant_build/App.vue';
+import BaseSelect from '../../../src/worldbook_assistant_build/components/controls/BaseSelect.vue';
 import { normalizeEntry } from '../../../src/worldbook_assistant_build/domain/persistedState';
 
 const SettingsPageStub = defineComponent({
@@ -284,6 +285,72 @@ describe('App utility navigation', () => {
     await openUtility(wrapper, 'ai-config');
     await returnToMain(wrapper);
     expect(wrapper.get('[data-main-workspace]').element).toBe(originalWorkspace);
+
+    wrapper.unmount();
+  });
+
+  it('preserves representative toolbar mappings and AI target across utility round trips', async () => {
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      selectedWorldbookName: string;
+      aiTargetWorldbook: string;
+      selectedGlobalPresetId: string;
+      panelMode: string;
+      draftEntries: ReturnType<typeof normalizeEntry>[];
+      selectedEntryUid: number | null;
+      selectedEntryUids: number[];
+      selectedPositionSelectValue: string;
+    };
+    vm.selectedWorldbookName = '世界书 A';
+    vm.aiTargetWorldbook = '世界书 B';
+    vm.selectedGlobalPresetId = '';
+    vm.panelMode = 'editor';
+    vm.draftEntries = [normalizeEntry({
+      uid: 4,
+      comment: 'Entry',
+      content: 'Draft',
+      strategy: { type: 'selective', keys: [], keys_secondary: { logic: 'not_any', keys: [] } },
+      position: { type: 'at_depth', role: 'assistant', depth: 4, order: 100 },
+    }, 4)];
+    vm.selectedEntryUid = 4;
+    vm.selectedEntryUids = [4];
+    await nextTick();
+
+    expect(vm.selectedPositionSelectValue).toBe('at_depth_as_assistant');
+    await openUtility(wrapper, 'settings');
+    await returnToMain(wrapper);
+    await openUtility(wrapper, 'ai-config');
+    await returnToMain(wrapper);
+
+    expect(vm.selectedWorldbookName).toBe('世界书 A');
+    expect(vm.aiTargetWorldbook).toBe('世界书 B');
+    expect(vm.selectedGlobalPresetId).toBe('');
+
+    wrapper.unmount();
+  });
+
+  it('uses named custom selects on the migrated App toolbar surfaces', async () => {
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      panelMode: string;
+      draftEntries: ReturnType<typeof normalizeEntry>[];
+      selectedEntryUid: number | null;
+      selectedEntryUids: number[];
+    };
+    vm.panelMode = 'editor';
+    vm.draftEntries = [normalizeEntry({ uid: 2, comment: 'Entry', content: 'Draft' }, 2)];
+    vm.selectedEntryUid = 2;
+    vm.selectedEntryUids = [2];
+    await nextTick();
+
+    const migratedNames = ['次要逻辑', '位置', '深度角色'];
+    const customSelects = wrapper.findAllComponents(BaseSelect);
+    for (const name of migratedNames) {
+      expect(customSelects.some(select => select.get('[role="combobox"]').attributes('aria-label') === name)).toBe(true);
+    }
+    expect(wrapper.find('.wb-toolbar select').exists()).toBe(false);
+    expect(wrapper.find('.wb-focus-toolbar select').exists()).toBe(false);
+    expect(wrapper.find('.mobile-browse-toolbar select').exists()).toBe(false);
 
     wrapper.unmount();
   });

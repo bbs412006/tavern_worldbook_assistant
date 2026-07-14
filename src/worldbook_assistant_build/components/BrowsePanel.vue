@@ -1,6 +1,5 @@
 <template>
   <div class="browse-panel-root" :class="{ 'is-mobile': isMobile }">
-    <!-- Desktop browse toolbar -->
     <template v-if="!isMobile">
       <section class="wb-toolbar browse-toolbar">
         <label class="toolbar-label">
@@ -13,38 +12,37 @@
             noMatchText="没有匹配的世界书"
           />
         </label>
-        <button class="btn" type="button" @click="$emit('create')">新建</button>
-        <button class="btn" type="button" :disabled="!localSelectedWorldbook" @click="$emit('duplicate')">另存为</button>
-        <button class="btn danger" type="button" :disabled="!localSelectedWorldbook" @click="$emit('delete')">删除</button>
-        <button class="btn" type="button" :disabled="!localSelectedWorldbook" @click="$emit('export')">导出</button>
-        <button class="btn" type="button" @click="$emit('import')">导入</button>
-        <button class="btn" type="button" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="$emit('save')">💾 保存</button>
+        <BaseButton size="sm" @click="$emit('create')">新建</BaseButton>
+        <BaseButton size="sm" :disabled="!localSelectedWorldbook" @click="$emit('duplicate')">另存为</BaseButton>
+        <BaseButton size="sm" variant="danger" :disabled="!localSelectedWorldbook" @click="$emit('delete')">删除</BaseButton>
+        <BaseButton size="sm" :disabled="!localSelectedWorldbook" @click="$emit('export')">导出</BaseButton>
+        <BaseButton size="sm" @click="$emit('import')">导入</BaseButton>
+        <BaseButton size="sm" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="$emit('save')">💾 保存</BaseButton>
         <div class="browse-mode-switch">
-          <button class="btn browse-mode-btn active" type="button">📖 浏览</button>
-          <button class="btn browse-mode-btn" type="button" @click="$emit('switch-mode', 'editor')">✏️ 编辑</button>
+          <BaseButton class="browse-mode-btn active" size="sm">📖 浏览</BaseButton>
+          <BaseButton class="browse-mode-btn" size="sm" @click="$emit('switch-mode', 'editor')">✏️ 编辑</BaseButton>
         </div>
       </section>
 
       <section class="browse-action-bar">
-        <input v-model="searchText" type="text" class="text-input browse-search" placeholder="🔍 搜索名称 / 内容 / 关键词" />
+        <BaseInput v-model="searchText" class="browse-search" placeholder="🔍 搜索名称 / 内容 / 关键词" aria-label="搜索世界书条目" />
         <span v-if="bindings.global.length" class="binding-tag global">🟢 全局: {{ bindings.global.join(', ') }}</span>
         <span v-if="bindings.charPrimary" class="binding-tag char">🔵 角色: {{ bindings.charPrimary }}</span>
         <span v-if="bindings.chat" class="binding-tag chat">🟡 聊天: {{ bindings.chat }}</span>
         <span class="browse-action-spacer"></span>
         <span class="browse-entry-count">条目 {{ filteredEntries.length }} / {{ entries.length }}</span>
-        <button class="btn mini" type="button" :disabled="!localSelectedWorldbook" @click="$emit('add-entry')">+ 新条目</button>
-        <button class="btn mini utility-btn" :class='{ active: globalMode }' type="button" @click="$emit('toggle-global')">🌐 全局模式</button>
+        <BaseButton size="sm" :disabled="!localSelectedWorldbook" @click="$emit('add-entry')">+ 新条目</BaseButton>
+        <BaseButton class="utility-btn" size="sm" :class="{ active: globalMode }" @click="$emit('toggle-global')">🌐 全局模式</BaseButton>
       </section>
     </template>
 
-    <!-- Browse scroll area / grid -->
     <div class="browse-scroll-area" :class="{ 'mobile-browse-scroll': isMobile }">
       <section class="browse-bindings" :class="{ 'mobile-browse-bindings': isMobile }">
         <span v-if="bindings.global.length" class="binding-tag global">🟢 全局</span>
         <span v-if="bindings.charPrimary" class="binding-tag char">🔵 角色</span>
         <span v-if="bindings.chat" class="binding-tag chat">🟡 聊天</span>
         <span class="browse-entry-count">{{ filteredEntries.length }} / {{ entries.length }}</span>
-        <button class="btn mini" type="button" :disabled="!localSelectedWorldbook" @click="$emit('add-entry')">+</button>
+        <BaseButton size="sm" :disabled="!localSelectedWorldbook" @click="$emit('add-entry')">+</BaseButton>
       </section>
       <div class="browse-grid" :class="{ 'mobile-browse-grid': isMobile }">
         <div v-if="!filteredEntries.length" class="browse-empty">
@@ -57,7 +55,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { computed, ref } from 'vue';
+
+import BaseButton from './controls/BaseButton.vue';
+import BaseInput from './controls/BaseInput.vue';
 import WorldbookPicker from './WorldbookPicker.vue';
 
 const props = defineProps<{
