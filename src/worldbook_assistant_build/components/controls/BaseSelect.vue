@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, useAttrs, watch } from 'vue';
 
 import { useCoalescedFrame, type CoalescedFrame } from '../../composables/useCoalescedFrame';
 import { calculateSelectMenuPlacement, type SelectMenuPlacement } from './selectPosition';
@@ -10,6 +10,10 @@ export interface BaseSelectOption<T extends string | number = string | number> {
   disabled?: boolean;
   keywords?: string[];
 }
+
+defineOptions({ inheritAttrs: false });
+
+const attrs = useAttrs();
 
 interface IndexedOption {
   option: BaseSelectOption;
@@ -88,6 +92,12 @@ const filteredOptions = computed(() => {
 });
 const activeEntry = computed(() => filteredOptions.value[activeIndex.value] ?? null);
 const activeDescendant = computed(() => activeEntry.value?.id);
+const triggerAttrs = computed(() => Object.fromEntries(
+  Object.entries(attrs).filter(([name]) => name === 'id'
+    || name === 'title'
+    || name.startsWith('aria-')
+    || name.startsWith('data-')),
+));
 const menuStyle = computed(() => ({
   left: `${placement.value.left}px`,
   top: `${placement.value.top}px`,
@@ -339,6 +349,7 @@ onBeforeUnmount(() => {
     <div class="wb-control-select-control" :class="{ 'has-clear': clearable && modelValue !== null }">
       <div
         ref="triggerRef"
+        v-bind="triggerAttrs"
         role="combobox"
         data-select-trigger
         class="wb-control wb-control-select-trigger"

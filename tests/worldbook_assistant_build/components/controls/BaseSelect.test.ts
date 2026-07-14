@@ -196,6 +196,37 @@ describe('BaseSelect values, identity, and search', () => {
 });
 
 describe('BaseSelect keyboard and accessibility', () => {
+  it('forwards trigger ID, ARIA, and title attributes to the combobox without leaking them or layout attrs to the shell', () => {
+    const wrapper = mountSelect({
+      id: 'theme-select',
+      'aria-label': '主题',
+      'aria-labelledby': 'theme-label',
+      'aria-describedby': 'theme-help',
+      title: '选择主题',
+      class: 'consumer-layout-class',
+      style: 'width: 1px',
+    });
+    const shell = wrapper.get('.wb-control-select-shell');
+    const trigger = wrapper.get('[data-select-trigger]');
+
+    expect(trigger.attributes()).toMatchObject({
+      id: 'theme-select',
+      'aria-label': '主题',
+      'aria-labelledby': 'theme-label',
+      'aria-describedby': 'theme-help',
+      title: '选择主题',
+    });
+    expect(shell.attributes('id')).toBeUndefined();
+    expect(shell.attributes('aria-label')).toBeUndefined();
+    expect(shell.attributes('aria-labelledby')).toBeUndefined();
+    expect(shell.attributes('title')).toBeUndefined();
+    expect(shell.classes()).not.toContain('consumer-layout-class');
+    expect(trigger.classes()).not.toContain('consumer-layout-class');
+    expect(shell.attributes('style')).toBeUndefined();
+    expect(trigger.attributes('style')).toBeUndefined();
+    wrapper.unmount();
+  });
+
   it('uses the focused element as combobox owner and keeps options out of the Tab order', async () => {
     const nonSearch = mountSelect({ modelValue: 1, searchable: false });
     const trigger = nonSearch.get<HTMLElement>('[data-select-trigger]');

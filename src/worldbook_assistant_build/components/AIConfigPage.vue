@@ -14,8 +14,10 @@
 
     <div v-if="stage === 'input'" class="utility-page-body utility-page-scroll ai-config-input-stage">
       <label class="field">
-        <span>目标世界书</span>
+        <span id="ai-config-target-worldbook-label">目标世界书</span>
         <BaseSelect
+          id="ai-config-target-worldbook-select"
+          aria-labelledby="ai-config-target-worldbook-label"
           :model-value="targetWorldbook"
           :options="worldbookOptions"
           @update:model-value="$emit('update:targetWorldbook', String($event ?? ''))"

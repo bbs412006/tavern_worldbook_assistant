@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { mount } from '@vue/test-utils';
+import { mount, type VueWrapper } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 
 import AIConfigPage from '../../../src/worldbook_assistant_build/components/AIConfigPage.vue';
@@ -40,6 +40,21 @@ function previewChanges(): Change[] {
   ];
 }
 
+function expectNamedComboboxes(wrapper: VueWrapper): void {
+  const comboboxes = wrapper.findAll('[role="combobox"]');
+  expect(comboboxes.length).toBeGreaterThan(0);
+  for (const combobox of comboboxes) {
+    const ariaLabel = combobox.attributes('aria-label')?.trim();
+    const labelledby = combobox.attributes('aria-labelledby')?.trim();
+    const labelledText = labelledby
+      ?.split(/\s+/)
+      .map(id => wrapper.find(`[id="${id}"]`).text().trim())
+      .join(' ')
+      .trim();
+    expect(ariaLabel || labelledText, combobox.html()).toBeTruthy();
+  }
+}
+
 describe('AIConfigPage', () => {
   it('uses unified controls without a native select', () => {
     const wrapper = mountPage();
@@ -48,6 +63,25 @@ describe('AIConfigPage', () => {
     expect(wrapper.findComponent(BaseSelect).exists()).toBe(true);
     expect(wrapper.findAllComponents(BaseTextarea)).toHaveLength(2);
     expect(wrapper.findAllComponents(BaseButton).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('gives every custom combobox a stable accessible name linked to visible field text', () => {
+    const wrapper = mountPage();
+
+    expectNamedComboboxes(wrapper);
+    const ids = wrapper.findAll('[id]').map(node => node.attributes('id'));
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('opens the target worldbook select and emits the original payload when a real option is clicked', async () => {
+    const wrapper = mountPage();
+
+    await wrapper.get('[role="combobox"]').trigger('click');
+    const option = wrapper.findAll('[role="option"]').find(candidate => candidate.text() === '世界书 B');
+    expect(option).toBeDefined();
+    await option!.trigger('click');
+
+    expect(wrapper.emitted('update:targetWorldbook')).toEqual([['世界书 B']]);
   });
 
   it('emits target, instruction, and custom prompt input updates', async () => {

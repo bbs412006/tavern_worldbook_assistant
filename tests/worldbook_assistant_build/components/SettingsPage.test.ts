@@ -66,6 +66,21 @@ function selectWithLabel(wrapper: VueWrapper, label: string) {
   return select!;
 }
 
+function expectNamedComboboxes(wrapper: VueWrapper): void {
+  const comboboxes = wrapper.findAll('[role="combobox"]');
+  expect(comboboxes.length).toBeGreaterThan(0);
+  for (const combobox of comboboxes) {
+    const ariaLabel = combobox.attributes('aria-label')?.trim();
+    const labelledby = combobox.attributes('aria-labelledby')?.trim();
+    const labelledText = labelledby
+      ?.split(/\s+/)
+      .map(id => wrapper.find(`[id="${id}"]`).text().trim())
+      .join(' ')
+      .trim();
+    expect(ariaLabel || labelledText, combobox.html()).toBeTruthy();
+  }
+}
+
 describe('SettingsPage', () => {
   it('renders experience, version, and API sections', () => {
     const wrapper = mountPage();
@@ -83,6 +98,14 @@ describe('SettingsPage', () => {
     expect(wrapper.findAllComponents(BaseSwitch).length).toBeGreaterThanOrEqual(6);
     expect(wrapper.findAllComponents(BaseInput).length).toBeGreaterThanOrEqual(5);
     expect(wrapper.findAllComponents(BaseButton).length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('gives every custom combobox a stable accessible name linked to visible field text', () => {
+    const wrapper = mountPage({ apiModelList: ['model-a', 'model-b'] });
+
+    expectNamedComboboxes(wrapper);
+    const ids = wrapper.findAll('[id]').map(node => node.attributes('id'));
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('uses the page body as its single internal scroll container', () => {

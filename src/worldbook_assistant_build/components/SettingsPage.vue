@@ -36,8 +36,10 @@
             </BaseSwitch>
           </div>
           <label class="field settings-field">
-            <span>父标签删除策略</span>
+            <span id="settings-delete-parent-label">父标签删除策略</span>
             <BaseSelect
+              id="settings-delete-parent-select"
+              aria-labelledby="settings-delete-parent-label"
               :model-value="persistedState.tag_editor.delete_parent_mode"
               :options="deleteParentOptions"
               @update:model-value="$emit('set-tag-delete-parent-mode', String($event))"
@@ -45,8 +47,10 @@
           </label>
           <div class="settings-hint">开启后将在工具栏和移动端 Tab 中显示 AI 对话入口</div>
           <label class="field settings-field">
-            <span>排序模式</span>
+            <span id="settings-sort-mode-label">排序模式</span>
             <BaseSelect
+              id="settings-sort-mode-select"
+              aria-labelledby="settings-sort-mode-label"
               :model-value="persistedState.sort.mode"
               :options="sortModeOptions"
               @update:model-value="updateSortMode"
@@ -59,8 +63,14 @@
             排序后重新分配 UID（仅直接排序模式）
           </BaseSwitch>
           <label class="field settings-field">
-            <span>主题</span>
-            <BaseSelect :model-value="currentTheme" :options="themeSelectOptions" @update:model-value="$emit('set-theme', String($event))" />
+            <span id="settings-theme-label">主题</span>
+            <BaseSelect
+              id="settings-theme-select"
+              aria-labelledby="settings-theme-label"
+              :model-value="currentTheme"
+              :options="themeSelectOptions"
+              @update:model-value="$emit('set-theme', String($event))"
+            />
           </label>
           <BaseSwitch
             :model-value="persistedState.glass_mode"
@@ -180,8 +190,10 @@
               {{ apiModelLoading ? '加载中...' : '加载模型列表' }}
             </BaseButton>
             <label v-if="apiModelList.length > 0" class="field">
-              <span>选择模型</span>
+              <span id="settings-model-label">选择模型</span>
               <BaseSelect
+                id="settings-model-select"
+                aria-labelledby="settings-model-label"
                 :model-value="persistedState.ai_api_config.model"
                 :options="modelOptions"
                 @update:model-value="$emit('update-api-config', { model: String($event ?? '') })"
