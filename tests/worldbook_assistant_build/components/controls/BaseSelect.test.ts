@@ -57,9 +57,15 @@ async function click(element: Element): Promise<void> {
   await flush();
 }
 
-async function keydown(element: Element, key: string): Promise<void> {
-  element.dispatchEvent(new element.ownerDocument.defaultView!.KeyboardEvent('keydown', { key, bubbles: true }));
+async function keydown(element: Element, key: string): Promise<KeyboardEvent> {
+  const event = new element.ownerDocument.defaultView!.KeyboardEvent('keydown', {
+    key,
+    bubbles: true,
+    cancelable: true,
+  });
+  element.dispatchEvent(event);
   await flush();
+  return event;
 }
 
 async function setInput(element: HTMLInputElement, value: string): Promise<void> {
@@ -215,16 +221,54 @@ describe('BaseSelect keyboard and accessibility', () => {
     searchable.unmount();
   });
 
-  it('keeps clear as an independent sibling control with isolated keyboard behavior', async () => {
+  it.each(['Enter', ' '])('clears from the focused clear button with %s without selecting the active option', async key => {
     const wrapper = mountSelect({ modelValue: 1, clearable: true, searchable: false });
-    const clear = wrapper.get('.wb-control-select-clear');
+    const clear = wrapper.get<HTMLButtonElement>('.wb-control-select-clear');
     expect(clear.element.parentElement).toBe(wrapper.get('.wb-control-select-control').element);
     expect(clear.element.parentElement).not.toBe(wrapper.get('[data-select-trigger]').element);
     await open(wrapper);
-    await keydown(clear.element, 'Enter');
+    clear.element.focus();
+    expect(document.activeElement).toBe(clear.element);
+    await keydown(clear.element, key);
     await click(clear.element);
     expect(wrapper.emitted('update:modelValue')).toEqual([[null]]);
     expect(menuOf(wrapper)).not.toBeNull();
+    wrapper.unmount();
+  });
+
+  it('closes from a focused clear button with Escape and restores trigger focus', async () => {
+    const wrapper = mountSelect({ modelValue: 1, clearable: true, searchable: false });
+    const trigger = wrapper.get<HTMLElement>('[data-select-trigger]').element;
+    const clear = wrapper.get<HTMLButtonElement>('.wb-control-select-clear').element;
+    await open(wrapper);
+    await click(clear);
+    clear.focus();
+
+    const event = await keydown(clear, 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(menuOf(wrapper)).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    expect(wrapper.emitted('update:modelValue')).toEqual([[null]]);
+    wrapper.unmount();
+  });
+
+  it('closes from a focused clear button with Tab without preventing normal focus traversal', async () => {
+    const wrapper = mountSelect({ modelValue: 1, clearable: true, searchable: false });
+    const clear = wrapper.get<HTMLButtonElement>('.wb-control-select-clear').element;
+    const after = document.createElement('button');
+    rootOf(wrapper).append(after);
+    await open(wrapper);
+    await click(clear);
+    clear.focus();
+
+    const event = await keydown(clear, 'Tab');
+    if (!event.defaultPrevented) after.focus();
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(menuOf(wrapper)).toBeNull();
+    expect(document.activeElement).toBe(after);
+    expect(wrapper.emitted('update:modelValue')).toEqual([[null]]);
     wrapper.unmount();
   });
 
@@ -288,9 +332,12 @@ describe('BaseSelect root layer positioning', () => {
     await open(wrapper);
     const layer = layerOf(wrapper)!;
     expect(layer.parentElement).toBe(root);
+    expect(layer.getAttributeNames().some(name => name.startsWith('data-v-'))).toBe(true);
     expect(layer.style.left).toBe('252px');
     expect(layer.style.top).toBe('186px');
     expect(layer.dataset.side).toBe('down');
+    await keydown(wrapper.get('[data-select-trigger]').element, 'Escape');
+    expect(root.querySelector('.wb-control-select-menu')).toBeNull();
     wrapper.unmount();
   });
 
@@ -402,6 +449,16 @@ describe('BaseSelect owner lifecycle', () => {
 });
 
 describe('BaseSelect DOM contract', () => {
+  it('uses an explicit clear state class for value padding', () => {
+    const clearable = mountSelect({ modelValue: 1, clearable: true });
+    expect(clearable.get('.wb-control-select-control').classes()).toContain('has-clear');
+    clearable.unmount();
+
+    const empty = mountSelect({ modelValue: null, clearable: true });
+    expect(empty.get('.wb-control-select-control').classes()).not.toContain('has-clear');
+    empty.unmount();
+  });
+
   it('renders no closed menu, native select, or Teleport', async () => {
     const wrapper = mountSelect();
     expect(menuOf(wrapper)).toBeNull();

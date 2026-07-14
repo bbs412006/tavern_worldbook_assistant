@@ -240,7 +240,18 @@ function onClearClick(event: MouseEvent): void {
 }
 
 function onClearKeydown(event: KeyboardEvent): void {
-  event.stopPropagation();
+  if (event.key === 'Escape') {
+    if (open.value) {
+      event.preventDefault();
+      closeMenu({ focus: true });
+    }
+    return;
+  }
+  if (event.key === 'Tab') {
+    closeMenu();
+    return;
+  }
+  if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
 }
 
 function onOwnerPointerDown(event: Event): void {
@@ -325,7 +336,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="wb-control-select-shell" :class="{ 'is-open': open, 'is-disabled': disabled }">
-    <div class="wb-control-select-control">
+    <div class="wb-control-select-control" :class="{ 'has-clear': clearable && modelValue !== null }">
       <div
         ref="triggerRef"
         role="combobox"
@@ -456,7 +467,7 @@ onBeforeUnmount(() => {
   transform: translateY(-50%);
 }
 
-.wb-control-select-control:has(.wb-control-select-clear) .wb-control-select-value {
+.wb-control-select-control.has-clear .wb-control-select-value {
   padding-right: 24px;
 }
 
