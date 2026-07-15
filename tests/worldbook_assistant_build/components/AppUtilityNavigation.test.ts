@@ -590,6 +590,27 @@ describe('App utility navigation', () => {
     expect(tabLabelRule).toMatch(/white-space:\s*nowrap;/);
   });
 
+  it('keeps mobile list titles left-aligned and gives them priority over right-aligned metadata', () => {
+    const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
+    const mobileListTemplate = appSource.match(/<div class="mobile-entry-list">([\s\S]*?)<div v-if="!filteredEntries\.length"/)?.[1] ?? '';
+    const titleGroupRule = appSource.match(/\.mobile-entry-title-group\s*\{([^}]*)\}/)?.[1] ?? '';
+    const titleRule = appSource.match(/\.mobile-entry-list \.entry-item-title\s*\{([^}]*)\}/)?.[1] ?? '';
+    const metadataRule = appSource.match(/\.mobile-entry-meta\s*\{([^}]*)\}/)?.[1] ?? '';
+    const detailsRule = appSource.match(/\.mobile-entry-details\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(mobileListTemplate).toMatch(/class="mobile-entry-title-group"[\s\S]*?entry-status-dot[\s\S]*?entry-item-title/);
+    expect(mobileListTemplate).toMatch(/class="mobile-entry-meta"[\s\S]*?entry-chip mono[\s\S]*?entry-chip uid/);
+    expect(mobileListTemplate).toMatch(/class="mobile-entry-details"/);
+    expect(titleGroupRule).toMatch(/flex:\s*1 1 auto;/);
+    expect(titleGroupRule).toMatch(/justify-content:\s*flex-start;/);
+    expect(titleRule).toMatch(/white-space:\s*normal;/);
+    expect(titleRule).toMatch(/overflow-wrap:\s*anywhere;/);
+    expect(titleRule).not.toMatch(/text-overflow:\s*ellipsis;/);
+    expect(metadataRule).toMatch(/margin-left:\s*auto;/);
+    expect(metadataRule).toMatch(/justify-content:\s*flex-end;/);
+    expect(detailsRule).toMatch(/justify-content:\s*flex-end;/);
+  });
+
   it('keeps mobile controls touchable while removing permanent frames from secondary actions', () => {
     const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
     const mobileBlocks = [...appSource.matchAll(/\.wb-assistant-root\.is-mobile\s*\{([\s\S]*?)\n\}/g)].map(match => match[1]).join('\n');

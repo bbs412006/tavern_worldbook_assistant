@@ -319,23 +319,26 @@
                 style="border: 1px solid var(--wb-border-subtle); border-radius: 8px; padding: 8px 10px; margin-bottom: 4px;"
               >
                 <div class="entry-item-head">
-                  <BaseCheckbox
-                    v-if="mobileMultiSelectMode"
-
-                    class="mobile-multi-checkbox"
-                    :checked="selectedEntryUidSet.has(entry.uid)"
-                    @click.stop
-                    @change="toggleMobileEntrySelection(entry.uid)"
-                  />
-                  <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
-                  <div class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</div>
-                  <span v-if="mobileMultiSelectMode && selectedEntryUid === entry.uid && selectedEntryUidSet.has(entry.uid)" class="entry-chip mono">样板</span>
-                  <span class="entry-chip uid">#{{ entry.uid }}</span>
+                  <div class="mobile-entry-title-group">
+                    <BaseCheckbox
+                      v-if="mobileMultiSelectMode"
+                      class="mobile-multi-checkbox"
+                      :checked="selectedEntryUidSet.has(entry.uid)"
+                      @click.stop
+                      @change="toggleMobileEntrySelection(entry.uid)"
+                    />
+                    <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
+                    <div class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</div>
+                  </div>
+                  <div class="mobile-entry-meta">
+                    <span v-if="mobileMultiSelectMode && selectedEntryUid === entry.uid && selectedEntryUidSet.has(entry.uid)" class="entry-chip mono">样板</span>
+                    <span class="entry-chip uid">#{{ entry.uid }}</span>
+                  </div>
                 </div>
                 <div class="entry-item-keys" v-if="entry.strategy.keys?.length">
                   {{ entry.strategy.keys.join(', ') }}
                 </div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:10px;opacity:0.8;">
+                <div class="mobile-entry-details">
                   <span style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;">📍 {{ getPositionTypeLabel(entry.position.type, entry.position.role) }}</span>
                   <span style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;">⚖️ #{{ entry.position.order }}</span>
                   <span v-if="entry.recursion.prevent_incoming" style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;color:#f59e0b;">🚫入</span>
@@ -14880,6 +14883,65 @@ watch(hasUnsavedChanges, (val) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.mobile-entry-list .entry-item-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  width: 100%;
+}
+
+.mobile-entry-title-group {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 7px;
+  min-width: 0;
+  text-align: left;
+}
+
+.mobile-entry-title-group .entry-status-dot {
+  margin-top: 0.4em;
+}
+
+.mobile-entry-list .entry-item-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.mobile-entry-meta {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-left: auto;
+  padding-left: 8px;
+  text-align: right;
+}
+
+.mobile-entry-list .entry-item-keys {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.mobile-entry-details {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  font-size: 10px;
+  opacity: 0.8;
+  text-align: right;
 }
 
 .mobile-multi-toolbar {

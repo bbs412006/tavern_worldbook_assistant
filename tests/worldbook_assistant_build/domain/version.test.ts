@@ -11,8 +11,8 @@ import {
 } from '../../../src/worldbook_assistant_build/domain/version';
 
 describe('version domain', () => {
-  it('reports the mobile-touch-cascade-fix release version', () => {
-    expect(APP_VERSION).toBe('2.2.3');
+  it('reports the mobile-list-layout-fix release version', () => {
+    expect(APP_VERSION).toBe('2.2.4');
   });
 
   it('normalizes whitespace and a leading v prefix', () => {
