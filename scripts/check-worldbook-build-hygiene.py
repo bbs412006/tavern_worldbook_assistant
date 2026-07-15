@@ -18,6 +18,7 @@ checks = {
     'package exposes build:worldbook': 'build:worldbook' in package.get('scripts', {}),
     'package exposes verify:worldbook': 'verify:worldbook' in package.get('scripts', {}),
     'package exposes test:worldbook-domain': 'test:worldbook-domain' in package.get('scripts', {}),
+    'package exposes test:worldbook-components': 'test:worldbook-components' in package.get('scripts', {}),
     'package exposes test:worldbook-composables': 'test:worldbook-composables' in package.get('scripts', {}),
     'vitest is a development dependency': 'vitest' in package.get('devDependencies', {}),
     'vitest config exists': vitest_config.is_file(),
@@ -25,7 +26,10 @@ checks = {
     'source maps are ignored': '*.map' in gitignore,
     'verification runner exists': verify_runner_path.is_file(),
     'verification runner executes domain tests': 'test:worldbook-domain' in verify_runner,
+    'verification runner executes component tests': 'test:worldbook-components' in verify_runner,
     'verification runner executes composable tests': 'test:worldbook-composables' in verify_runner,
+    'verification runner executes unified control guard': 'check-worldbook-unified-controls.py' in verify_runner,
+    'verification runner executes unified control guard tests': 'test_check_worldbook_unified_controls.py' in verify_runner,
 }
 
 failed = False

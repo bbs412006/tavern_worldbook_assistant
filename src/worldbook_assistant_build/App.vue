@@ -10736,12 +10736,12 @@ watch(hasUnsavedChanges, (val) => {
   gap: 6px;
 }
 
-.browse-secondary-keys-row select {
+.browse-secondary-keys-row .wb-base-select {
   width: 110px;
   flex-shrink: 0;
 }
 
-.browse-secondary-keys-row textarea {
+.browse-secondary-keys-row .wb-base-textarea {
   flex: 1;
 }
 
@@ -15062,44 +15062,6 @@ watch(hasUnsavedChanges, (val) => {
   padding: 0 8px;
 }
 
-/* ─────────────────────────────────────────────────
-   Override: Force theme colors on native form elements
-   This beats SillyTavern global dark CSS which sets
-   background/color on textarea, input, select, etc.
-   ───────────────────────────────────────────────── */
-.wb-assistant-root input,
-.wb-assistant-root textarea,
-.wb-assistant-root select,
-.wb-assistant-root option,
-.wb-assistant-root button:not(.wb-control) {
-  color: var(--wb-text-main) !important;
-}
-
-.wb-assistant-root input[type="text"]:not(.wb-control),
-.wb-assistant-root input[type="number"]:not(.wb-control),
-.wb-assistant-root textarea:not(.wb-control),
-.wb-assistant-root select {
-  background: var(--wb-control-bg) !important;
-  border-color: var(--wb-control-border) !important;
-}
-
-.wb-assistant-root input[type="text"]:not(.wb-control):hover,
-.wb-assistant-root input[type="number"]:not(.wb-control):hover,
-.wb-assistant-root textarea:not(.wb-control):hover,
-.wb-assistant-root select:hover {
-  background: var(--wb-control-bg-hover) !important;
-  border-color: var(--wb-control-border-hover) !important;
-}
-
-.wb-assistant-root input[type="text"]:not(.wb-control):focus,
-.wb-assistant-root input[type="number"]:not(.wb-control):focus,
-.wb-assistant-root textarea:not(.wb-control):focus,
-.wb-assistant-root select:focus {
-  background: var(--wb-control-bg-active) !important;
-  border-color: var(--wb-control-border-hover) !important;
-  outline: none !important;
-  box-shadow: var(--wb-control-focus-ring) !important;
-}
 /* ═════════════════════════════════════════════════
    AI Generator Panel
    ═════════════════════════════════════════════════ */
@@ -15324,10 +15286,6 @@ watch(hasUnsavedChanges, (val) => {
   user-select: none;
 }
 
-.ai-context-toggle input {
-  margin: 0;
-}
-
 .ai-context-toggle span {
   white-space: nowrap;
 }
@@ -15481,21 +15439,6 @@ watch(hasUnsavedChanges, (val) => {
   background: var(--wb-glass-header);
 }
 
-.btn.primary {
-  background: var(--wb-primary);
-  color: #fff;
-  border-color: var(--wb-primary);
-}
-
-.btn.primary:hover {
-  filter: brightness(1.1);
-}
-
-.btn.primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* ═════════════════════════════════════════════════
    Mobile Responsive
    ═════════════════════════════════════════════════ */
@@ -15510,7 +15453,7 @@ watch(hasUnsavedChanges, (val) => {
     width: 100%;
   }
 
-  .toolbar-label select {
+  .toolbar-label .wb-base-select {
     flex: 1;
     min-width: 0;
   }

@@ -15,14 +15,10 @@ function cssRule(selector: string): string {
 }
 
 describe('worldbook control CSS contracts', () => {
-  it('keeps late host compatibility selectors on control tokens without overriding base controls', () => {
-    const surface = cssRule('.wb-assistant-root input[type="text"]:not(.wb-control),\n.wb-assistant-root input[type="number"]:not(.wb-control),\n.wb-assistant-root textarea:not(.wb-control),\n.wb-assistant-root select');
-    const focus = cssRule('.wb-assistant-root input[type="text"]:not(.wb-control):focus,\n.wb-assistant-root input[type="number"]:not(.wb-control):focus,\n.wb-assistant-root textarea:not(.wb-control):focus,\n.wb-assistant-root select:focus');
-
-    expect(surface).toContain('background: var(--wb-control-bg) !important');
-    expect(surface).toContain('border-color: var(--wb-control-border) !important');
-    expect(focus).toContain('box-shadow: var(--wb-control-focus-ring) !important');
-    expect(focus).toContain('border-color: var(--wb-control-border-hover) !important');
+  it('removes obsolete native-form compatibility overrides after migration', () => {
+    expect(appSource).not.toContain('.wb-assistant-root input[type="text"]:not(.wb-control)');
+    expect(appSource).not.toContain('.wb-assistant-root textarea:not(.wb-control)');
+    expect(appSource).not.toContain('.wb-assistant-root select:focus');
     expect(appSource).toContain('.wb-assistant-root :deep(.wb-control:focus-visible)');
   });
 

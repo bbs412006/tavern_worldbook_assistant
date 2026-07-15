@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.1.1';
+export const APP_VERSION = '2.2.0';
 export const VERSION_REPO_OWNER = 'bbs412006';
 export const VERSION_REPO_NAME = 'tavern_worldbook_assistant';
 export const VERSION_BRANCH = 'ST-Manager-STscript';

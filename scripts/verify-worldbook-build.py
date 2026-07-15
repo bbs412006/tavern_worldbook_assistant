@@ -41,6 +41,7 @@ def main() -> None:
     for check in checks:
         run(['python3', check])
 
+    run(['python3', '-m', 'unittest', 'tests/scripts/test_check_worldbook_unified_controls.py'])
     run(['corepack', 'pnpm', 'test:worldbook-domain'])
     run(['corepack', 'pnpm', 'test:worldbook-components'])
     run(['corepack', 'pnpm', 'test:worldbook-composables'])
