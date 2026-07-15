@@ -575,6 +575,21 @@ describe('App utility navigation', () => {
     wrapper.unmount();
   });
 
+  it('keeps crowded mobile tabs readable, aligned, and horizontally scrollable', () => {
+    const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
+    const tabBarRule = appSource.match(/\.mobile-tab-bar\s*\{([^}]*)\}/)?.[1] ?? '';
+    const tabButtonRule = appSource.match(/\.mobile-tab-bar button\s*\{([^}]*)\}/)?.[1] ?? '';
+    const tabLabelRule = appSource.match(/\.mobile-tab-bar \.tab-label\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(tabBarRule).toMatch(/overflow-x:\s*auto;/);
+    expect(tabBarRule).toMatch(/align-items:\s*stretch;/);
+    expect(tabButtonRule).toMatch(/flex:\s*0 0 auto;/);
+    expect(tabButtonRule).toMatch(/min-width:\s*56px;/);
+    expect(tabButtonRule).toMatch(/min-height:\s*52px;/);
+    expect(tabButtonRule).toMatch(/align-self:\s*stretch;/);
+    expect(tabLabelRule).toMatch(/white-space:\s*nowrap;/);
+  });
+
   it('preserves the mobile workspace flex boundary and active tab across utility round trips', async () => {
     Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
     Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });

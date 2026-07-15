@@ -11,8 +11,8 @@ import {
 } from '../../../src/worldbook_assistant_build/domain/version';
 
 describe('version domain', () => {
-  it('reports the unified-controls release version', () => {
-    expect(APP_VERSION).toBe('2.2.0');
+  it('reports the mobile-tab-layout release version', () => {
+    expect(APP_VERSION).toBe('2.2.1');
   });
 
   it('normalizes whitespace and a leading v prefix', () => {

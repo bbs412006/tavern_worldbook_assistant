@@ -14953,13 +14953,25 @@ watch(hasUnsavedChanges, (val) => {
   flex-shrink: 0;
   z-index: 10100;
   display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
   border-top: 1px solid var(--wb-border-main);
   background: var(--wb-bg-panel);
   height: 52px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-tab-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .mobile-tab-bar button {
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 56px;
+  min-height: 52px;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14987,6 +14999,8 @@ watch(hasUnsavedChanges, (val) => {
 
 .mobile-tab-bar .tab-label {
   font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .wb-assistant-root.is-mobile {
