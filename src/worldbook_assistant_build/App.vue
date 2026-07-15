@@ -164,12 +164,12 @@
         </div>
         <!-- Mobile browse bottom tabs -->
         <div class="mobile-tab-bar" style="display:flex !important;flex-shrink:0;">
-          <button class="active">
+          <BaseButton class="active">
             <span class="tab-icon">📖</span><span class="tab-label">浏览</span>
-          </button>
-          <button @click="switchPanelMode('editor')">
+          </BaseButton>
+          <BaseButton @click="switchPanelMode('editor')">
             <span class="tab-icon">✏️</span><span class="tab-label">编辑</span>
-          </button>
+          </BaseButton>
         </div>
       </template>
 
@@ -228,31 +228,31 @@
             <div v-if="globalWorldbookMode" style="border:1px solid var(--wb-border-subtle);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--wb-bg-card);">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                 <span style="font-weight:600;font-size:13px;">🌐 全局世界书（{{ bindings.global.length }}）</span>
-                <button class="btn mini danger" type="button" :disabled="!bindings.global.length" @click="clearGlobalWorldbooks" style="font-size:11px;">清空</button>
+                <BaseButton class="btn mini danger" type="button" :disabled="!bindings.global.length" @click="clearGlobalWorldbooks" style="font-size:11px;">清空</BaseButton>
               </div>
               <label class="field" style="margin-bottom:6px;">
                 <span style="font-size:12px;">预设（切换即应用）</span>
                 <BaseSelect v-model="selectedGlobalPresetId" :options="globalPresetOptions" :searchable="false" size="sm" aria-label="全局预设" @update:model-value="onGlobalPresetSelectionChanged" />
               </label>
               <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
-                <button class="btn mini" type="button" :disabled="!bindings.global.length" @click="saveCurrentAsGlobalPreset" style="font-size:11px;">保存组合</button>
-                <button class="btn mini" type="button" :disabled="!selectedGlobalPreset" @click="overwriteSelectedGlobalPreset" style="font-size:11px;">覆盖预设</button>
-                <button class="btn mini danger" type="button" :disabled="!selectedGlobalPreset" @click="deleteSelectedGlobalPreset" style="font-size:11px;">删除预设</button>
+                <BaseButton class="btn mini" type="button" :disabled="!bindings.global.length" @click="saveCurrentAsGlobalPreset" style="font-size:11px;">保存组合</BaseButton>
+                <BaseButton class="btn mini" type="button" :disabled="!selectedGlobalPreset" @click="overwriteSelectedGlobalPreset" style="font-size:11px;">覆盖预设</BaseButton>
+                <BaseButton class="btn mini danger" type="button" :disabled="!selectedGlobalPreset" @click="deleteSelectedGlobalPreset" style="font-size:11px;">删除预设</BaseButton>
               </div>
               <label class="field" style="margin-bottom:6px;">
                 <span style="font-size:12px;">搜索并添加</span>
-                <input v-model="globalAddSearchText" type="text" class="text-input" placeholder="搜索世界书..." @keydown.enter.prevent="addFirstGlobalCandidate" style="font-size:12px;" />
+                <BaseInput v-model="globalAddSearchText" type="text" class="text-input" placeholder="搜索世界书..." @keydown.enter.prevent="addFirstGlobalCandidate" style="font-size:12px;" />
               </label>
               <div v-if="globalAddCandidates.length" style="max-height:120px;overflow-y:auto;margin-bottom:6px;">
-                <button v-for="name in globalAddCandidates" :key="`m-add-${name}`" type="button" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;margin-bottom:2px;cursor:pointer;" @click="addGlobalWorldbook(name)">
+                <BaseButton v-for="name in globalAddCandidates" :key="`m-add-${name}`" type="button" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;margin-bottom:2px;cursor:pointer;" @click="addGlobalWorldbook(name)">
                   <span>{{ name }}</span><span style="color:#22c55e;">+ 添加</span>
-                </button>
+                </BaseButton>
               </div>
               <div v-if="filteredGlobalWorldbooks.length" style="font-size:12px;margin-bottom:4px;opacity:0.7;">已启用：</div>
               <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px;">
-                <button v-for="name in filteredGlobalWorldbooks" :key="`m-gl-${name}`" type="button" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;cursor:pointer;" @click="removeGlobalWorldbook(name)">
+                <BaseButton v-for="name in filteredGlobalWorldbooks" :key="`m-gl-${name}`" type="button" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;cursor:pointer;" @click="removeGlobalWorldbook(name)">
                   <span>{{ name }}</span><span style="color:#ef4444;">移除</span>
-                </button>
+                </BaseButton>
               </div>
               <!-- Role Binding Section -->
               <div style="border-top:1px solid var(--wb-border-subtle);padding-top:8px;margin-top:4px;">
@@ -261,28 +261,28 @@
                   {{ currentRoleContext ? `当前角色: ${currentRoleContext.name}` : '当前未进入角色聊天' }}
                 </div>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
-                  <button class="btn mini" type="button" :disabled="!selectedGlobalPreset || !currentRoleContext" @click="bindCurrentRoleToSelectedPreset" style="font-size:11px;">绑定当前角色</button>
-                  <button class="btn mini" type="button" :disabled="!selectedGlobalPreset || !isCurrentRoleBoundToSelectedPreset" @click="unbindCurrentRoleFromSelectedPreset" style="font-size:11px;">解绑当前角色</button>
+                  <BaseButton class="btn mini" type="button" :disabled="!selectedGlobalPreset || !currentRoleContext" @click="bindCurrentRoleToSelectedPreset" style="font-size:11px;">绑定当前角色</BaseButton>
+                  <BaseButton class="btn mini" type="button" :disabled="!selectedGlobalPreset || !isCurrentRoleBoundToSelectedPreset" @click="unbindCurrentRoleFromSelectedPreset" style="font-size:11px;">解绑当前角色</BaseButton>
                 </div>
                 <div style="margin-bottom:6px;">
-                  <button type="button" :disabled="!selectedGlobalPreset" @click="toggleRolePicker" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:1px solid var(--wb-border-subtle);border-radius:4px;background:var(--wb-input-bg);color:var(--wb-text-main);font-size:12px;cursor:pointer;">
+                  <BaseButton type="button" :disabled="!selectedGlobalPreset" @click="toggleRolePicker" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:1px solid var(--wb-border-subtle);border-radius:4px;background:var(--wb-input-bg);color:var(--wb-text-main);font-size:12px;cursor:pointer;">
                     <span>{{ selectedGlobalPreset ? '从角色卡列表选择绑定' : '请先选择预设' }}</span>
                     <span>{{ rolePickerOpen ? '▴' : '▾' }}</span>
-                  </button>
+                  </BaseButton>
                   <div v-if="rolePickerOpen" style="margin-top:4px;">
-                    <input v-model="roleBindSearchText" type="text" class="text-input" placeholder="搜索角色名..." style="font-size:12px;margin-bottom:4px;" @keydown.enter.prevent="bindFirstRoleCandidate" />
+                    <BaseInput v-model="roleBindSearchText" type="text" class="text-input" placeholder="搜索角色名..." style="font-size:12px;margin-bottom:4px;" @keydown.enter.prevent="bindFirstRoleCandidate" />
                     <div style="max-height:120px;overflow-y:auto;">
-                      <button v-for="candidate in roleBindingCandidates" :key="`m-role-${candidate.key}`" type="button" :disabled="candidate.bound" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;margin-bottom:2px;cursor:pointer;opacity: 1;" :style="{ opacity: candidate.bound ? '0.5' : '1' }" @click="bindRoleCandidateToSelectedPreset(candidate)">
+                      <BaseButton v-for="candidate in roleBindingCandidates" :key="`m-role-${candidate.key}`" type="button" :disabled="candidate.bound" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;margin-bottom:2px;cursor:pointer;opacity: 1;" :style="{ opacity: candidate.bound ? '0.5' : '1' }" @click="bindRoleCandidateToSelectedPreset(candidate)">
                         <span>{{ candidate.name }}</span><span :style="{ color: candidate.bound ? '#94a3b8' : '#22c55e' }">{{ candidate.bound ? '已绑定' : '绑定' }}</span>
-                      </button>
+                      </BaseButton>
                       <div v-if="!roleBindingCandidates.length" style="font-size:11px;opacity:0.5;padding:4px;">没有匹配角色</div>
                     </div>
                   </div>
                 </div>
                 <div v-if="selectedGlobalPreset" style="display:flex;flex-wrap:wrap;gap:4px;">
-                  <button v-for="binding in selectedGlobalPresetRoleBindings" :key="`m-rb-${selectedGlobalPreset?.id}-${binding.key}`" type="button" style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--wb-border-subtle);border-radius:4px;background:var(--wb-input-bg);color:var(--wb-text-main);font-size:11px;cursor:pointer;" @click="removeRoleBindingFromSelectedPreset(binding.key)">
+                  <BaseButton v-for="binding in selectedGlobalPresetRoleBindings" :key="`m-rb-${selectedGlobalPreset?.id}-${binding.key}`" type="button" style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--wb-border-subtle);border-radius:4px;background:var(--wb-input-bg);color:var(--wb-text-main);font-size:11px;cursor:pointer;" @click="removeRoleBindingFromSelectedPreset(binding.key)">
                     {{ binding.name }} <span style="color:#ef4444;">×</span>
-                  </button>
+                  </BaseButton>
                   <div v-if="!selectedGlobalPresetRoleBindings.length" style="font-size:11px;opacity:0.5;">当前预设尚未绑定角色</div>
                 </div>
                 <div v-else style="font-size:11px;opacity:0.5;">选择预设后可配置角色绑定</div>
@@ -292,12 +292,12 @@
               <div v-if="mobileMultiSelectMode" class="mobile-multi-toolbar">
                 <span class="mobile-multi-title">多选模式 · 已选 {{ selectedEntryCount }}</span>
                 <div class="mobile-multi-actions">
-                  <button class="btn mini" type="button" @click="selectAllVisibleForMobileMultiSelect">全选可见</button>
-                  <button class="btn mini" type="button" @click="clearMobileMultiSelectSelection">清空</button>
-                  <button class="btn mini" type="button" @click="finishMobileMultiSelectMode">完成</button>
+                  <BaseButton class="btn mini" type="button" @click="selectAllVisibleForMobileMultiSelect">全选可见</BaseButton>
+                  <BaseButton class="btn mini" type="button" @click="clearMobileMultiSelectSelection">清空</BaseButton>
+                  <BaseButton class="btn mini" type="button" @click="finishMobileMultiSelectMode">完成</BaseButton>
                 </div>
               </div>
-              <button
+              <BaseButton
                 v-for="entry in filteredEntries"
                 :key="`me-${entry.uid}`"
                 type="button"
@@ -319,9 +319,9 @@
                 style="border: 1px solid var(--wb-border-subtle); border-radius: 8px; padding: 8px 10px; margin-bottom: 4px;"
               >
                 <div class="entry-item-head">
-                  <input
+                  <BaseCheckbox
                     v-if="mobileMultiSelectMode"
-                    type="checkbox"
+
                     class="mobile-multi-checkbox"
                     :checked="selectedEntryUidSet.has(entry.uid)"
                     @click.stop
@@ -341,7 +341,7 @@
                   <span v-if="entry.recursion.prevent_incoming" style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;color:#f59e0b;">🚫入</span>
                   <span v-if="entry.recursion.prevent_outgoing" style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;color:#f59e0b;">🚫出</span>
                 </div>
-              </button>
+              </BaseButton>
               <div v-if="!filteredEntries.length" class="empty-note">暂无条目</div>
             </div>
             </div>
@@ -354,7 +354,7 @@
               <header class="editor-head">
                 <label class="field editor-comment">
                   <span>备注 (COMMENT)</span>
-                  <input v-model="selectedEntry.name" type="text" class="text-input" tabindex="-1" />
+                  <BaseInput v-model="selectedEntry.name" type="text" class="text-input" tabindex="-1" />
                 </label>
                 <div class="editor-badges">
                   <span class="editor-badge" :class="selectedEntry.enabled ? 'on' : 'off'">{{ selectedEntry.enabled ? 'EN' : 'OFF' }}</span>
@@ -365,11 +365,11 @@
               <section class="editor-grid two-cols editor-keyword-grid">
                 <label class="field">
                   <span>主要关键词 (KEYS)</span>
-                  <textarea :value="selectedKeysRaw" @input="selectedKeysRaw = ($event.target as HTMLTextAreaElement).value" @blur="commitKeysFromRaw" class="text-area compact"></textarea>
+                  <BaseTextarea :model-value="selectedKeysRaw" @update:model-value="selectedKeysRaw = $event" @blur="commitKeysFromRaw" class="text-area compact"></BaseTextarea>
                 </label>
                 <label class="field">
                   <span>次要关键词 (SECONDARY)</span>
-                  <textarea :value="selectedSecondaryKeysRaw" @input="selectedSecondaryKeysRaw = ($event.target as HTMLTextAreaElement).value" @blur="commitSecondaryKeysFromRaw" class="text-area compact"></textarea>
+                  <BaseTextarea :model-value="selectedSecondaryKeysRaw" @update:model-value="selectedSecondaryKeysRaw = $event" @blur="commitSecondaryKeysFromRaw" class="text-area compact"></BaseTextarea>
                 </label>
               </section>
               <section class="editor-content-block" ref="editorContentBlockRef">
@@ -378,13 +378,13 @@
                 </div>
                 <div v-if="mobileMultiSelectMode" class="mobile-multi-content-note">多选模式下仅支持配置联动，内容编辑已禁用</div>
                 <div class="editor-content-title">世界观设定 / 内容 (CONTENT)</div>
-                <textarea
+                <BaseTextarea
                   ref="contentTextareaRef"
                   v-model="selectedEntry.content"
                   class="text-area large editor-content-area"
                   :disabled="mobileMultiSelectMode"
                   style="min-height: calc(100vh - 500px);"
-                ></textarea>
+                ></BaseTextarea>
                 <div class="content-resize-handle" @pointerdown="startContentResize">
                   <span class="content-resize-grip">━━━</span>
                 </div>
@@ -401,13 +401,13 @@
               <article class="editor-card">
                 <h4>触发策略 (STRATEGY)</h4>
                 <label class="field checkbox-inline">
-                  <input v-model="selectedEntry.enabled" type="checkbox" />
+                  <BaseCheckbox v-model="selectedEntry.enabled" />
                   <span>启用条目</span>
                 </label>
                 <div class="strategy-switch">
-                  <button type="button" class="strategy-pill constant" :class="{ active: selectedEntry.strategy.type === 'constant' }" @click="selectedEntry.strategy.type = 'constant'">🔵 常驻</button>
-                  <button type="button" class="strategy-pill vector" :class="{ active: selectedEntry.strategy.type === 'vectorized' }" @click="selectedEntry.strategy.type = 'vectorized'">📎 向量化</button>
-                  <button type="button" class="strategy-pill selective" :class="{ active: selectedEntry.strategy.type === 'selective' }" @click="selectedEntry.strategy.type = 'selective'">🟢 关键词</button>
+                  <BaseButton type="button" class="strategy-pill constant" :class="{ active: selectedEntry.strategy.type === 'constant' }" @click="selectedEntry.strategy.type = 'constant'">🔵 常驻</BaseButton>
+                  <BaseButton type="button" class="strategy-pill vector" :class="{ active: selectedEntry.strategy.type === 'vectorized' }" @click="selectedEntry.strategy.type = 'vectorized'">📎 向量化</BaseButton>
+                  <BaseButton type="button" class="strategy-pill selective" :class="{ active: selectedEntry.strategy.type === 'selective' }" @click="selectedEntry.strategy.type = 'selective'">🟢 关键词</BaseButton>
                 </div>
                 <details class="editor-advanced">
                   <summary>高级策略设置</summary>
@@ -417,11 +417,11 @@
                   </label>
                   <label class="field">
                     <span>扫描深度</span>
-                    <input v-model="selectedScanDepthText" type="text" class="text-input" placeholder="留空或 same_as_global" />
+                    <BaseInput v-model="selectedScanDepthText" type="text" class="text-input" placeholder="留空或 same_as_global" />
                   </label>
                   <label class="field">
                     <span>概率(0-100)</span>
-                    <input v-model.number="selectedEntry.probability" type="number" class="text-input" min="0" max="100" step="1" />
+                    <BaseInput v-model.number="selectedEntry.probability" type="number" class="text-input" min="0" max="100" step="1" />
                   </label>
                 </details>
               </article>
@@ -433,7 +433,7 @@
                 </label>
                 <label class="field">
                   <span>权重 (Order)</span>
-                  <input v-model.number="selectedEntry.position.order" type="number" class="text-input" step="1" />
+                  <BaseInput v-model.number="selectedEntry.position.order" type="number" class="text-input" step="1" />
                 </label>
                 <div class="editor-grid two-cols">
                   <label class="field" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
@@ -442,18 +442,18 @@
                   </label>
                   <label class="field" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
                     <span>深度层级</span>
-                    <input v-model.number="selectedEntry.position.depth" type="number" class="text-input" min="0" step="1" :disabled="selectedEntry.position.type !== 'at_depth'" />
+                    <BaseInput v-model.number="selectedEntry.position.depth" type="number" class="text-input" min="0" step="1" :disabled="selectedEntry.position.type !== 'at_depth'" />
                   </label>
                 </div>
               </article>
               <article class="editor-card">
                 <h4>递归与效果 (RECURSION)</h4>
                 <label class="field checkbox-inline">
-                  <input v-model="selectedEntry.recursion.prevent_incoming" type="checkbox" />
+                  <BaseCheckbox v-model="selectedEntry.recursion.prevent_incoming" />
                   <span>不可递归命中</span>
                 </label>
                 <label class="field checkbox-inline">
-                  <input v-model="selectedEntry.recursion.prevent_outgoing" type="checkbox" />
+                  <BaseCheckbox v-model="selectedEntry.recursion.prevent_outgoing" />
                   <span>阻止后续递归</span>
                 </label>
               </article>
@@ -461,16 +461,16 @@
                 <summary>高级字段 / extra JSON</summary>
                 <label class="field">
                   <span>extra JSON（未知字段）</span>
-                  <textarea v-model="selectedExtraText" class="text-area compact" placeholder="{ ... }"></textarea>
+                  <BaseTextarea v-model="selectedExtraText" class="text-area compact" placeholder="{ ... }"></BaseTextarea>
                 </label>
                 <div class="field-actions">
-                  <button class="btn" type="button" @click="applyExtraJson">应用 extra</button>
-                  <button class="btn" type="button" @click="clearExtra">清空 extra</button>
+                  <BaseButton class="btn" type="button" @click="applyExtraJson">应用 extra</BaseButton>
+                  <BaseButton class="btn" type="button" @click="clearExtra">清空 extra</BaseButton>
                 </div>
               </details>
               <div class="mobile-danger-zone">
-                <button class="btn danger" type="button" @click="removeSelectedEntry">🗑 删除此条目</button>
-                <button class="btn" type="button" @click="duplicateSelectedEntry">📋 复制条目</button>
+                <BaseButton class="btn danger" type="button" @click="removeSelectedEntry">🗑 删除此条目</BaseButton>
+                <BaseButton class="btn" type="button" @click="duplicateSelectedEntry">📋 复制条目</BaseButton>
               </div>
             </template>
             <div v-else class="empty-block">请在列表中选择一个条目</div>
@@ -644,27 +644,27 @@
 
       <!-- Tab Bar: bottom, direct child of wb-assistant-root via fragment -->
       <div class="mobile-tab-bar" style="display:flex !important;flex-shrink:0;">
-        <button @click="switchPanelMode('browse')">
+        <BaseButton @click="switchPanelMode('browse')">
           <span class="tab-icon">📖</span><span class="tab-label">浏览</span>
-        </button>
-        <button @click="mobileTab = 'list'" :class="{ active: mobileTab === 'list' }">
+        </BaseButton>
+        <BaseButton @click="mobileTab = 'list'" :class="{ active: mobileTab === 'list' }">
           <span class="tab-icon">📋</span><span class="tab-label">列表</span>
-        </button>
-        <button @click="mobileTab = 'edit'" :class="{ active: mobileTab === 'edit' }">
+        </BaseButton>
+        <BaseButton @click="mobileTab = 'edit'" :class="{ active: mobileTab === 'edit' }">
           <span class="tab-icon">✏️</span><span class="tab-label">编辑</span>
-        </button>
-        <button @click="mobileTab = 'settings'" :class="{ active: mobileTab === 'settings' }">
+        </BaseButton>
+        <BaseButton @click="mobileTab = 'settings'" :class="{ active: mobileTab === 'settings' }">
           <span class="tab-icon">⚙️</span><span class="tab-label">设置</span>
-        </button>
-        <button @click="mobileTab = 'copy'" :class="{ active: mobileTab === 'copy' }">
+        </BaseButton>
+        <BaseButton @click="mobileTab = 'copy'" :class="{ active: mobileTab === 'copy' }">
           <span class="tab-icon">📚</span><span class="tab-label">复制</span>
-        </button>
-        <button v-if="persistedState.show_ai_chat" @click="mobileTab = 'ai'" :class="{ active: mobileTab === 'ai' }">
+        </BaseButton>
+        <BaseButton v-if="persistedState.show_ai_chat" @click="mobileTab = 'ai'" :class="{ active: mobileTab === 'ai' }">
           <span class="tab-icon">🤖</span><span class="tab-label">AI</span>
-        </button>
-        <button @click="mobileTab = 'tags'" :class="{ active: mobileTab === 'tags' }">
+        </BaseButton>
+        <BaseButton @click="mobileTab = 'tags'" :class="{ active: mobileTab === 'tags' }">
           <span class="tab-icon">🏷️</span><span class="tab-label">标签</span>
-        </button>
+        </BaseButton>
       </div>
       </template><!-- end mobile editor mode -->
     </template>
@@ -702,7 +702,7 @@
             <div class="global-mode-column">
               <label class="field">
                 <span>搜索并添加常驻世界书</span>
-                <input
+                <BaseInput
                   v-model="globalAddSearchText"
                   type="text"
                   class="text-input"
@@ -711,7 +711,7 @@
                 />
               </label>
               <TransitionGroup name="list" tag="div" class="global-mode-list">
-                <button
+                <BaseButton
                   v-for="name in globalAddCandidates"
                   :key="`browse-add-${name}`"
                   class="global-mode-item add"
@@ -720,14 +720,14 @@
                 >
                   <span class="global-mode-item-name">{{ name }}</span>
                   <span class="global-mode-item-action">添加</span>
-                </button>
+                </BaseButton>
                 <div v-if="!globalAddCandidates.length" key="empty" class="empty-note">没有可添加的世界书</div>
               </TransitionGroup>
             </div>
             <div class="global-mode-column">
               <label class="field">
                 <span>筛选常驻世界书</span>
-                <input
+                <BaseInput
                   v-model="globalFilterText"
                   type="text"
                   class="text-input"
@@ -735,7 +735,7 @@
                 />
               </label>
               <TransitionGroup name="list" tag="div" class="global-mode-list">
-                <button
+                <BaseButton
                   v-for="name in filteredGlobalWorldbooks"
                   :key="`browse-global-${name}`"
                   class="global-mode-item active"
@@ -744,7 +744,7 @@
                 >
                   <span class="global-mode-item-name">{{ name }}</span>
                   <span class="global-mode-item-action">移除</span>
-                </button>
+                </BaseButton>
                 <div v-if="!filteredGlobalWorldbooks.length" key="empty" class="empty-note">暂无常驻世界书</div>
               </TransitionGroup>
             </div>
@@ -876,8 +876,8 @@
     <template v-if="panelMode === 'editor'">
     <section class="wb-toolbar browse-toolbar" style="justify-content: flex-end; gap: 8px; padding: 6px 12px; min-height: 0;">
       <div class="browse-mode-switch">
-        <button class="btn browse-mode-btn" type="button" @click="switchPanelMode('browse')">📖 浏览</button>
-        <button class="btn browse-mode-btn active" type="button">✏️ 编辑</button>
+        <BaseButton class="btn browse-mode-btn" type="button" @click="switchPanelMode('browse')">📖 浏览</BaseButton>
+        <BaseButton class="btn browse-mode-btn active" type="button">✏️ 编辑</BaseButton>
       </div>
     </section>
     <section v-if="!isDesktopFocusMode" class="wb-toolbar">
@@ -887,17 +887,17 @@
                 <BaseSelect :model-value="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="世界书" @update:model-value="handleWorldbookSelectionUpdate" />
                   <div v-if="tagDefinitions.length" class="worldbook-picker-tags tree-mode">
                     <div class="tag-filter-toolbar">
-                      <button class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</button>
+                      <BaseButton class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</BaseButton>
                       <span class="tag-filter-summary">{{ tagFilterSummary }}</span>
                       <BaseSelect v-model="tagFilterLogic" class="tag-filter-select" :options="tagFilterLogicOptions" :searchable="false" size="sm" aria-label="标签筛选逻辑" />
                       <BaseSelect v-model="tagFilterMatchMode" class="tag-filter-select" :options="tagFilterMatchModeOptions" :searchable="false" size="sm" aria-label="标签匹配模式" />
-                      <button class="btn mini" type="button" :disabled="!selectedTagFilterIds.length" @click="clearTagFilterSelection">清空</button>
+                      <BaseButton class="btn mini" type="button" :disabled="!selectedTagFilterIds.length" @click="clearTagFilterSelection">清空</BaseButton>
                     </div>
                     <Transition name="tag-filter-panel">
                       <div v-if="tagFilterPanelOpen" class="tag-filter-panel">
-                        <input v-model="tagFilterSearchText" type="text" class="text-input tag-filter-search" placeholder="搜索标签名称 / 路径..." />
+                        <BaseInput v-model="tagFilterSearchText" type="text" class="text-input tag-filter-search" placeholder="搜索标签名称 / 路径..." />
                         <div v-if="selectedTagFilterIds.length" class="tag-filter-selected-list">
-                          <button
+                          <BaseButton
                             v-for="tagId in selectedTagFilterIds"
                             :key="`tag-selected-desktop-${tagId}`"
                             class="tag-filter-selected-chip"
@@ -905,18 +905,18 @@
                             @click="toggleTagFilterSelection(tagId)"
                           >
                             {{ tagPathMap.get(tagId) ?? tagId }} ×
-                          </button>
+                          </BaseButton>
                         </div>
                         <div class="tag-tree-list">
                           <div v-for="row in tagTreeRows" :key="`tag-tree-desktop-${row.id}`" class="tag-tree-row" :style="{ '--depth': row.depth, '--tag-color': row.color }">
-                            <button
+                            <BaseButton
                               v-if="row.hasChildren"
                               class="tag-tree-toggle"
                               type="button"
                               @click.stop="toggleTagTreeExpanded(row.id)"
-                            >{{ tagTreeExpandedIds.includes(row.id) || tagFilterSearchText.trim() ? '▾' : '▸' }}</button>
+                            >{{ tagTreeExpandedIds.includes(row.id) || tagFilterSearchText.trim() ? '▾' : '▸' }}</BaseButton>
                             <span v-else class="tag-tree-toggle placeholder"></span>
-                            <input type="checkbox" :checked="selectedTagFilterIdSet.has(row.id)" @change="toggleTagFilterSelection(row.id)" />
+                            <BaseCheckbox :model-value="selectedTagFilterIdSet.has(row.id)" @update:model-value="toggleTagFilterSelection(row.id)" />
                             <span class="tag-tree-name">{{ row.name }}</span>
                             <span class="tag-tree-path">{{ row.path }}</span>
                           </div>
@@ -954,17 +954,17 @@
                     <BaseSelect :model-value="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="世界书" size="sm" @update:model-value="handleWorldbookSelectionUpdate" />
                       <div v-if="tagDefinitions.length" class="worldbook-picker-tags tree-mode">
                         <div class="tag-filter-toolbar">
-                          <button class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</button>
+                          <BaseButton class="btn mini tag-filter-open" type="button" @click="tagFilterPanelOpen = !tagFilterPanelOpen">🏷 标签筛选</BaseButton>
                           <span class="tag-filter-summary">{{ tagFilterSummary }}</span>
                           <BaseSelect v-model="tagFilterLogic" class="tag-filter-select" :options="tagFilterLogicOptions" :searchable="false" size="sm" aria-label="标签筛选逻辑" />
                           <BaseSelect v-model="tagFilterMatchMode" class="tag-filter-select" :options="tagFilterMatchModeOptions" :searchable="false" size="sm" aria-label="标签匹配模式" />
-                          <button class="btn mini" type="button" :disabled="!selectedTagFilterIds.length" @click="clearTagFilterSelection">清空</button>
+                          <BaseButton class="btn mini" type="button" :disabled="!selectedTagFilterIds.length" @click="clearTagFilterSelection">清空</BaseButton>
                         </div>
                         <Transition name="tag-filter-panel">
                           <div v-if="tagFilterPanelOpen" class="tag-filter-panel">
-                            <input v-model="tagFilterSearchText" type="text" class="text-input tag-filter-search" placeholder="搜索标签名称 / 路径..." />
+                            <BaseInput v-model="tagFilterSearchText" type="text" class="text-input tag-filter-search" placeholder="搜索标签名称 / 路径..." />
                             <div v-if="selectedTagFilterIds.length" class="tag-filter-selected-list">
-                              <button
+                              <BaseButton
                                 v-for="tagId in selectedTagFilterIds"
                                 :key="`tag-selected-focus-${tagId}`"
                                 class="tag-filter-selected-chip"
@@ -972,18 +972,18 @@
                                 @click="toggleTagFilterSelection(tagId)"
                               >
                                 {{ tagPathMap.get(tagId) ?? tagId }} ×
-                              </button>
+                              </BaseButton>
                             </div>
                             <div class="tag-tree-list">
                               <div v-for="row in tagTreeRows" :key="`tag-tree-focus-${row.id}`" class="tag-tree-row" :style="{ '--depth': row.depth, '--tag-color': row.color }">
-                                <button
+                                <BaseButton
                                   v-if="row.hasChildren"
                                   class="tag-tree-toggle"
                                   type="button"
                                   @click.stop="toggleTagTreeExpanded(row.id)"
-                                >{{ tagTreeExpandedIds.includes(row.id) || tagFilterSearchText.trim() ? '▾' : '▸' }}</button>
+                                >{{ tagTreeExpandedIds.includes(row.id) || tagFilterSearchText.trim() ? '▾' : '▸' }}</BaseButton>
                                 <span v-else class="tag-tree-toggle placeholder"></span>
-                                <input type="checkbox" :checked="selectedTagFilterIdSet.has(row.id)" @change="toggleTagFilterSelection(row.id)" />
+                                <BaseCheckbox :model-value="selectedTagFilterIdSet.has(row.id)" @update:model-value="toggleTagFilterSelection(row.id)" />
                                 <span class="tag-tree-name">{{ row.name }}</span>
                                 <span class="tag-tree-path">{{ row.path }}</span>
                               </div>
@@ -1072,6 +1072,7 @@
             </Transition>
           </section>
 
+          <!-- unified-control-exception: hidden native file input required for browser file picker -->
           <input
             ref="importFileInput"
             class="hidden-input"
@@ -1097,9 +1098,9 @@
               <div class="wb-copy-workspace-actions">
                 <span class="wb-copy-workspace-meta">{{ crossCopyWorkspaceComparedText }}</span>
                 <div class="wb-copy-workspace-tool-anchor">
-                  <button class="btn mini utility-btn" type="button" :disabled="isAnyCineLocked" @click="toggleCrossCopyWorkspaceTools">
+                  <BaseButton class="btn mini utility-btn" type="button" :disabled="isAnyCineLocked" @click="toggleCrossCopyWorkspaceTools">
                     {{ crossCopyWorkspaceToolsExpanded ? '收起工具' : '展开工具' }}
-                  </button>
+                  </BaseButton>
                   <div class="copy-cine-sink-cluster workspace" aria-hidden="true">
                     <span class="copy-cine-sink" data-copy-sink="focus_toggle"></span>
                     <span class="copy-cine-sink" data-copy-sink="save_btn"></span>
@@ -1117,13 +1118,13 @@
                     <span class="copy-cine-sink" data-copy-sink="tool_ai_config"></span>
                   </div>
                 </div>
-                <button class="btn mini utility-btn" type="button" :disabled="isAnyCineLocked" @click="toggleCrossCopyMode">退出模式</button>
+                <BaseButton class="btn mini utility-btn" type="button" :disabled="isAnyCineLocked" @click="toggleCrossCopyMode">退出模式</BaseButton>
               </div>
             </div>
             <Transition name="copy-workspace-tools">
             <div v-if="!isDesktopFocusMode && (!crossCopyMode || crossCopyWorkspaceToolsExpanded)" class="wb-history-shortcuts" :class="{ 'copy-workspace-tools': crossCopyMode }">
-              <button class="btn history-btn utility-btn" data-focus-hero="focus_toggle" data-copy-hero="focus_toggle" type="button" :disabled="isAnyCineLocked" @click="toggleFocusEditing">🎯 专注编辑</button>
-              <button
+              <BaseButton class="btn history-btn utility-btn" data-focus-hero="focus_toggle" data-copy-hero="focus_toggle" type="button" :disabled="isAnyCineLocked" @click="toggleFocusEditing">🎯 专注编辑</BaseButton>
+              <BaseButton
                 class="btn history-btn utility-btn"
                 data-focus-hero="tool_global"
                 data-copy-hero="tool_global"
@@ -1132,11 +1133,11 @@
                 @click="toggleGlobalMode"
               >
                 🌐 全局模式
-              </button>
-              <button class="btn history-btn" data-focus-hero="tool_entry_history" data-copy-hero="tool_entry_history" type="button" :disabled="!selectedEntry" @click="openEntryHistoryModal">
+              </BaseButton>
+              <BaseButton class="btn history-btn" data-focus-hero="tool_entry_history" data-copy-hero="tool_entry_history" type="button" :disabled="!selectedEntry" @click="openEntryHistoryModal">
                 🕰️ 条目时光机
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 class="btn history-btn"
                 data-focus-hero="tool_worldbook_history"
                 data-copy-hero="tool_worldbook_history"
@@ -1145,8 +1146,8 @@
                 @click="openWorldbookHistoryModal"
               >
                 ⏪ 整本时光机
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 class="btn history-btn utility-btn"
                 data-focus-hero="find_btn"
                 data-copy-hero="find_btn"
@@ -1156,8 +1157,8 @@
                 @click="toggleFloatingPanel('find')"
               >
                 🔎 查找与替换
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 class="btn history-btn utility-btn"
                 data-focus-hero="tool_activation"
                 data-copy-hero="tool_activation"
@@ -1166,8 +1167,8 @@
                 @click="toggleFloatingPanel('activation')"
               >
                 📡 激活监控
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 v-if="persistedState.show_ai_chat"
                 class="btn history-btn utility-btn"
                 data-focus-hero="tool_ai_generate"
@@ -1177,8 +1178,8 @@
                 @click="aiToggleMode"
               >
                 🤖 AI 生成
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 class="btn history-btn utility-btn"
                 data-focus-hero="tool_extract"
                 data-copy-hero="tool_extract"
@@ -1186,8 +1187,8 @@
                 @click="extractFromChat"
               >
                 📥 从聊天提取
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 class="btn history-btn utility-btn"
                 data-focus-hero="tool_tag"
                 data-copy-hero="tool_tag"
@@ -1196,8 +1197,8 @@
                 @click="tagToggleMode"
               >
                 🏷️ 标签管理
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 class="btn history-btn utility-btn"
                 data-focus-hero="tool_copy"
                 data-copy-hero="tool_copy"
@@ -1207,8 +1208,8 @@
                 @click="toggleCrossCopyMode"
               >
                 📚 跨书复制
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 class="btn history-btn utility-btn"
                 data-focus-hero="tool_settings"
                 data-copy-hero="tool_settings"
@@ -1216,8 +1217,8 @@
                 @click="openSettingsPage"
               >
                 ⚙️ 设置
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 class="btn history-btn utility-btn"
                 data-focus-hero="tool_ai_config"
                 data-copy-hero="tool_ai_config"
@@ -1225,15 +1226,15 @@
                 @click="openAiConfigPage"
               >
                 🔧 AI配置
-              </button>
+              </BaseButton>
             </div>
             </Transition>
             <div v-if="globalWorldbookMode" class="global-mode-panel">
               <div class="global-mode-head">
                 <span class="global-mode-title">全局世界书（{{ bindings.global.length }}）</span>
-                <button class="btn mini danger" type="button" :disabled="!bindings.global.length" @click="clearGlobalWorldbooks">
+                <BaseButton class="btn mini danger" type="button" :disabled="!bindings.global.length" @click="clearGlobalWorldbooks">
                   清空全局
-                </button>
+                </BaseButton>
               </div>
               <div class="global-mode-sections">
                 <details class="global-mode-section" open>
@@ -1249,15 +1250,15 @@
                       <BaseSelect v-model="selectedGlobalPresetId" :options="globalPresetOptions" :searchable="false" aria-label="全局预设" @update:model-value="onGlobalPresetSelectionChanged" />
                     </label>
                     <div class="global-mode-actions">
-                      <button class="btn" type="button" :disabled="!bindings.global.length" @click="saveCurrentAsGlobalPreset">
+                      <BaseButton class="btn" type="button" :disabled="!bindings.global.length" @click="saveCurrentAsGlobalPreset">
                         保存当前组合
-                      </button>
-                      <button class="btn" type="button" :disabled="!selectedGlobalPreset" @click="overwriteSelectedGlobalPreset">
+                      </BaseButton>
+                      <BaseButton class="btn" type="button" :disabled="!selectedGlobalPreset" @click="overwriteSelectedGlobalPreset">
                         覆盖当前预设
-                      </button>
-                      <button class="btn danger" type="button" :disabled="!selectedGlobalPreset" @click="deleteSelectedGlobalPreset">
+                      </BaseButton>
+                      <BaseButton class="btn danger" type="button" :disabled="!selectedGlobalPreset" @click="deleteSelectedGlobalPreset">
                         删除预设
-                      </button>
+                      </BaseButton>
                     </div>
                   </div>
                 </details>
@@ -1271,25 +1272,25 @@
                   </summary>
                   <div class="global-mode-section-body preset-role-panel">
                     <div class="preset-role-actions">
-                      <button
+                      <BaseButton
                         class="btn mini"
                         type="button"
                         :disabled="!selectedGlobalPreset || !currentRoleContext"
                         @click="bindCurrentRoleToSelectedPreset"
                       >
                         绑定当前角色
-                      </button>
-                      <button
+                      </BaseButton>
+                      <BaseButton
                         class="btn mini"
                         type="button"
                         :disabled="!selectedGlobalPreset || !isCurrentRoleBoundToSelectedPreset"
                         @click="unbindCurrentRoleFromSelectedPreset"
                       >
                         解绑当前角色
-                      </button>
+                      </BaseButton>
                     </div>
                     <div ref="rolePickerRef" class="role-picker">
-                      <button
+                      <BaseButton
                         class="role-picker-trigger"
                         type="button"
                         :disabled="!selectedGlobalPreset"
@@ -1299,9 +1300,9 @@
                           {{ selectedGlobalPreset ? '从角色卡列表选择绑定' : '请先选择预设' }}
                         </span>
                         <span class="role-picker-trigger-arrow">{{ rolePickerOpen ? '▴' : '▾' }}</span>
-                      </button>
+                      </BaseButton>
                       <div v-if="rolePickerOpen" class="role-picker-dropdown">
-                        <input
+                        <BaseInput
                           ref="rolePickerSearchInputRef"
                           v-model="roleBindSearchText"
                           type="text"
@@ -1310,7 +1311,7 @@
                           @keydown.enter.prevent="bindFirstRoleCandidate"
                         />
                         <div class="role-picker-list">
-                          <button
+                          <BaseButton
                             v-for="candidate in roleBindingCandidates"
                             :key="`role-candidate-${candidate.key}`"
                             class="role-picker-item"
@@ -1320,13 +1321,13 @@
                           >
                             <span class="name">{{ candidate.name }}</span>
                             <span class="meta">{{ candidate.bound ? '已绑定' : '绑定' }}</span>
-                          </button>
+                          </BaseButton>
                           <div v-if="!roleBindingCandidates.length" class="empty-note">没有匹配角色</div>
                         </div>
                       </div>
                     </div>
                     <div class="preset-role-tags">
-                      <button
+                      <BaseButton
                         v-for="binding in selectedGlobalPresetRoleBindings"
                         :key="`binding-${selectedGlobalPreset?.id}-${binding.key}`"
                         class="preset-role-tag"
@@ -1336,7 +1337,7 @@
                       >
                         <span>{{ binding.name }}</span>
                         <span class="remove">×</span>
-                      </button>
+                      </BaseButton>
                       <div v-if="selectedGlobalPreset && !selectedGlobalPresetRoleBindings.length" class="empty-note">
                         当前预设尚未绑定角色
                       </div>
@@ -1349,7 +1350,7 @@
                 <div class="global-mode-column">
                   <label class="field">
                     <span>搜索并添加常驻世界书</span>
-                    <input
+                    <BaseInput
                       v-model="globalAddSearchText"
                       type="text"
                       class="text-input"
@@ -1358,7 +1359,7 @@
                     />
                   </label>
                   <TransitionGroup name="list" tag="div" class="global-mode-list">
-                    <button
+                    <BaseButton
                       v-for="name in globalAddCandidates"
                       :key="`add-${name}`"
                       class="global-mode-item add"
@@ -1367,14 +1368,14 @@
                     >
                       <span class="global-mode-item-name">{{ name }}</span>
                       <span class="global-mode-item-action">添加</span>
-                    </button>
+                    </BaseButton>
                     <div v-if="!globalAddCandidates.length" key="empty" class="empty-note">没有可添加的世界书</div>
                   </TransitionGroup>
                 </div>
                 <div class="global-mode-column">
                   <label class="field">
                     <span>筛选常驻世界书</span>
-                    <input
+                    <BaseInput
                       v-model="globalFilterText"
                       type="text"
                       class="text-input"
@@ -1382,7 +1383,7 @@
                     />
                   </label>
                   <TransitionGroup name="list" tag="div" class="global-mode-list">
-                    <button
+                    <BaseButton
                       v-for="name in filteredGlobalWorldbooks"
                       :key="`global-${name}`"
                       class="global-mode-item active"
@@ -1391,7 +1392,7 @@
                     >
                       <span class="global-mode-item-name">{{ name }}</span>
                       <span class="global-mode-item-action">移除</span>
-                    </button>
+                    </BaseButton>
                     <div v-if="!filteredGlobalWorldbooks.length" key="empty" class="empty-note">
                       {{ bindings.global.length ? '没有匹配结果' : '暂无常驻世界书' }}
                     </div>
@@ -1399,9 +1400,9 @@
                 </div>
               </div>
               <div class="global-mode-actions">
-                <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="toggleGlobalBinding">
+                <BaseButton class="btn" type="button" :disabled="!selectedWorldbookName" @click="toggleGlobalBinding">
                   {{ isGlobalBound ? '移出全局' : '加入全局' }}
-                </button>
+                </BaseButton>
               </div>
             </div>
           </section>
@@ -1411,7 +1412,7 @@
             <div class="ai-sidebar">
               <div class="ai-sidebar-head">
                 <span class="ai-sidebar-title">对话列表</span>
-                <button class="btn mini" type="button" @click="aiCreateSession">+ 新建</button>
+                <BaseButton class="btn mini" type="button" @click="aiCreateSession">+ 新建</BaseButton>
               </div>
               <div class="ai-session-list">
                 <div
@@ -1427,12 +1428,12 @@
                 >
                   <span class="ai-session-title">{{ session.title }}</span>
                   <span class="ai-session-meta">{{ session.messages.length }} 条消息</span>
-                  <button
+                  <BaseButton
                     class="ai-session-delete"
                     type="button"
                     title="删除对话"
                     @click.stop="aiDeleteSession(session.id)"
-                  >×</button>
+                  >×</BaseButton>
                 </div>
                 <div v-if="!aiSessions.length" class="empty-note">暂无对话，点击上方新建</div>
               </div>
@@ -1584,21 +1585,21 @@
           <section v-show="!aiGeneratorMode && !tagEditorMode && !crossCopyMode" ref="mainLayoutRef" class="wb-main-layout" :class="{ 'focus-mode': isDesktopFocusMode, 'global-mode-visible': globalWorldbookMode }" :style="mainLayoutStyle">
             <aside v-show="!showMobileEditor" class="wb-entry-list" :class="{ focus: isDesktopFocusMode }">
               <div v-if="!isDesktopFocusMode" class="list-search">
-                <input v-model="searchText" type="text" class="text-input" placeholder="搜索名称 / 内容 / 关键词" />
+                <BaseInput v-model="searchText" type="text" class="text-input" placeholder="搜索名称 / 内容 / 关键词" />
                 <label class="checkbox-inline">
-                  <input v-model="onlyEnabled" type="checkbox" />
+                  <BaseCheckbox v-model="onlyEnabled" />
                   <span>仅启用</span>
                 </label>
               </div>
               <div v-if="!isDesktopFocusMode" class="list-summary">
                 <span>条目 {{ filteredEntries.length }} / {{ draftEntries.length }} | 启用 {{ enabledEntryCount }} | 选中 {{ selectedEntryCount }}</span>
-                <button class="btn mini" type="button" :disabled="!draftEntries.length" :class="{ active: viewSortActive }" @click="sortEntries" style="margin-left:auto;font-size:11px;">🔢 排序</button>
+                <BaseButton class="btn mini" type="button" :disabled="!draftEntries.length" :class="{ active: viewSortActive }" @click="sortEntries" style="margin-left:auto;font-size:11px;">🔢 排序</BaseButton>
               </div>
               <div v-if="selectedEntryCount > 1 && !isMobile" class="list-multi-edit-hint" :class="{ off: !multiEditEnabled }">
                 {{ multiEditHintText }}
               </div>
               <TransitionGroup name="list" tag="div" class="list-scroll">
-                <button
+                <BaseButton
                   v-for="entry in filteredEntries"
                   :key="entry.uid"
                   type="button"
@@ -1633,20 +1634,20 @@
                     <span class="entry-chip mono">#{{ entry.position.order }}</span>
                   </div>
                   <div v-if="!isDesktopFocusMode" class="entry-item-preview">{{ getEntryKeyPreview(entry) }}</div>
-                </button>
+                </BaseButton>
               </TransitionGroup>
               <div v-if="!isDesktopFocusMode" class="list-actions">
-                <button class="btn" type="button" :disabled="!selectedWorldbookName" @click="addEntry">新增</button>
-                <button class="btn" type="button" :disabled="!selectedEntry" @click="duplicateSelectedEntry">
+                <BaseButton class="btn" type="button" :disabled="!selectedWorldbookName" @click="addEntry">新增</BaseButton>
+                <BaseButton class="btn" type="button" :disabled="!selectedEntry" @click="duplicateSelectedEntry">
                   复制
-                </button>
-                <button class="btn danger" type="button" :disabled="!selectedEntry" @click="removeSelectedEntry">
+                </BaseButton>
+                <BaseButton class="btn danger" type="button" :disabled="!selectedEntry" @click="removeSelectedEntry">
                   删除
-                </button>
-                <button class="btn" type="button" :disabled="!selectedEntry" @click="moveSelectedEntry(-1)">
+                </BaseButton>
+                <BaseButton class="btn" type="button" :disabled="!selectedEntry" @click="moveSelectedEntry(-1)">
                   上移
-                </button>
-                <button class="btn" type="button" :disabled="!selectedEntry" @click="moveSelectedEntry(1)">下移</button>
+                </BaseButton>
+                <BaseButton class="btn" type="button" :disabled="!selectedEntry" @click="moveSelectedEntry(1)">下移</BaseButton>
               </div>
             </aside>
             <div
@@ -1667,19 +1668,19 @@
                       <template v-if="!isDesktopFocusMode">
                         <label class="field editor-comment">
                           <span>备注 (COMMENT)</span>
-                          <input v-model="selectedEntry.name" type="text" class="text-input" />
+                          <BaseInput v-model="selectedEntry.name" type="text" class="text-input" />
                         </label>
                       </template>
                       <template v-else>
                         <div class="focus-meta-summary-row">
-                          <button class="focus-meta-chip" type="button" :class="{ active: focusMetaPanel.comment }" @click="toggleFocusMetaPanel('comment')">
+                          <BaseButton class="focus-meta-chip" type="button" :class="{ active: focusMetaPanel.comment }" @click="toggleFocusMetaPanel('comment')">
                             <span>备注</span>
                             <strong>{{ focusCommentSummary }}</strong>
-                          </button>
-                          <button class="focus-meta-chip" type="button" :class="{ active: focusMetaPanel.keywords }" @click="toggleFocusMetaPanel('keywords')">
+                          </BaseButton>
+                          <BaseButton class="focus-meta-chip" type="button" :class="{ active: focusMetaPanel.keywords }" @click="toggleFocusMetaPanel('keywords')">
                             <span>关键词</span>
                             <strong>{{ focusKeywordSummary }}</strong>
-                          </button>
+                          </BaseButton>
                         </div>
                       </template>
                       <div class="editor-badges">
@@ -1699,7 +1700,7 @@
                       <section v-if="isDesktopFocusMode && focusMetaPanel.comment" class="focus-meta-panel">
                         <label class="field editor-comment">
                           <span>备注 (COMMENT)</span>
-                          <input v-model="selectedEntry.name" type="text" class="text-input" />
+                          <BaseInput v-model="selectedEntry.name" type="text" class="text-input" />
                         </label>
                       </section>
                     </Transition>
@@ -1707,21 +1708,21 @@
                     <section v-if="!isDesktopFocusMode || focusMetaPanel.keywords" class="editor-grid two-cols editor-keyword-grid">
                       <label class="field">
                         <span>主要关键词 (KEYS)</span>
-                        <textarea :value="selectedKeysRaw" @input="selectedKeysRaw = ($event.target as HTMLTextAreaElement).value" @blur="commitKeysFromRaw" class="text-area compact"></textarea>
+                        <BaseTextarea :model-value="selectedKeysRaw" @update:model-value="selectedKeysRaw = $event" @blur="commitKeysFromRaw" class="text-area compact"></BaseTextarea>
                       </label>
                       <label class="field">
                         <span>次要关键词 (SECONDARY)</span>
-                        <textarea :value="selectedSecondaryKeysRaw" @input="selectedSecondaryKeysRaw = ($event.target as HTMLTextAreaElement).value" @blur="commitSecondaryKeysFromRaw" class="text-area compact"></textarea>
+                        <BaseTextarea :model-value="selectedSecondaryKeysRaw" @update:model-value="selectedSecondaryKeysRaw = $event" @blur="commitSecondaryKeysFromRaw" class="text-area compact"></BaseTextarea>
                       </label>
                     </section>
 
                     <section class="editor-content-block">
                       <div class="editor-content-title">世界观设定 / 内容 (CONTENT)</div>
-                      <textarea
+                      <BaseTextarea
                         ref="contentTextareaRef"
                         v-model="selectedEntry.content"
                         class="text-area large editor-content-area"
-                      ></textarea>
+                      ></BaseTextarea>
                       <div
                         class="content-resize-handle"
                         @pointerdown="startContentResize"
@@ -1734,11 +1735,11 @@
                       <summary>高级字段 / extra JSON</summary>
                       <label class="field">
                         <span>extra JSON（未知字段）</span>
-                        <textarea v-model="selectedExtraText" class="text-area compact" placeholder="{ ... }"></textarea>
+                        <BaseTextarea v-model="selectedExtraText" class="text-area compact" placeholder="{ ... }"></BaseTextarea>
                       </label>
                       <div class="field-actions">
-                        <button class="btn" type="button" @click="applyExtraJson">应用 extra</button>
-                        <button class="btn" type="button" @click="clearExtra">清空 extra</button>
+                        <BaseButton class="btn" type="button" @click="applyExtraJson">应用 extra</BaseButton>
+                        <BaseButton class="btn" type="button" @click="clearExtra">清空 extra</BaseButton>
                       </div>
                     </details>
                   </section>
@@ -1752,43 +1753,43 @@
                   <aside class="editor-side" :class="{ focus: isDesktopFocusMode }">
                     <article class="editor-card focus-side-card" :class="{ open: focusSidePanelState.strategy }">
                       <template v-if="isDesktopFocusMode">
-                        <button type="button" class="focus-side-summary" @click="toggleFocusSidePanel('strategy')">
+                        <BaseButton type="button" class="focus-side-summary" @click="toggleFocusSidePanel('strategy')">
                           <span class="focus-side-summary-title">触发策略</span>
                           <span class="focus-side-summary-value">{{ focusStrategySummary }}</span>
                           <span class="focus-side-summary-arrow">{{ focusSidePanelState.strategy ? '▾' : '▸' }}</span>
-                        </button>
+                        </BaseButton>
                       </template>
                       <h4 v-else>触发策略 (STRATEGY)</h4>
                       <div class="focus-side-content" :class="{ hidden: isDesktopFocusMode && !focusSidePanelState.strategy }">
                         <label class="field checkbox-inline">
-                          <input v-model="selectedEntry.enabled" type="checkbox" />
+                          <BaseCheckbox v-model="selectedEntry.enabled" />
                           <span>启用条目</span>
                         </label>
                         <div class="strategy-switch">
-                          <button
+                          <BaseButton
                             type="button"
                             class="strategy-pill constant"
                             :class="{ active: selectedEntry.strategy.type === 'constant' }"
                             @click="selectedEntry.strategy.type = 'constant'"
                           >
                             🔵 常驻 (Constant)
-                          </button>
-                          <button
+                          </BaseButton>
+                          <BaseButton
                             type="button"
                             class="strategy-pill vector"
                             :class="{ active: selectedEntry.strategy.type === 'vectorized' }"
                             @click="selectedEntry.strategy.type = 'vectorized'"
                           >
                             📎 向量化 (Vector)
-                          </button>
-                          <button
+                          </BaseButton>
+                          <BaseButton
                             type="button"
                             class="strategy-pill selective"
                             :class="{ active: selectedEntry.strategy.type === 'selective' }"
                             @click="selectedEntry.strategy.type = 'selective'"
                           >
                             🟢 关键词 (Selective)
-                          </button>
+                          </BaseButton>
                         </div>
                         <details class="editor-advanced">
                           <summary>高级设置</summary>
@@ -1798,7 +1799,7 @@
                           </label>
                           <label class="field">
                             <span>扫描深度</span>
-                            <input
+                            <BaseInput
                               v-model="selectedScanDepthText"
                               type="text"
                               class="text-input"
@@ -1807,7 +1808,7 @@
                           </label>
                           <label class="field">
                             <span>概率(0-100)</span>
-                            <input
+                            <BaseInput
                               v-model.number="selectedEntry.probability"
                               type="number"
                               class="text-input"
@@ -1822,11 +1823,11 @@
 
                     <article class="editor-card focus-side-card" :class="{ open: focusSidePanelState.insertion }">
                       <template v-if="isDesktopFocusMode">
-                        <button type="button" class="focus-side-summary" @click="toggleFocusSidePanel('insertion')">
+                        <BaseButton type="button" class="focus-side-summary" @click="toggleFocusSidePanel('insertion')">
                           <span class="focus-side-summary-title">插入设置</span>
                           <span class="focus-side-summary-value">{{ focusInsertionSummary }}</span>
                           <span class="focus-side-summary-arrow">{{ focusSidePanelState.insertion ? '▾' : '▸' }}</span>
-                        </button>
+                        </BaseButton>
                       </template>
                       <h4 v-else>插入设置 (INSERTION)</h4>
                       <div class="focus-side-content" :class="{ hidden: isDesktopFocusMode && !focusSidePanelState.insertion }">
@@ -1836,7 +1837,7 @@
                         </label>
                         <label class="field">
                           <span>权重 (Order)</span>
-                          <input v-model.number="selectedEntry.position.order" type="number" class="text-input" step="1" />
+                          <BaseInput v-model.number="selectedEntry.position.order" type="number" class="text-input" step="1" />
                         </label>
                         <div class="editor-collapsible-group">
                           <details class="editor-mini-collapse" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
@@ -1858,7 +1859,7 @@
                               </span>
                             </summary>
                             <div class="editor-mini-collapse-body">
-                              <input
+                              <BaseInput
                                 v-model.number="selectedEntry.position.depth"
                                 type="number"
                                 class="text-input"
@@ -1874,20 +1875,20 @@
 
                     <article class="editor-card focus-side-card" :class="{ open: focusSidePanelState.recursion }">
                       <template v-if="isDesktopFocusMode">
-                        <button type="button" class="focus-side-summary" @click="toggleFocusSidePanel('recursion')">
+                        <BaseButton type="button" class="focus-side-summary" @click="toggleFocusSidePanel('recursion')">
                           <span class="focus-side-summary-title">递归与效果</span>
                           <span class="focus-side-summary-value">{{ focusRecursionSummary }}</span>
                           <span class="focus-side-summary-arrow">{{ focusSidePanelState.recursion ? '▾' : '▸' }}</span>
-                        </button>
+                        </BaseButton>
                       </template>
                       <h4 v-else>递归与效果 (RECURSION)</h4>
                       <div class="focus-side-content" :class="{ hidden: isDesktopFocusMode && !focusSidePanelState.recursion }">
                         <label class="field checkbox-inline">
-                          <input v-model="selectedEntry.recursion.prevent_incoming" type="checkbox" />
+                          <BaseCheckbox v-model="selectedEntry.recursion.prevent_incoming" />
                           <span>不可递归命中 (Exclude Incoming)</span>
                         </label>
                         <label class="field checkbox-inline">
-                          <input v-model="selectedEntry.recursion.prevent_outgoing" type="checkbox" />
+                          <BaseCheckbox v-model="selectedEntry.recursion.prevent_outgoing" />
                           <span>阻止后续递归 (Prevent Outgoing)</span>
                         </label>
                         <div class="editor-collapsible-group">
@@ -1897,7 +1898,7 @@
                               <span class="editor-mini-collapse-value">{{ selectedRecursionDelayText || 'null' }}</span>
                             </summary>
                             <div class="editor-mini-collapse-body">
-                              <input
+                              <BaseInput
                                 v-model="selectedRecursionDelayText"
                                 type="text"
                                 class="text-input"
@@ -1911,7 +1912,7 @@
                               <span class="editor-mini-collapse-value">{{ selectedStickyText || 'null' }}</span>
                             </summary>
                             <div class="editor-mini-collapse-body">
-                              <input
+                              <BaseInput
                                 v-model="selectedStickyText"
                                 type="text"
                                 class="text-input"
@@ -1925,7 +1926,7 @@
                               <span class="editor-mini-collapse-value">{{ selectedCooldownText || 'null' }}</span>
                             </summary>
                             <div class="editor-mini-collapse-body">
-                              <input
+                              <BaseInput
                                 v-model="selectedCooldownText"
                                 type="text"
                                 class="text-input"
@@ -1939,7 +1940,7 @@
                               <span class="editor-mini-collapse-value">{{ selectedEffectDelayText || 'null' }}</span>
                             </summary>
                             <div class="editor-mini-collapse-body">
-                              <input
+                              <BaseInput
                                 v-model="selectedEffectDelayText"
                                 type="text"
                                 class="text-input"
@@ -1988,7 +1989,7 @@
       <div class="ai-tag-review-modal">
         <div class="ai-tag-review-head">
           <span class="ai-tag-review-title">📋 提取到的条目（{{ aiExtractedTags.length }}）</span>
-          <button class="ai-tag-review-close" type="button" @click="aiShowTagReview = false">×</button>
+          <BaseButton class="ai-tag-review-close" type="button" @click="aiShowTagReview = false">×</BaseButton>
         </div>
         <div class="ai-tag-review-target">
           <label class="field">
@@ -1999,14 +2000,14 @@
         <details class="ai-tag-ignore-config">
           <summary>🚫 忽略标签配置</summary>
           <div style="padding:8px 0 0;font-size:12px;color:var(--wb-text-muted);margin-bottom:4px;">匹配到这些标签时跳过导入，但继续扫描其内部可用标签（逗号或换行分隔）</div>
-          <textarea
+          <BaseTextarea
             class="text-input"
             rows="2"
             :value="persistedState.extract_ignore_tags.join(', ')"
             @change="updateIgnoreTags(($event.target as HTMLTextAreaElement).value)"
             style="width:100%;font-size:12px;"
-          ></textarea>
-          <button class="btn" type="button" style="margin-top:4px;font-size:11px;" @click="resetIgnoreTags">🔄 恢复默认</button>
+          ></BaseTextarea>
+          <BaseButton class="btn" type="button" style="margin-top:4px;font-size:11px;" @click="resetIgnoreTags">🔄 恢复默认</BaseButton>
         </details>
         <div class="ai-tag-list">
           <label
@@ -2015,7 +2016,7 @@
             class="ai-tag-item"
             :class="{ 'ai-tag-duplicate': tag.duplicate }"
           >
-            <input v-model="tag.selected" type="checkbox" />
+            <BaseCheckbox v-model="tag.selected" />
             <div class="ai-tag-info">
               <span class="ai-tag-name">{{ tag.tag }}<span v-if="tag.duplicate" style="color:#f59e0b;font-size:0.85em;margin-left:6px;">⚠️ 已存在</span><span v-else-if="tag.updated" style="color:#3b82f6;font-size:0.85em;margin-left:6px;">🔄 内容已更新</span></span>
               <span class="ai-tag-preview">{{ tag.content.slice(0, 120) }}{{ tag.content.length > 120 ? '...' : '' }}</span>
@@ -2023,14 +2024,14 @@
           </label>
         </div>
         <div class="ai-tag-review-actions">
-          <button class="btn" type="button" @click="aiExtractedTags.forEach(t => t.selected = true)">全选</button>
-          <button class="btn" type="button" @click="aiExtractedTags.forEach(t => t.selected = false)">全不选</button>
-          <button
+          <BaseButton class="btn" type="button" @click="aiExtractedTags.forEach(t => t.selected = true)">全选</BaseButton>
+          <BaseButton class="btn" type="button" @click="aiExtractedTags.forEach(t => t.selected = false)">全不选</BaseButton>
+          <BaseButton
             class="btn primary"
             type="button"
             :disabled="!aiTargetWorldbook || !aiExtractedTags.some(t => t.selected)"
             @click="aiCreateSelectedEntries"
-          >创建选中条目（{{ aiExtractedTags.filter(t => t.selected).length }}）</button>
+          >创建选中条目（{{ aiExtractedTags.filter(t => t.selected).length }}）</BaseButton>
         </div>
       </div>
     </div>
@@ -2046,7 +2047,7 @@
                   <span class="cross-copy-status-badge" :class="getCrossCopyStatusBadgeClass(crossCopyDiffRow.status)">
                     {{ getCrossCopyStatusLabel(crossCopyDiffRow.status) }}
                   </span>
-                  <button class="btn mini" type="button" @click="closeCrossCopyDiff">关闭</button>
+                  <BaseButton class="btn mini" type="button" @click="closeCrossCopyDiff">关闭</BaseButton>
                 </div>
               </div>
 
@@ -2136,18 +2137,18 @@
                   <span>{{ entryHistorySummary }}</span>
                 </div>
                 <div class="wb-history-modal-actions">
-                  <button class="btn mini" type="button" :disabled="!selectedEntry" @click="createManualEntrySnapshot">
+                  <BaseButton class="btn mini" type="button" :disabled="!selectedEntry" @click="createManualEntrySnapshot">
                     记录条目
-                  </button>
-                  <button
+                  </BaseButton>
+                  <BaseButton
                     class="btn mini danger"
                     type="button"
                     :disabled="!entrySnapshotsForSelected.length"
                     @click="clearCurrentEntrySnapshots"
                   >
                     清空条目历史
-                  </button>
-                  <button class="btn mini" type="button" @click="closeEntryHistoryModal">关闭</button>
+                  </BaseButton>
+                  <BaseButton class="btn mini" type="button" @click="closeEntryHistoryModal">关闭</BaseButton>
                 </div>
               </div>
 
@@ -2159,8 +2160,8 @@
                       <div class="wb-history-version-line">
                         <strong>{{ formatHistoryOptionLabel(ver.label, ver.ts, ver.isCurrent) }}</strong>
                         <div class="wb-history-lr">
-                          <button class="mini-lr" :class="{ active: entryHistoryLeftId === ver.id }" @click="entryHistoryLeftId = ver.id">L</button>
-                          <button class="mini-lr" :class="{ active: entryHistoryRightId === ver.id }" @click="entryHistoryRightId = ver.id">R</button>
+                          <BaseButton class="mini-lr" :class="{ active: entryHistoryLeftId === ver.id }" @click="entryHistoryLeftId = ver.id">L</BaseButton>
+                          <BaseButton class="mini-lr" :class="{ active: entryHistoryRightId === ver.id }" @click="entryHistoryRightId = ver.id">R</BaseButton>
                         </div>
                       </div>
                       <span>{{ ver.name }}</span>
@@ -2176,9 +2177,9 @@
                       |
                       Right: {{ selectedEntryHistoryRight ? formatHistoryOptionLabel(selectedEntryHistoryRight.label, selectedEntryHistoryRight.ts, selectedEntryHistoryRight.isCurrent) : '-' }}
                     </div>
-                    <button class="btn mini" type="button" :disabled="!canRestoreEntryFromLeft" @click="restoreEntryFromLeftHistory">
+                    <BaseButton class="btn mini" type="button" :disabled="!canRestoreEntryFromLeft" @click="restoreEntryFromLeftHistory">
                       恢复到 Left
-                    </button>
+                    </BaseButton>
                   </div>
                   <div class="wb-history-visual-main">
                     <div ref="entryHistoryLayoutRef" class="wb-history-resizable-layout">
@@ -2283,18 +2284,18 @@
                   <span>{{ getWorldbookVersionDiffSummary(selectedWorldbookHistoryLeft, selectedWorldbookHistoryRight) }}</span>
                 </div>
                 <div class="wb-history-modal-actions">
-                  <button class="btn mini" type="button" :disabled="!selectedWorldbookName" @click="createManualSnapshot">
+                  <BaseButton class="btn mini" type="button" :disabled="!selectedWorldbookName" @click="createManualSnapshot">
                     创建整本快照
-                  </button>
-                  <button
+                  </BaseButton>
+                  <BaseButton
                     class="btn mini danger"
                     type="button"
                     :disabled="!snapshotsForCurrent.length"
                     @click="clearCurrentSnapshots"
                   >
                     清空整本快照
-                  </button>
-                  <button class="btn mini" type="button" @click="closeWorldbookHistoryModal">关闭</button>
+                  </BaseButton>
+                  <BaseButton class="btn mini" type="button" @click="closeWorldbookHistoryModal">关闭</BaseButton>
                 </div>
               </div>
 
@@ -2306,8 +2307,8 @@
                       <div class="wb-history-version-line">
                         <strong>{{ formatHistoryOptionLabel(ver.label, ver.ts, ver.isCurrent) }}</strong>
                         <div class="wb-history-lr">
-                          <button class="mini-lr" :class="{ active: worldbookHistoryLeftId === ver.id }" @click="worldbookHistoryLeftId = ver.id">L</button>
-                          <button class="mini-lr" :class="{ active: worldbookHistoryRightId === ver.id }" @click="worldbookHistoryRightId = ver.id">R</button>
+                          <BaseButton class="mini-lr" :class="{ active: worldbookHistoryLeftId === ver.id }" @click="worldbookHistoryLeftId = ver.id">L</BaseButton>
+                          <BaseButton class="mini-lr" :class="{ active: worldbookHistoryRightId === ver.id }" @click="worldbookHistoryRightId = ver.id">R</BaseButton>
                         </div>
                       </div>
                       <span>entries: {{ ver.entries.length }}</span>
@@ -2322,14 +2323,14 @@
                       |
                       Right: {{ selectedWorldbookHistoryRight ? formatHistoryOptionLabel(selectedWorldbookHistoryRight.label, selectedWorldbookHistoryRight.ts, selectedWorldbookHistoryRight.isCurrent) : '-' }}
                     </div>
-                    <button
+                    <BaseButton
                       class="btn mini"
                       type="button"
                       :disabled="!canRestoreWorldbookFromLeft"
                       @click="restoreWorldbookFromLeftHistory"
                     >
                       恢复到 Left
-                    </button>
+                    </BaseButton>
                   </div>
                   <div class="wb-history-visual-main">
                     <div class="cross-copy-preview-grid cross-copy-preview-grid-modal wb-history-version-preview">
@@ -2353,7 +2354,7 @@
                         <span>{{ worldbookHistoryCompareSummary }}</span>
                       </div>
                       <div class="wb-worldbook-compare-list">
-                        <button
+                        <BaseButton
                           v-for="row in worldbookHistoryCompareRows"
                           :key="row.key"
                           type="button"
@@ -2369,7 +2370,7 @@
                             <span v-if="row.uid !== null" class="entry-chip uid">#{{ row.uid }}</span>
                           </div>
                           <div class="wb-worldbook-compare-row-note">{{ row.note }}</div>
-                        </button>
+                        </BaseButton>
                         <div v-if="!worldbookHistoryCompareRows.length" class="empty-note">左右版本条目一致，无需处理。</div>
                       </div>
                     </section>
@@ -2490,7 +2491,7 @@
             <div class="wb-floating-header" @pointerdown="startFloatingDrag('find', $event)">
               <strong>🔎 查找与替换</strong>
               <div class="wb-floating-header-actions">
-                <button
+                <BaseButton
                   class="btn mini"
                   type="button"
                   :disabled="!draftEntries.length"
@@ -2498,8 +2499,8 @@
                   @click="findFirstMatch"
                 >
                   查找
-                </button>
-                <button
+                </BaseButton>
+                <BaseButton
                   class="btn mini"
                   type="button"
                   :disabled="!draftEntries.length"
@@ -2507,8 +2508,8 @@
                   @click="findPreviousMatch"
                 >
                   上一个
-                </button>
-                <button
+                </BaseButton>
+                <BaseButton
                   class="btn mini"
                   type="button"
                   :disabled="!draftEntries.length"
@@ -2516,8 +2517,8 @@
                   @click="findNextMatch"
                 >
                   下一个
-                </button>
-                <button
+                </BaseButton>
+                <BaseButton
                   class="btn mini"
                   type="button"
                   :disabled="!draftEntries.length"
@@ -2525,28 +2526,30 @@
                   @click="applyBatchReplace"
                 >
                   替换全部
-                </button>
-                <button class="btn mini danger" type="button" @pointerdown.stop @click="closeFloatingPanel('find')">
+                </BaseButton>
+                <BaseButton class="btn mini danger" type="button" @pointerdown.stop @click="closeFloatingPanel('find')">
                   关闭
-                </button>
+                </BaseButton>
               </div>
             </div>
             <div class="wb-floating-body">
               <div class="tool-line stacked">
-                <input v-model="batchFindText" type="text" class="text-input" placeholder="查找文本 / 正则" />
-                <input v-model="batchReplaceText" type="text" class="text-input" placeholder="替换为" />
+                <BaseInput v-model="batchFindText" type="text" class="text-input" placeholder="查找文本 / 正则" />
+                <BaseInput v-model="batchReplaceText" type="text" class="text-input" placeholder="替换为" />
                 <div class="find-scope-line">
                   <label class="checkbox-inline">
-                    <input v-model="batchSearchScope" type="radio" value="all" />
+                    <!-- unified-control-exception: native radio required for mutually exclusive search scope -->
+                  <input v-model="batchSearchScope" type="radio" value="all" />
                     <span>全部条目</span>
                   </label>
                   <label class="checkbox-inline">
-                    <input v-model="batchSearchScope" type="radio" value="current" :disabled="!selectedEntry" />
+                    <!-- unified-control-exception: native radio required for mutually exclusive search scope -->
+                  <input v-model="batchSearchScope" type="radio" value="current" :disabled="!selectedEntry" />
                     <span>当前条目</span>
                   </label>
                   <span class="find-summary-text">{{ findHitSummaryText }}</span>
                 </div>
-                <input
+                <BaseInput
                   v-model="batchExcludeText"
                   type="text"
                   class="text-input"
@@ -2564,19 +2567,19 @@
                 </div>
                 <div class="find-flags">
                   <label class="checkbox-inline">
-                    <input v-model="batchUseRegex" type="checkbox" />
+                    <BaseCheckbox v-model="batchUseRegex" />
                     <span>正则模式</span>
                   </label>
                   <label class="checkbox-inline">
-                    <input v-model="batchInName" type="checkbox" />
+                    <BaseCheckbox v-model="batchInName" />
                     <span>名称</span>
                   </label>
                   <label class="checkbox-inline">
-                    <input v-model="batchInContent" type="checkbox" />
+                    <BaseCheckbox v-model="batchInContent" />
                     <span>内容</span>
                   </label>
                   <label class="checkbox-inline">
-                    <input v-model="batchInKeys" type="checkbox" />
+                    <BaseCheckbox v-model="batchInKeys" />
                     <span>关键词</span>
                   </label>
                 </div>
@@ -2584,20 +2587,20 @@
               <details class="tool-details">
                 <summary>附加批处理工具</summary>
                 <div class="tool-line">
-                  <button class="btn" type="button" :disabled="!draftEntries.length" @click="normalizeAllEntries">
+                  <BaseButton class="btn" type="button" :disabled="!draftEntries.length" @click="normalizeAllEntries">
                     标准化全部
-                  </button>
-                  <button class="btn" type="button" :disabled="!draftEntries.length" @click="sortEntriesByOrderDesc">
+                  </BaseButton>
+                  <BaseButton class="btn" type="button" :disabled="!draftEntries.length" @click="sortEntriesByOrderDesc">
                     按 order 排序
-                  </button>
+                  </BaseButton>
                 </div>
                 <div class="tool-line">
-                  <button class="btn" type="button" :disabled="!draftEntries.length" @click="setEnabledForAll(true)">
+                  <BaseButton class="btn" type="button" :disabled="!draftEntries.length" @click="setEnabledForAll(true)">
                     全部启用
-                  </button>
-                  <button class="btn" type="button" :disabled="!draftEntries.length" @click="setEnabledForAll(false)">
+                  </BaseButton>
+                  <BaseButton class="btn" type="button" :disabled="!draftEntries.length" @click="setEnabledForAll(false)">
                     全部禁用
-                  </button>
+                  </BaseButton>
                 </div>
               </details>
             </div>
@@ -2612,7 +2615,7 @@
             <div class="wb-floating-header" @pointerdown="startFloatingDrag('activation', $event)">
               <strong>📡 激活监控（WORLD_INFO_ACTIVATED）</strong>
               <div class="wb-floating-header-actions">
-                <button
+                <BaseButton
                   class="btn mini danger"
                   type="button"
                   :disabled="!activationLogs.length"
@@ -2620,15 +2623,15 @@
                   @click="clearActivationLogs"
                 >
                   清空
-                </button>
-                <button
+                </BaseButton>
+                <BaseButton
                   class="btn mini danger"
                   type="button"
                   @pointerdown.stop
                   @click="closeFloatingPanel('activation')"
                 >
                   关闭
-                </button>
+                </BaseButton>
               </div>
             </div>
             <div class="wb-floating-body">
@@ -3136,7 +3139,7 @@ const floatingPanelKeys: FloatingPanelKey[] = ['find', 'activation'];
 const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1440);
 const mainLayoutRef = ref<HTMLElement | null>(null);
 const editorShellRef = ref<HTMLElement | null>(null);
-const contentTextareaRef = ref<HTMLTextAreaElement | null>(null);
+const contentTextareaRef = ref<InstanceType<typeof BaseTextarea> | null>(null);
 type ContentDragSession = {
   pointerId: number;
   target: HTMLElement;
@@ -10074,7 +10077,7 @@ function startContentResize(e: PointerEvent): void {
     return;
   }
   e.preventDefault();
-  const textarea = contentTextareaRef.value;
+  const textarea = contentTextareaRef.value?.$el as HTMLTextAreaElement | undefined;
   if (!textarea) return;
 
   stopContentResize();

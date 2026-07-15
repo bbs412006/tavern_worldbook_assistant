@@ -48,10 +48,12 @@
             >{{ pathFor(tagId) }} ×</BaseButton>
           </div>
           <div v-if="mobileTagView" class="tag-flat-list">
-            <label v-for="tag in flatTagRows" :key="`tag-flat-${tag.id}`" class="tag-flat-item" :style="{ '--tag-color': tag.color }">
-              <input type="checkbox" :checked="selectedTagIdSet.has(tag.id)" @change="toggleTagFilterSelection(tag.id)" />
-              <span>{{ tag.path }}</span>
-            </label>
+            <div v-for="tag in flatTagRows" :key="`tag-flat-${tag.id}`" class="tag-flat-item" :style="{ '--tag-color': tag.color }">
+              <BaseCheckbox
+                :model-value="selectedTagIdSet.has(tag.id)"
+                @update:model-value="toggleTagFilterSelection(tag.id)"
+              >{{ tag.path }}</BaseCheckbox>
+            </div>
             <div v-if="!flatTagRows.length" class="empty-note">没有匹配的标签</div>
           </div>
           <div v-else class="tag-tree-list">
@@ -60,7 +62,7 @@
                 {{ expandedTagIdSet.has(row.id) || tagFilterSearchText.trim() ? '▾' : '▸' }}
               </BaseButton>
               <span v-else class="tag-tree-toggle placeholder"></span>
-              <input type="checkbox" :checked="selectedTagIdSet.has(row.id)" @change="toggleTagFilterSelection(row.id)" />
+              <BaseCheckbox :model-value="selectedTagIdSet.has(row.id)" aria-label="筛选标签" @update:model-value="toggleTagFilterSelection(row.id)" />
               <span class="tag-tree-name">{{ row.name }}</span>
               <span class="tag-tree-path">{{ row.path }}</span>
             </div>
@@ -76,6 +78,7 @@
 import { computed, ref, watch } from 'vue';
 
 import BaseButton from './controls/BaseButton.vue';
+import BaseCheckbox from './controls/BaseCheckbox.vue';
 import BaseInput from './controls/BaseInput.vue';
 import BaseSelect, { type BaseSelectOption } from './controls/BaseSelect.vue';
 
