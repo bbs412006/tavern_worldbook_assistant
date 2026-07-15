@@ -608,9 +608,13 @@ describe('App utility navigation', () => {
     expect(mobileBlocks).toMatch(/\.ai-session-delete,[\s\S]*?\.ai-tag-review-close[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/);
     expect(mobileBlocks).toMatch(/\.ai-session-delete[\s\S]*?opacity:\s*1;/);
     expect(mobileBlocks).not.toMatch(/\.ai-tag-review-close\s*\{[^}]*width:\s*28px;/);
-    expect(appSource).toMatch(/\.wb-assistant-root\.is-mobile \.tag-tree-toggle:not\(\.placeholder\)[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/);
-    expect(appSource).toMatch(/\.wb-assistant-root\.is-mobile \.tag-filter-select,[\s\S]*?\.wb-assistant-root\.is-mobile \.tag-filter-search[\s\S]*?height:\s*44px;/);
     expect(appSource.match(/<BaseButton[^>]*variant="primary"[^>]*@click="saveCurrentWorldbook"/g)).toHaveLength(3);
+
+    const coarsePointerRule = appSource.match(/@media \(pointer:\s*coarse\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(coarsePointerRule).not.toMatch(/(?:min-height|width|min-width):\s*(?:40|4[0-3])px;/);
+    expect(mobileBlocks).toMatch(/\.tag-tree-row[\s\S]*?grid-template-columns:\s*44px 44px minmax\(0,\s*1fr\);/);
+    expect(mobileBlocks).toMatch(/\.tag-tree-toggle:not\(\.placeholder\)[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-select-control\.has-clear \.wb-control-select-value\)[\s\S]*?padding-right:\s*68px;/);
   });
 
   it('flattens nested mobile panels and preserves the device bottom safe area', () => {

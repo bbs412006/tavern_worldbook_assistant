@@ -11180,12 +11180,12 @@ watch(hasUnsavedChanges, (val) => {
 @media (pointer: coarse) {
   .wb-assistant-root :deep(.wb-control--md),
   .wb-assistant-root :deep(.wb-control-choice) {
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .wb-assistant-root :deep(.wb-control-button.wb-control--md.is-icon-only) {
-    width: 40px;
-    min-width: 40px;
+    width: 44px;
+    min-width: 44px;
   }
 }
 
@@ -15502,6 +15502,25 @@ watch(hasUnsavedChanges, (val) => {
     right: 22px;
   }
 
+  :deep(.wb-control-select-control.has-clear .wb-control-select-value) {
+    padding-right: 68px;
+  }
+
+  .tag-filter-select,
+  .tag-filter-search {
+    height: 44px;
+  }
+
+  .tag-tree-row {
+    grid-template-columns: 44px 44px minmax(0, 1fr);
+    min-height: 44px;
+  }
+
+  .tag-tree-toggle:not(.placeholder) {
+    width: 44px;
+    height: 44px;
+  }
+
   .ai-session-delete,
   .ai-tag-review-close {
     width: 44px;
@@ -16251,19 +16270,5 @@ watch(hasUnsavedChanges, (val) => {
     max-height: 38vh;
   }
 
-  .wb-assistant-root.is-mobile .tag-filter-select,
-  .wb-assistant-root.is-mobile .tag-filter-search {
-    height: 44px;
-  }
-
-  .wb-assistant-root.is-mobile .tag-tree-row {
-    grid-template-columns: 44px 44px minmax(0, 1fr);
-    min-height: 44px;
-  }
-
-  .wb-assistant-root.is-mobile .tag-tree-toggle:not(.placeholder) {
-    width: 44px;
-    height: 44px;
-  }
 }
 </style>

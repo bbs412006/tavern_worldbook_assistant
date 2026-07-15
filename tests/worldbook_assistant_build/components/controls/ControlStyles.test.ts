@@ -32,9 +32,9 @@ describe('worldbook control CSS contracts', () => {
     expect(rule).toContain(`min-width: var(${token})`);
   });
 
-  it('raises regular md icon-only controls to a square 40px coarse-pointer target', () => {
+  it('raises regular md icon-only controls to a square 44px coarse-pointer target', () => {
     expect(appSource).toMatch(
-      /@media \(pointer: coarse\)[\s\S]*?\.wb-assistant-root :deep\(\.wb-control-button\.wb-control--md\.is-icon-only\)\s*\{[^}]*width: 40px;[^}]*min-width: 40px;/,
+      /@media \(pointer: coarse\)[\s\S]*?\.wb-assistant-root :deep\(\.wb-control-button\.wb-control--md\.is-icon-only\)\s*\{[^}]*width: 44px;[^}]*min-width: 44px;/,
     );
   });
 
