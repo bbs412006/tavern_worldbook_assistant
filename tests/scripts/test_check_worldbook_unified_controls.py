@@ -83,6 +83,22 @@ class UnifiedControlGuardTest(unittest.TestCase):
         self.assertEqual(len(violations), 1)
         self.assertIn(':6: native <button>', violations[0])
 
+    def test_ignores_script_example_in_sfc_comment(self) -> None:
+        violations = self.violations(
+            '''<!-- docs: <script> -->\n<script setup lang="ts">\nconst ready = true;\n</script>\n<template>\n  <!-- ordinary template comment -->\n  <button>real violation</button>\n</template>\n'''
+        )
+
+        self.assertEqual(len(violations), 1)
+        self.assertIn(':7: native <button>', violations[0])
+
+    def test_ignores_style_example_in_sfc_comment(self) -> None:
+        violations = self.violations(
+            '''<!-- docs: <style> -->\n<style scoped>\n.example { display: block; }\n</style>\n<template>\n  <!-- ordinary template comment -->\n  <textarea>real violation</textarea>\n</template>\n'''
+        )
+
+        self.assertEqual(len(violations), 1)
+        self.assertIn(':7: native <textarea>', violations[0])
+
 
 if __name__ == '__main__':
     unittest.main()

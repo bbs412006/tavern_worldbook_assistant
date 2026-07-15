@@ -39,23 +39,43 @@ def iter_vue_files() -> list[Path]:
 
 
 TEMPLATE_TAG = re.compile(r'</?template\b[^>]*>', re.IGNORECASE)
-COMMENT = re.compile(r'<!--.*?-->', re.DOTALL)
-SCRIPT_OR_STYLE_BLOCK = re.compile(r'<(script|style)\b[^>]*>.*?</\1\s*>', re.IGNORECASE | re.DOTALL)
+SCRIPT_OR_STYLE_OPEN = re.compile(r'<(script|style)\b[^>]*>', re.IGNORECASE)
 
 
-def mask_matches(text: str, pattern: re.Pattern[str]) -> str:
-    """Mask matches while preserving offsets and source line numbers."""
+def mask_range(chars: list[str], start: int, end: int) -> None:
+    """Mask one source range while preserving offsets and line numbers."""
+    for index in range(start, end):
+        if chars[index] != '\n':
+            chars[index] = ' '
+
+
+def mask_sfc_non_template_regions(text: str) -> str:
+    """Mask SFC comments and real script/style blocks without cross-region regex matches."""
     chars = list(text)
-    for match in pattern.finditer(text):
-        for index in range(match.start(), match.end()):
-            if chars[index] != '\n':
-                chars[index] = ' '
+    index = 0
+    while index < len(text):
+        if text.startswith('<!--', index):
+            end = text.find('-->', index + 4)
+            end = len(text) if end < 0 else end + 3
+            mask_range(chars, index, end)
+            index = end
+            continue
+
+        block = SCRIPT_OR_STYLE_OPEN.match(text, index)
+        if block:
+            closing = re.compile(rf'</{block.group(1)}\s*>', re.IGNORECASE).search(text, block.end())
+            end = closing.end() if closing else block.end()
+            mask_range(chars, index, end)
+            index = end
+            continue
+
+        index += 1
     return ''.join(chars)
 
 
 def template_source(text: str) -> tuple[str, int]:
     """Return the root SFC template body and its zero-based source offset."""
-    searchable = mask_matches(mask_matches(text, SCRIPT_OR_STYLE_BLOCK), COMMENT)
+    searchable = mask_sfc_non_template_regions(text)
     depth = 0
     body_start: int | None = None
     for match in TEMPLATE_TAG.finditer(searchable):
