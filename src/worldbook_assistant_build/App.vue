@@ -59,7 +59,7 @@
           <section class="wb-toolbar browse-toolbar mobile-browse-toolbar">
             <WorldbookPicker :model-value="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择" @update:model-value="handleWorldbookSelectionUpdate" />
             <BaseInput v-model="searchText" class="browse-search" placeholder="🔍 搜索..." aria-label="搜索世界书条目" />
-            <BaseButton size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾</BaseButton>
+            <BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾</BaseButton>
           </section>
 
           <!-- Mobile browse card list -->
@@ -205,7 +205,7 @@
                   />
               </label>
               <div class="toolbar-btns" style="display:flex;gap:6px;flex-wrap:wrap;">
-                <BaseButton size="sm" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾 保存</BaseButton>
+                <BaseButton variant="primary" size="sm" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾 保存</BaseButton>
                 <BaseButton size="sm" @click="addEntry">+ 新条目</BaseButton>
                 <BaseButton size="sm" @click="triggerImport">📥 导入</BaseButton>
                 <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook">📤 导出</BaseButton>
@@ -994,7 +994,7 @@
                       </div>
                   </div>
                 </label>
-                <BaseButton class="btn" size="sm" data-focus-hero="save_btn" data-copy-hero="save_btn" aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges || isAnyCineLocked" @click="saveCurrentWorldbook">
+                <BaseButton class="btn" variant="primary" size="sm" data-focus-hero="save_btn" data-copy-hero="save_btn" aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges || isAnyCineLocked" @click="saveCurrentWorldbook">
                   {{ isFocusToolbarCompact ? '💾' : '💾 保存' }}
                 </BaseButton>
                 <BaseButton class="btn utility-btn" size="sm" data-focus-hero="focus_toggle" data-copy-hero="focus_toggle" aria-label="切换专注编辑" :class="{ active: isDesktopFocusMode }" :disabled="isAnyCineLocked" @click="toggleFocusEditing">
@@ -14950,6 +14950,7 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .mobile-tab-bar {
+  box-sizing: border-box;
   flex-shrink: 0;
   z-index: 10100;
   display: flex;
@@ -14959,7 +14960,8 @@ watch(hasUnsavedChanges, (val) => {
   scrollbar-width: none;
   border-top: 1px solid var(--wb-border-main);
   background: var(--wb-bg-panel);
-  height: 52px;
+  height: calc(52px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -15457,9 +15459,77 @@ watch(hasUnsavedChanges, (val) => {
    Mobile Responsive
    ═════════════════════════════════════════════════ */
 .wb-assistant-root.is-mobile {
+  --wb-control-height-sm: 44px;
+  --wb-control-height-md: 44px;
+  --wb-control-height-lg: 48px;
   padding: 6px;
   gap: 6px;
   border-radius: 0;
+
+  :deep(.wb-control-button--default) {
+    border-color: transparent;
+    background: color-mix(in srgb, var(--wb-control-bg) 72%, transparent);
+  }
+
+  :deep(.wb-control-button.is-icon-only) {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  :deep(.wb-control-button--primary) {
+    border-color: var(--wb-primary);
+  }
+
+  :deep(.wb-control-button.is-icon-only.wb-control-button--primary) {
+    background: var(--wb-primary);
+  }
+
+  :deep(.wb-control-button--danger) {
+    border-color: var(--wb-control-danger-border);
+  }
+
+  :deep(.wb-control-button:active:not(:disabled)) {
+    transform: scale(0.97);
+  }
+
+  :deep(.wb-control-choice) {
+    min-height: 44px;
+  }
+
+  :deep(.wb-control-select-clear) {
+    width: 44px;
+    height: 44px;
+    right: 22px;
+  }
+
+  .ai-session-delete,
+  .ai-tag-review-close {
+    width: 44px;
+    height: 44px;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .ai-session-delete {
+    top: 0;
+    right: 0;
+    opacity: 1;
+  }
+
+  .wb-header,
+  .wb-bindings,
+  .global-mode-panel,
+  .wb-toolbar,
+  .wb-focus-toolbar {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .tool-card,
+  .history-preview-card {
+    border-color: transparent;
+    box-shadow: none;
+  }
 
   /* ── Toolbar ── */
   .toolbar-label {
@@ -15481,7 +15551,19 @@ watch(hasUnsavedChanges, (val) => {
 
   .toolbar-btns .btn {
     font-size: 0.78em;
-    padding: 4px 8px;
+    padding: 8px 10px;
+    border-color: transparent;
+    background: color-mix(in srgb, var(--wb-control-bg) 72%, transparent);
+    box-shadow: none;
+  }
+
+  .toolbar-btns .btn.primary,
+  .toolbar-btns .btn.danger {
+    border-color: currentColor;
+  }
+
+  .btn.mini {
+    min-height: 44px;
   }
 
   /* ── Bindings bar ── */
@@ -15556,7 +15638,7 @@ watch(hasUnsavedChanges, (val) => {
   }
 
   .ai-chat-input {
-    min-height: 36px;
+    min-height: 44px;
     font-size: 0.85em;
   }
 
@@ -15590,8 +15672,8 @@ watch(hasUnsavedChanges, (val) => {
   }
 
   .ai-tag-review-close {
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
     font-size: 1em;
   }
 
@@ -16167,6 +16249,21 @@ watch(hasUnsavedChanges, (val) => {
   .tag-assign-list,
   .tag-assign-list.compact {
     max-height: 38vh;
+  }
+
+  .wb-assistant-root.is-mobile .tag-filter-select,
+  .wb-assistant-root.is-mobile .tag-filter-search {
+    height: 44px;
+  }
+
+  .wb-assistant-root.is-mobile .tag-tree-row {
+    grid-template-columns: 44px 44px minmax(0, 1fr);
+    min-height: 44px;
+  }
+
+  .wb-assistant-root.is-mobile .tag-tree-toggle:not(.placeholder) {
+    width: 44px;
+    height: 44px;
   }
 }
 </style>

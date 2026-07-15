@@ -590,6 +590,41 @@ describe('App utility navigation', () => {
     expect(tabLabelRule).toMatch(/white-space:\s*nowrap;/);
   });
 
+  it('keeps mobile controls touchable while removing permanent frames from secondary actions', () => {
+    const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
+    const mobileBlocks = [...appSource.matchAll(/\.wb-assistant-root\.is-mobile\s*\{([\s\S]*?)\n\}/g)].map(match => match[1]).join('\n');
+
+    expect(mobileBlocks).toMatch(/--wb-control-height-sm:\s*44px;/);
+    expect(mobileBlocks).toMatch(/--wb-control-height-md:\s*44px;/);
+    expect(mobileBlocks).toMatch(/--wb-control-height-lg:\s*48px;/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-button--default\)[\s\S]*?border-color:\s*transparent;/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-button\.is-icon-only\)[\s\S]*?background:\s*transparent;/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-button:active:not\(:disabled\)\)[\s\S]*?transform:\s*scale\(0\.97\);/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-button--primary\)[\s\S]*?border-color:\s*var\(--wb-primary\);/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-button\.is-icon-only\.wb-control-button--primary\)[\s\S]*?background:\s*var\(--wb-primary\);/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-button--danger\)[\s\S]*?border-color:\s*var\(--wb-control-danger-border\);/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-choice\)[\s\S]*?min-height:\s*44px;/);
+    expect(mobileBlocks).toMatch(/:deep\(\.wb-control-select-clear\)[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/);
+    expect(mobileBlocks).toMatch(/\.ai-session-delete,[\s\S]*?\.ai-tag-review-close[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/);
+    expect(mobileBlocks).toMatch(/\.ai-session-delete[\s\S]*?opacity:\s*1;/);
+    expect(mobileBlocks).not.toMatch(/\.ai-tag-review-close\s*\{[^}]*width:\s*28px;/);
+    expect(appSource).toMatch(/\.wb-assistant-root\.is-mobile \.tag-tree-toggle:not\(\.placeholder\)[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/);
+    expect(appSource).toMatch(/\.wb-assistant-root\.is-mobile \.tag-filter-select,[\s\S]*?\.wb-assistant-root\.is-mobile \.tag-filter-search[\s\S]*?height:\s*44px;/);
+    expect(appSource.match(/<BaseButton[^>]*variant="primary"[^>]*@click="saveCurrentWorldbook"/g)).toHaveLength(3);
+  });
+
+  it('flattens nested mobile panels and preserves the device bottom safe area', () => {
+    const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
+    const mobileBlocks = [...appSource.matchAll(/\.wb-assistant-root\.is-mobile\s*\{([\s\S]*?)\n\}/g)].map(match => match[1]).join('\n');
+    const tabBarRule = appSource.match(/\.mobile-tab-bar\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(mobileBlocks).toMatch(/\.wb-header,[\s\S]*?\.wb-bindings,[\s\S]*?\.wb-toolbar[\s\S]*?border-color:\s*transparent;/);
+    expect(mobileBlocks).toMatch(/\.wb-header,[\s\S]*?\.wb-bindings,[\s\S]*?\.wb-toolbar[\s\S]*?box-shadow:\s*none;/);
+    expect(mobileBlocks).toMatch(/\.tool-card,[\s\S]*?\.history-preview-card[\s\S]*?border-color:\s*transparent;/);
+    expect(tabBarRule).toMatch(/padding-bottom:\s*env\(safe-area-inset-bottom,\s*0px\);/);
+    expect(tabBarRule).toMatch(/height:\s*calc\(52px \+ env\(safe-area-inset-bottom,\s*0px\)\);/);
+  });
+
   it('preserves the mobile workspace flex boundary and active tab across utility round trips', async () => {
     Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
     Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });
