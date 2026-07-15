@@ -19,6 +19,7 @@ CONTROL_TESTS = [
     'ControlStyles.test.ts',
 ]
 NATIVE_TAG = re.compile(r'<(button|input|textarea|select)\b', re.IGNORECASE)
+COMMENT_OR_NATIVE_TAG = re.compile(r'<!--.*?-->|<(button|input|textarea|select)\b', re.IGNORECASE | re.DOTALL)
 INPUT_TYPE = re.compile(r'\btype\s*=\s*["\']([^"\']+)["\']', re.IGNORECASE)
 ALLOWED_NATIVE_INPUT_TYPES = {'file', 'color', 'hidden'}
 ALLOWED_BASE_NATIVE_TAGS = {
@@ -38,13 +39,26 @@ def iter_vue_files() -> list[Path]:
 
 
 TEMPLATE_TAG = re.compile(r'</?template\b[^>]*>', re.IGNORECASE)
+COMMENT = re.compile(r'<!--.*?-->', re.DOTALL)
+SCRIPT_OR_STYLE_BLOCK = re.compile(r'<(script|style)\b[^>]*>.*?</\1\s*>', re.IGNORECASE | re.DOTALL)
+
+
+def mask_matches(text: str, pattern: re.Pattern[str]) -> str:
+    """Mask matches while preserving offsets and source line numbers."""
+    chars = list(text)
+    for match in pattern.finditer(text):
+        for index in range(match.start(), match.end()):
+            if chars[index] != '\n':
+                chars[index] = ' '
+    return ''.join(chars)
 
 
 def template_source(text: str) -> tuple[str, int]:
     """Return the root SFC template body and its zero-based source offset."""
+    searchable = mask_matches(mask_matches(text, COMMENT), SCRIPT_OR_STYLE_BLOCK)
     depth = 0
     body_start: int | None = None
-    for match in TEMPLATE_TAG.finditer(text):
+    for match in TEMPLATE_TAG.finditer(searchable):
         is_closing = match.group(0).startswith('</')
         if not is_closing:
             if depth == 0:
@@ -74,29 +88,23 @@ def start_tag(source: str, offset: int) -> str:
     return source[offset:]
 
 
-def exception_documented(source: str, match: re.Match[str]) -> bool:
-    line_start = source.rfind('\n', 0, match.start()) + 1
-    line_prefix = source[line_start:match.start()]
-    marker = line_prefix.rfind(EXCEPTION_MARKER)
-    if marker >= 0 and not NATIVE_TAG.search(line_prefix[marker + len(EXCEPTION_MARKER):]):
-        return True
-
-    if NATIVE_TAG.search(line_prefix):
-        return False
-    previous_end = max(0, line_start - 1)
-    previous_start = source.rfind('\n', 0, previous_end) + 1
-    return EXCEPTION_MARKER in source[previous_start:previous_end]
-
-
 def native_control_violations(path: Path) -> list[str]:
     violations: list[str] = []
     text = path.read_text(encoding='utf-8')
     source, source_offset = template_source(text)
     relative = path.relative_to(ROOT)
     allowed_base_tags = ALLOWED_BASE_NATIVE_TAGS.get(path.name, set()) if path.parent == CONTROLS_ROOT else set()
-    for match in NATIVE_TAG.finditer(source):
+    pending_exception_end: int | None = None
+    for match in COMMENT_OR_NATIVE_TAG.finditer(source):
+        token = match.group(0)
+        if token.startswith('<!--'):
+            pending_exception_end = match.end() if EXCEPTION_MARKER in token else None
+            continue
+
         tag = match.group(1).lower()
-        if exception_documented(source, match):
+        exempt = pending_exception_end is not None and not source[pending_exception_end:match.start()].strip()
+        pending_exception_end = None
+        if exempt:
             continue
         if tag in allowed_base_tags:
             continue

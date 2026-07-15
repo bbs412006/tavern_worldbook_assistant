@@ -209,11 +209,13 @@ function addOpenListeners(): void {
     cancel: ownerWindow.cancelAnimationFrame.bind(ownerWindow),
   });
   ownerDocument.addEventListener('pointerdown', onOwnerPointerDown);
+  ownerDocument.addEventListener('scroll', schedulePlacement, true);
   ownerWindow.addEventListener('resize', schedulePlacement);
 }
 
 function removeOpenListeners(): void {
   ownerDocument?.removeEventListener('pointerdown', onOwnerPointerDown);
+  ownerDocument?.removeEventListener('scroll', schedulePlacement, true);
   ownerWindow?.removeEventListener('resize', schedulePlacement);
   frame?.dispose();
   frame = null;

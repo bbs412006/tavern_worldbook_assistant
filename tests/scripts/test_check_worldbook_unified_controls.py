@@ -59,6 +59,22 @@ class UnifiedControlGuardTest(unittest.TestCase):
         self.assertEqual(len(violations), 1)
         self.assertIn(':2: native <button>', violations[0])
 
+    def test_ignores_template_like_strings_in_script(self) -> None:
+        violations = self.violations(
+            '''<script setup lang="ts">\nconst sample = '<template><div /></template>';\n</script>\n<template>\n  <button>real violation</button>\n</template>\n'''
+        )
+
+        self.assertEqual(len(violations), 1)
+        self.assertIn(':5: native <button>', violations[0])
+
+    def test_ignores_template_closing_text_and_native_examples_in_comments(self) -> None:
+        violations = self.violations(
+            '''<template>\n  <!-- docs mention </template> and <button>example</button> here -->\n  <button>real violation</button>\n</template>\n'''
+        )
+
+        self.assertEqual(len(violations), 1)
+        self.assertIn(':3: native <button>', violations[0])
+
 
 if __name__ == '__main__':
     unittest.main()

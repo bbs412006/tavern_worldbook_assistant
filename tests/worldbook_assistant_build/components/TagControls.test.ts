@@ -25,6 +25,7 @@ describe('tag unified controls', () => {
     expect(wrapper.find('select').exists()).toBe(false);
     expect(wrapper.findComponent(BaseInput).exists()).toBe(true);
     expect(wrapper.findComponent(BaseSelect).exists()).toBe(true);
+    expect(wrapper.findComponent(BaseSelect).get('[data-select-trigger]').attributes('aria-label')).toBe('新标签的父标签');
     expect(wrapper.findAllComponents(BaseButton)).toHaveLength(2);
 
     await wrapper.findComponent(BaseInput).setValue('新标签');
@@ -66,6 +67,7 @@ describe('tag unified controls', () => {
     });
 
     expect(wrapper.find('select').exists()).toBe(false);
+    expect(wrapper.findComponent(BaseSelect).get('[data-select-trigger]').attributes('aria-label')).toBe('子标签的父标签');
     await wrapper.findComponent(BaseInput).setValue('重命名');
     await wrapper.findComponent(BaseInput).get('input').trigger('blur');
     await wrapper.findComponent(BaseSelect).vm.$emit('update:modelValue', '');

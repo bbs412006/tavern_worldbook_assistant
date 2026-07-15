@@ -5,7 +5,7 @@
     <BaseButton class="btn mini" size="sm" :disabled="!selectedCount" @click="$emit('apply-status-action', 'duplicate_exact', 'skip')">同名同内容→跳过</BaseButton>
     <BaseButton class="btn mini" size="sm" :disabled="!selectedCount" @click="$emit('apply-status-action', 'content_duplicate_other_name', 'skip')">异名同内容→跳过</BaseButton>
     <div class="cross-copy-bulk-box">
-      <BaseSelect :model-value="bulkAction" :options="actionOptions" size="sm" @update:model-value="updateBulkAction" />
+      <BaseSelect aria-label="批量动作" :model-value="bulkAction" :options="actionOptions" size="sm" @update:model-value="updateBulkAction" />
       <BaseButton class="btn mini" size="sm" :disabled="!selectedCount" @click="$emit('apply-bulk-action')">应用到已选</BaseButton>
     </div>
     <BaseButton v-if="!mobile" class="btn primary" variant="primary" :disabled="!canApply" :loading="applyLoading" @click="$emit('apply-selection')">{{ applyLoading ? '执行中...' : `执行复制（${selectedCount}）` }}</BaseButton>

@@ -2,7 +2,7 @@
   <section class="cross-copy-right">
     <div class="cross-copy-list-head"><strong>对比与动作</strong><span>已选 {{ selectedCount }} 条</span></div>
     <div class="cross-copy-list-tools">
-      <BaseSelect :model-value="statusFilter" :options="statusOptions" @update:model-value="updateStatusFilter" />
+      <BaseSelect aria-label="筛选对比状态" :model-value="statusFilter" :options="statusOptions" @update:model-value="updateStatusFilter" />
     </div>
     <slot name="bulk"></slot>
     <div class="cross-copy-rows" :class="{ 'mobile-rows': mobile }">
@@ -16,7 +16,7 @@
         </div>
         <div class="cross-copy-row-note">{{ row.note || rowDiffSummary(row) }}</div>
         <div class="cross-copy-row-actions">
-          <BaseSelect :model-value="row.action" :options="actionOptions" :disabled="!row.selected || row.status === 'invalid_same_source_target' || applyLoading" @update:model-value="value => updateAction(row.id, value)" />
+          <BaseSelect :aria-label="`${row.source_entry.name || `条目 ${row.source_entry.uid}`} 操作`" :model-value="row.action" :options="actionOptions" :disabled="!row.selected || row.status === 'invalid_same_source_target' || applyLoading" @update:model-value="value => updateAction(row.id, value)" />
           <BaseInput v-if="row.action === 'rename_create'" :model-value="row.rename_name" class="text-input" placeholder="输入新名称（自动去重）" :disabled="!row.selected || applyLoading" @update:model-value="$emit('set-rename-name', row.id, $event)" @blur="$emit('rename-blur', row.id)" />
         </div>
         <BaseButton class="btn mini cross-copy-detail-trigger" size="sm" @click="$emit('open-detail', row.id)">▷ 查看对比明细</BaseButton>

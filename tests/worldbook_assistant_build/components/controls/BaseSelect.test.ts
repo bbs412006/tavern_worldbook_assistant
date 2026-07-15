@@ -417,6 +417,10 @@ describe('BaseSelect root layer positioning', () => {
     const scroll = document.createElement('div');
     scroll.style.overflow = 'auto';
     const host = document.createElement('div');
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => {
+      callback(0);
+      return 1;
+    });
     root.append(hidden);
     hidden.append(scroll);
     scroll.append(host);
@@ -431,6 +435,12 @@ describe('BaseSelect root layer positioning', () => {
     expect(layer.style.left).toBe('252px');
     expect(layer.style.top).toBe('186px');
     expect(layer.dataset.side).toBe('down');
+
+    vi.spyOn(wrapper.get('[data-select-trigger]').element, 'getBoundingClientRect').mockReturnValue({ left: 430, right: 530, top: 260, bottom: 296, width: 100, height: 36, x: 430, y: 260, toJSON: () => ({}) });
+    scroll.dispatchEvent(new Event('scroll'));
+    await flush();
+    expect(layer.style.top).toBe('246px');
+
     await keydown(wrapper.get('[data-select-trigger]').element, 'Escape');
     expect(root.querySelector('.wb-control-select-menu')).toBeNull();
     wrapper.unmount();
@@ -475,6 +485,7 @@ describe('BaseSelect owner lifecycle', () => {
     await open(wrapper);
     expect(menuOf(wrapper)!.ownerDocument).toBe(ownerDocument);
     expect(addDocument.mock.calls.filter(([type]) => type === 'pointerdown')).toHaveLength(1);
+    expect(addDocument.mock.calls.filter(([type]) => type === 'scroll')).toHaveLength(1);
     expect(addDocument.mock.calls.filter(([type]) => type === 'keydown')).toHaveLength(0);
     expect(addWindow.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1);
     expect(localAdd.mock.calls.filter(([type]) => type === 'pointerdown' || type === 'keydown')).toHaveLength(0);
@@ -484,6 +495,7 @@ describe('BaseSelect owner lifecycle', () => {
     await keydown(wrapper.get('[data-select-trigger]').element, 'Escape');
     expect(cancel).toHaveBeenCalledWith(41);
     expect(removeDocument.mock.calls.filter(([type]) => type === 'pointerdown')).toHaveLength(1);
+    expect(removeDocument.mock.calls.filter(([type]) => type === 'scroll')).toHaveLength(1);
     expect(removeWindow.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1);
     wrapper.unmount();
     iframe.remove();
@@ -502,6 +514,8 @@ describe('BaseSelect owner lifecycle', () => {
     const baselines = {
       addPointer: addDocument.mock.calls.filter(([type]) => type === 'pointerdown').length,
       removePointer: removeDocument.mock.calls.filter(([type]) => type === 'pointerdown').length,
+      addScroll: addDocument.mock.calls.filter(([type]) => type === 'scroll').length,
+      removeScroll: removeDocument.mock.calls.filter(([type]) => type === 'scroll').length,
       addResize: addWindow.mock.calls.filter(([type]) => type === 'resize').length,
       removeResize: removeWindow.mock.calls.filter(([type]) => type === 'resize').length,
     };
@@ -516,6 +530,8 @@ describe('BaseSelect owner lifecycle', () => {
 
     expect(addDocument.mock.calls.filter(([type]) => type === 'pointerdown')).toHaveLength(baselines.addPointer + 20);
     expect(removeDocument.mock.calls.filter(([type]) => type === 'pointerdown')).toHaveLength(baselines.removePointer + 20);
+    expect(addDocument.mock.calls.filter(([type]) => type === 'scroll')).toHaveLength(baselines.addScroll + 20);
+    expect(removeDocument.mock.calls.filter(([type]) => type === 'scroll')).toHaveLength(baselines.removeScroll + 20);
     expect(addWindow.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(baselines.addResize + 20);
     expect(removeWindow.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(baselines.removeResize + 20);
     expect(request).toHaveBeenCalledTimes(20);

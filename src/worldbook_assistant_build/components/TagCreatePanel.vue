@@ -10,6 +10,7 @@
       />
       <BaseSelect
         v-if="showParentSelect"
+        aria-label="新标签的父标签"
         :model-value="parentId"
         :options="selectOptions"
         class="text-input tag-parent-select"
@@ -21,6 +22,7 @@
     <label v-if="!showParentSelect" class="field tag-parent-field">
       <span>父标签（可选）</span>
       <BaseSelect
+        aria-label="新标签的父标签"
         :model-value="parentId"
         :options="selectOptions"
         class="text-input"

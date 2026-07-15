@@ -97,6 +97,10 @@ describe('cross-copy unified controls', () => {
     expect(wrapper.find('select').exists()).toBe(false);
     expect(wrapper.findAllComponents(BaseSelect)).toHaveLength(2);
     expect(wrapper.findComponent(BaseCheckbox).exists()).toBe(true);
+    expect(wrapper.findAllComponents(BaseSelect).map(select => select.get('[data-select-trigger]').attributes('aria-label'))).toEqual([
+      '筛选对比状态',
+      '来源条目 操作',
+    ]);
 
     await wrapper.findAllComponents(BaseSelect)[0]!.vm.$emit('update:modelValue', 'new');
     await wrapper.findAllComponents(BaseSelect)[1]!.vm.$emit('update:modelValue', 'rename_create');
@@ -120,6 +124,7 @@ describe('cross-copy unified controls', () => {
     });
 
     expect(wrapper.find('select').exists()).toBe(false);
+    expect(wrapper.findComponent(BaseSelect).get('[data-select-trigger]').attributes('aria-label')).toBe('批量动作');
     await wrapper.findComponent(BaseSelect).vm.$emit('update:modelValue', 'overwrite');
     const buttons = wrapper.findAllComponents(BaseButton);
     await buttons[0]!.trigger('click');

@@ -10,6 +10,7 @@
       @keydown.enter.prevent="blurCurrentTarget"
     />
     <BaseSelect
+      :aria-label="`${row.name}的父标签`"
       class="text-input tag-parent-select"
       :model-value="parentId ?? ''"
       :options="selectOptions"
