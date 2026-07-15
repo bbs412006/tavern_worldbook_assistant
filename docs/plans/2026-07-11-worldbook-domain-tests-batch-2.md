@@ -1,7 +1,5 @@
 # Worldbook Domain Tests Batch 2 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Extend behavioral unit coverage to tag trees, cross-copy operations, AI configuration parsing, and AI tag extraction.
 
 **Architecture:** Add four Node-only Vitest files that import existing pure domain modules directly. Tests use normalized real worldbook entries where needed and avoid host/Vue mocks. No production behavior changes are planned; any failing assertion must be resolved by aligning the test with documented existing behavior unless it reveals a clear defect.

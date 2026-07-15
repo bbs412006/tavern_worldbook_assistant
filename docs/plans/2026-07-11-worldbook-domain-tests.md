@@ -1,7 +1,5 @@
 # Worldbook Domain Tests Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Establish a Vitest unit-test foundation and cover the version, persisted-state helper, and worldbook import/sort domains with executable behavioral tests.
 
 **Architecture:** Add Vitest as a development dependency with a Node-only configuration. Tests import the existing pure TypeScript modules directly, avoiding Vue and SillyTavern host globals. Integrate the domain suite into `verify:worldbook` before the production build.

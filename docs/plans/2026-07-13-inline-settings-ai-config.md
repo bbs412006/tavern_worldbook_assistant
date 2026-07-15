@@ -1,7 +1,5 @@
 # Inline Settings and AI Config Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Replace the broken cross-document settings and AI-config modals with inline utility pages inside the worldbook assistant while preserving every existing business action.
 
 **Architecture:** `App.vue` owns a single `utilityPage` navigation state and all existing business state. `SettingsPage.vue` and `AIConfigPage.vue` are presentation components rendered inside the assistant root; they communicate only through props and emits and never use Teleport, fixed overlays, or the host document body.

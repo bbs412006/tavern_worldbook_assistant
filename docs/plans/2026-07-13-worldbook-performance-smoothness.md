@@ -1,7 +1,5 @@
 # Worldbook Assistant Performance and Smoothness Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Make Settings/AI Config navigation and utility-page interaction feel immediate on mobile WebView while keeping resource counts and long-running memory stable.
 
 **Architecture:** Keep the large main workspace mounted and visibility-toggle it while utility pages remain conditionally mounted. Add small activity/resource abstractions so visibility-only layout work can pause, resume, coalesce to one frame, and dispose deterministically without changing business-critical watchers or data flows.

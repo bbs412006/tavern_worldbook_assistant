@@ -1,7 +1,5 @@
 # Worldbook Assistant Debug Diagnostics Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Publish a temporary `2.0.0-debug.1` build that renders real Vue, synchronous mount, window error, and unhandled Promise rejection details inside the otherwise-empty assistant panel.
 
 **Architecture:** Add diagnostics only in `src/worldbook_assistant_build/index.ts`, where the panel body and Vue application are both available. A small renderer replaces the panel body with a readable debug report. Listeners are installed before mount and removed during cleanup. The debug work is released under a separate branch/tag and does not move the stable `2.0.0` tag.

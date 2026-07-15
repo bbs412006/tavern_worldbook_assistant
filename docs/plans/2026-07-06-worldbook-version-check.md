@@ -1,7 +1,5 @@
 # Worldbook Version Check Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Add visible script version information and an update check inside the worldbook assistant settings modal.
 
 **Architecture:** Maintain a manual semantic version constant in `App.vue`, inject build commit/branch from webpack, expose a small `VersionInfo` object to `SettingsModal`, and check GitHub latest branch commit on demand. Keep code in existing files for this small feature.

@@ -1,7 +1,5 @@
 # Worldbook Build Hygiene Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Add dedicated worldbook-assistant build and verification commands that do not rewrite unrelated demo artifacts or leave source maps behind.
 
 **Architecture:** Make webpack entry selection and production source-map generation configurable through environment variables. Add a small verification script that runs existing structural checks, builds only `src/worldbook_assistant_build/index.ts`, validates the generated bundle, removes source maps, and rejects unrelated `dist/` changes.

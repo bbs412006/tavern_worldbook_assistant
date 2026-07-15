@@ -1,7 +1,5 @@
 # Worldbook Assistant Core Refactor Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Refactor the worldbook assistant into smaller, testable modules while preserving the current user-facing feature set and avoiding another modal/event/host-document patch spiral.
 
 **Architecture:** Keep the current Vue UI and SillyTavern/TavernHelper integration, but extract stable domains from `src/worldbook_assistant_build/App.vue` into typed modules and composables. The refactor is intentionally incremental: first move pure types/constants/normalizers and tests, then composables for persistence/version/modals, then UI panels. The published bundle remains `dist/worldbook_assistant_build/index.js`.

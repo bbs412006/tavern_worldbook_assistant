@@ -1,7 +1,5 @@
 # Worldbook Memory Cache Release Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Reduce runtime memory retained by heavyweight worldbook helper features after they are closed or no longer relevant.
 
 **Architecture:** Keep the existing monolithic `App.vue` architecture for this low-risk pass. Add explicit cleanup functions and gate heavyweight history view construction behind modal visibility so large snapshot/diff structures are not held while the feature is closed.

@@ -1,7 +1,5 @@
 # Worldbook Assistant Unified Controls Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-subagent-driven-development (recommended) or superpowers-executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Replace inconsistent assistant-internal native controls with a tested, theme-aware control system, including fully custom searchable dropdown menus, while preserving all existing business behavior and mobile WebView compatibility.
 
 **Architecture:** Add focused base-control Vue components under `components/controls/` and shared control tokens under the assistant root. Migrate business surfaces in small reviewed slices, keeping the current `.btn`/`.text-input` compatibility layer until the final cleanup. `BaseSelect` owns its menu, keyboard behavior, owner-document listeners, positioning, search state, and teardown without cross-document Teleport.
