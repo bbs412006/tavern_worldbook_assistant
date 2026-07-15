@@ -55,7 +55,7 @@ def mask_matches(text: str, pattern: re.Pattern[str]) -> str:
 
 def template_source(text: str) -> tuple[str, int]:
     """Return the root SFC template body and its zero-based source offset."""
-    searchable = mask_matches(mask_matches(text, COMMENT), SCRIPT_OR_STYLE_BLOCK)
+    searchable = mask_matches(mask_matches(text, SCRIPT_OR_STYLE_BLOCK), COMMENT)
     depth = 0
     body_start: int | None = None
     for match in TEMPLATE_TAG.finditer(searchable):

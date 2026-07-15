@@ -75,6 +75,14 @@ class UnifiedControlGuardTest(unittest.TestCase):
         self.assertEqual(len(violations), 1)
         self.assertIn(':3: native <button>', violations[0])
 
+    def test_ignores_unclosed_comment_opener_in_script_string(self) -> None:
+        violations = self.violations(
+            '''<script setup lang="ts">\nconst sample = '<!--';\n</script>\n<template>\n  <!-- ordinary template comment -->\n  <button>real violation</button>\n</template>\n'''
+        )
+
+        self.assertEqual(len(violations), 1)
+        self.assertIn(':6: native <button>', violations[0])
+
 
 if __name__ == '__main__':
     unittest.main()
