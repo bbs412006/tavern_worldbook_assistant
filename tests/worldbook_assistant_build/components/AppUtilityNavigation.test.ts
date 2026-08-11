@@ -611,6 +611,98 @@ describe('App utility navigation', () => {
     expect(detailsRule).toMatch(/justify-content:\s*flex-end;/);
   });
 
+  it('contains the mobile entry list within one vertical scroller without overlay collisions', () => {
+    const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
+    const mobilePaneRule = appSource.match(/\.mobile-pane\s*\{([^}]*)\}/)?.[1] ?? '';
+    const mobileListRule = appSource.match(/\.mobile-entry-list\s*\{([^}]*)\}/)?.[1] ?? '';
+    const mobileItemRule = appSource.match(/\.mobile-entry-list \.entry-item\s*\{([^}]*)\}/)?.[1] ?? '';
+    const titleGroupRule = appSource.match(/\.mobile-entry-title-group\s*\{([^}]*)\}/)?.[1] ?? '';
+    const keysRule = appSource.match(/\.mobile-entry-list \.entry-item-keys\s*\{([^}]*)\}/)?.[1] ?? '';
+    const detailsRule = appSource.match(/\.mobile-entry-details\s*\{([^}]*)\}/)?.[1] ?? '';
+    const loadMoreRule = appSource.match(/\.mobile-entry-load-more\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(mobilePaneRule).toMatch(/overflow-x:\s*hidden;/);
+    expect(mobilePaneRule).toMatch(/box-sizing:\s*border-box;/);
+    expect(mobilePaneRule).toMatch(/padding:\s*8px 8px calc\(60px \+ env\(safe-area-inset-bottom,\s*0px\)\);/);
+    expect(mobileListRule).toMatch(/width:\s*100%;/);
+    expect(mobileListRule).toMatch(/min-width:\s*0;/);
+    expect(mobileListRule).toMatch(/overflow-x:\s*clip;/);
+    expect(mobileItemRule).toMatch(/box-sizing:\s*border-box;/);
+    expect(mobileItemRule).toMatch(/max-width:\s*100%;/);
+    expect(mobileItemRule).toMatch(/min-width:\s*0;/);
+    expect(titleGroupRule).toMatch(/max-width:\s*100%;/);
+    expect(mobileItemRule).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\) auto;/);
+    expect(keysRule).toMatch(/white-space:\s*normal;/);
+    expect(keysRule).toMatch(/min-width:\s*0;/);
+    expect(keysRule).toMatch(/grid-column:\s*1 \/ -1;/);
+    expect(detailsRule).toMatch(/grid-column:\s*1 \/ -1;/);
+    expect(loadMoreRule).toMatch(/padding:\s*4px 0 calc\(8px \+ env\(safe-area-inset-bottom,\s*0px\)\);/);
+  });
+
+  it('renders mobile entries in bounded batches so opening a large worldbook stays responsive', async () => {
+    Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
+    Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });
+    const globals = globalThis as Record<string, any>;
+    globals.getWorldbookNames = vi.fn(() => ['大型世界书']);
+    globals.getWorldbook = vi.fn(async () =>
+      Array.from({ length: 120 }, (_, index) =>
+        normalizeEntry({
+          uid: index + 1,
+          name: `长标题条目 ${index + 1}`,
+          enabled: true,
+          strategy: { type: 'selective', keys: [`关键词 ${index + 1}`], secondary_keys: [] },
+          position: { type: 'before_character_definition', order: index + 1 },
+          recursion: { prevent_incoming: false, prevent_outgoing: false },
+          content: `内容 ${index + 1}`,
+        }, index + 1),
+      ),
+    );
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      panelMode: string;
+      mobileTab: string;
+      reloadWorldbookNames(preferred?: string): Promise<boolean>;
+      mobileEditorLoadMore(): void;
+    };
+    vm.panelMode = 'editor';
+    vm.mobileTab = 'list';
+    await vm.reloadWorldbookNames('大型世界书');
+    await nextTick();
+
+    expect(wrapper.findAll('.mobile-entry-list .entry-item')).toHaveLength(18);
+    vm.mobileEditorLoadMore();
+    await nextTick();
+    expect(wrapper.findAll('.mobile-entry-list .entry-item')).toHaveLength(36);
+    wrapper.unmount();
+  });
+
+  it('switches to the mobile editor immediately after selecting a rendered entry', async () => {
+    Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
+    Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });
+    const globals = globalThis as Record<string, any>;
+    globals.getWorldbookNames = vi.fn(() => ['快速世界书']);
+    globals.getWorldbook = vi.fn(async () => [
+      normalizeEntry({ uid: 1, name: '快速展开条目', content: '正文' }, 1),
+    ]);
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      panelMode: string;
+      mobileTab: string;
+      reloadWorldbookNames(preferred?: string): Promise<boolean>;
+    };
+    vm.panelMode = 'editor';
+    vm.mobileTab = 'list';
+    await vm.reloadWorldbookNames('快速世界书');
+    await nextTick();
+
+    await wrapper.get('.mobile-entry-list .entry-item').trigger('click');
+    expect(vm.mobileTab).toBe('edit');
+    expect(wrapper.find('.mobile-pane .editor-head').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
   it('keeps mobile controls touchable while removing permanent frames from secondary actions', () => {
     const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
     const mobileBlocks = [...appSource.matchAll(/\.wb-assistant-root\.is-mobile\s*\{([\s\S]*?)\n\}/g)].map(match => match[1]).join('\n');

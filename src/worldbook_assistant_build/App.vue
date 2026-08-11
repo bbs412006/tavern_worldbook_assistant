@@ -298,7 +298,7 @@
                 </div>
               </div>
               <BaseButton
-                v-for="entry in filteredEntries"
+                v-for="entry in mobileEditorVisibleEntries"
                 :key="`me-${entry.uid}`"
                 type="button"
                 class="entry-item"
@@ -345,6 +345,11 @@
                   <span v-if="entry.recursion.prevent_outgoing" style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;color:#f59e0b;">🚫出</span>
                 </div>
               </BaseButton>
+              <div v-if="mobileEditorHasMoreEntries" class="mobile-entry-load-more">
+                <BaseButton size="sm" type="button" @click="mobileEditorLoadMore">
+                  加载更多（{{ mobileEditorVisibleEntries.length }} / {{ filteredEntries.length }}）
+                </BaseButton>
+              </div>
               <div v-if="!filteredEntries.length" class="empty-note">暂无条目</div>
             </div>
             </div>
@@ -2883,7 +2888,9 @@ const crossCopyMode = ref(false);
 const panelMode = ref<'browse' | 'editor'>('browse');
 const expandedBrowseCardUids = ref<Set<number>>(new Set());
 const BROWSE_RENDER_BATCH = 30;
+const MOBILE_EDITOR_RENDER_BATCH = 18;
 const browseRenderLimit = ref(BROWSE_RENDER_BATCH);
+const mobileEditorRenderLimit = ref(MOBILE_EDITOR_RENDER_BATCH);
 const browseLoadMoreSentinelRef = ref<HTMLElement | null>(null);
 const rootRef = ref<HTMLElement | null>(null);
 const performanceDiagnosticsEnabled = (() => {
@@ -5551,14 +5558,26 @@ function applyPanelModeFromPersisted(): void {
 
 const browseVisibleEntries = computed(() => filteredEntries.value.slice(0, browseRenderLimit.value));
 const browseHasMoreEntries = computed(() => browseRenderLimit.value < filteredEntries.value.length);
+const mobileEditorVisibleEntries = computed(() => filteredEntries.value.slice(0, mobileEditorRenderLimit.value));
+const mobileEditorHasMoreEntries = computed(() => mobileEditorRenderLimit.value < filteredEntries.value.length);
 
 function browseLoadMore(): void {
   browseRenderLimit.value = Math.min(browseRenderLimit.value + BROWSE_RENDER_BATCH, filteredEntries.value.length);
 }
 
+function mobileEditorLoadMore(): void {
+  mobileEditorRenderLimit.value = Math.min(
+    mobileEditorRenderLimit.value + MOBILE_EDITOR_RENDER_BATCH,
+    filteredEntries.value.length,
+  );
+}
+
 watch(
   () => filteredEntries.value.length,
-  () => { browseRenderLimit.value = BROWSE_RENDER_BATCH; },
+  () => {
+    browseRenderLimit.value = BROWSE_RENDER_BATCH;
+    mobileEditorRenderLimit.value = MOBILE_EDITOR_RENDER_BATCH;
+  },
 );
 
 function normalizeCrossCopyWorldbookSelection(): void {
@@ -14875,7 +14894,9 @@ watch(hasUnsavedChanges, (val) => {
   position: absolute;
   inset: 0;
   overflow-y: auto;
-  padding: 8px;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 8px 8px calc(60px + env(safe-area-inset-bottom, 0px));
   -webkit-overflow-scrolling: touch;
 }
 
@@ -14883,6 +14904,18 @@ watch(hasUnsavedChanges, (val) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.mobile-entry-list .entry-item {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .mobile-entry-list .entry-item-head {
@@ -14890,6 +14923,8 @@ watch(hasUnsavedChanges, (val) => {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   width: 100%;
+  min-width: 0;
+  grid-column: 1 / -1;
 }
 
 .mobile-entry-title-group {
@@ -14899,6 +14934,7 @@ watch(hasUnsavedChanges, (val) => {
   justify-content: flex-start;
   gap: 7px;
   min-width: 0;
+  max-width: 100%;
   text-align: left;
 }
 
@@ -14929,11 +14965,16 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .mobile-entry-list .entry-item-keys {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
   overflow-wrap: anywhere;
-  text-align: right;
+  text-align: left;
 }
 
 .mobile-entry-details {
+  grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
   gap: 6px;
@@ -14942,6 +14983,13 @@ watch(hasUnsavedChanges, (val) => {
   font-size: 10px;
   opacity: 0.8;
   text-align: right;
+}
+
+.mobile-entry-load-more {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 4px 0 calc(8px + env(safe-area-inset-bottom, 0px));
 }
 
 .mobile-multi-toolbar {

@@ -477,6 +477,8 @@ function ensurePanelStyle(): void {
 }
 
 #${FAB_ID}.panel-open {
+  visibility: hidden;
+  pointer-events: none;
   box-shadow: 0 0 0 1.5px rgba(244, 63, 94, 0.5), 0 4px 16px rgba(0,0,0,0.35);
   font-size: 18px;
 }
