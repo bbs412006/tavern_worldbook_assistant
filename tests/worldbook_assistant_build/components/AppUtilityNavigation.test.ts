@@ -677,6 +677,73 @@ describe('App utility navigation', () => {
     wrapper.unmount();
   });
 
+  it('resets mobile rendering when switching between equally sized worldbooks', async () => {
+    Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
+    Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });
+    const globals = globalThis as Record<string, any>;
+    globals.getWorldbookNames = vi.fn(() => ['世界书 A', '世界书 B']);
+    globals.getWorldbook = vi.fn(async (name: string) =>
+      Array.from({ length: 36 }, (_, index) => normalizeEntry({
+        uid: index + 1,
+        name: `${name} 条目 ${index + 1}`,
+        content: `${name} 内容 ${index + 1}`,
+      }, index + 1)),
+    );
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      panelMode: string;
+      mobileTab: string;
+      reloadWorldbookNames(preferred?: string): Promise<boolean>;
+      switchWorldbookSelection(name: string, options?: Record<string, unknown>): boolean;
+      mobileEditorLoadMore(): void;
+    };
+    vm.panelMode = 'editor';
+    vm.mobileTab = 'list';
+    await vm.reloadWorldbookNames('世界书 A');
+    await nextTick();
+    vm.mobileEditorLoadMore();
+    await nextTick();
+    expect(wrapper.findAll('.mobile-entry-list .entry-item')).toHaveLength(36);
+
+    expect(vm.switchWorldbookSelection('世界书 B', { source: 'manual', allowDirty: true })).toBe(true);
+    await vi.waitFor(() => expect(globals.getWorldbook).toHaveBeenCalledWith('世界书 B'));
+    await nextTick();
+    expect(wrapper.findAll('.mobile-entry-list .entry-item')).toHaveLength(18);
+    expect(wrapper.get('.mobile-entry-list .entry-item').text()).toContain('世界书 B');
+    wrapper.unmount();
+  });
+
+  it('selects only the currently rendered mobile entries when selecting all visible', async () => {
+    Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
+    Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });
+    const globals = globalThis as Record<string, any>;
+    globals.getWorldbookNames = vi.fn(() => ['大型世界书']);
+    globals.getWorldbook = vi.fn(async () =>
+      Array.from({ length: 36 }, (_, index) => normalizeEntry({ uid: index + 1, name: `条目 ${index + 1}` }, index + 1)),
+    );
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      panelMode: string;
+      mobileTab: string;
+      mobileMultiSelectMode: boolean;
+      selectedEntryUids: number[];
+      reloadWorldbookNames(preferred?: string): Promise<boolean>;
+      selectAllVisibleForMobileMultiSelect(): void;
+    };
+    vm.panelMode = 'editor';
+    vm.mobileTab = 'list';
+    await vm.reloadWorldbookNames('大型世界书');
+    await nextTick();
+    vm.mobileMultiSelectMode = true;
+    vm.selectAllVisibleForMobileMultiSelect();
+
+    expect(vm.selectedEntryUids).toHaveLength(18);
+    expect(vm.selectedEntryUids).toEqual(Array.from({ length: 18 }, (_, index) => index + 1));
+    wrapper.unmount();
+  });
+
   it('switches to the mobile editor immediately after selecting a rendered entry', async () => {
     Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
     Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });

@@ -5572,12 +5572,14 @@ function mobileEditorLoadMore(): void {
   );
 }
 
+function resetEntryRenderLimits(): void {
+  browseRenderLimit.value = BROWSE_RENDER_BATCH;
+  mobileEditorRenderLimit.value = MOBILE_EDITOR_RENDER_BATCH;
+}
+
 watch(
-  () => filteredEntries.value.length,
-  () => {
-    browseRenderLimit.value = BROWSE_RENDER_BATCH;
-    mobileEditorRenderLimit.value = MOBILE_EDITOR_RENDER_BATCH;
-  },
+  [selectedWorldbookName, searchText, onlyEnabled, viewSortActive],
+  resetEntryRenderLimits,
 );
 
 function normalizeCrossCopyWorldbookSelection(): void {
@@ -7354,7 +7356,7 @@ function selectAllVisibleForMobileMultiSelect(): void {
   if (!isMobile.value || !mobileMultiSelectMode.value) {
     return;
   }
-  const visibleUids = filteredEntries.value.map(entry => entry.uid);
+  const visibleUids = mobileEditorVisibleEntries.value.map(entry => entry.uid);
   selectedEntryUids.value = visibleUids;
   if (visibleUids.length > 0) {
     selectedEntryUid.value = visibleUids[0];

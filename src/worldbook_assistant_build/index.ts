@@ -933,7 +933,8 @@ function createFab(): void {
 
   const fab = doc.createElement('div');
   fab.id = FAB_ID;
-  fab.textContent = '📖';
+  fab.classList.toggle('panel-open', isPanelVisible);
+  fab.textContent = isPanelVisible ? '✕' : '📖';
   fab.title = '世界书助手';
   fab.setAttribute('tabindex', '-1');
   fab.setAttribute('inputmode', 'none');
