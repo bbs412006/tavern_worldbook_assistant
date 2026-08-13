@@ -496,8 +496,8 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           __VUE_OPTIONS_API__: false,
           __VUE_PROD_DEVTOOLS__: process.env.CI !== 'true',
           __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
-          __WB_ASSISTANT_BUILD_COMMIT__: JSON.stringify(read_git_value('git rev-parse --short=12 HEAD', 'unknown')),
-          __WB_ASSISTANT_BUILD_BRANCH__: JSON.stringify(read_git_value('git rev-parse --abbrev-ref HEAD', 'unknown')),
+          __WB_ASSISTANT_BUILD_COMMIT__: JSON.stringify(process.env.WB_BUILD_COMMIT ?? read_git_value('git rev-parse --short=12 HEAD', 'unknown')),
+          __WB_ASSISTANT_BUILD_BRANCH__: JSON.stringify(process.env.WB_BUILD_BRANCH ?? read_git_value('git rev-parse --abbrev-ref HEAD', 'unknown')),
           __WB_ASSISTANT_BUILD_TIME__: JSON.stringify(resolve_worldbook_build_time()),
         }),
       )

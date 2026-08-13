@@ -4,6 +4,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import shutil
+import os
 from pathlib import Path
 
 
@@ -12,9 +13,9 @@ TARGET_BUNDLE = Path('dist/worldbook_assistant_build/index.js')
 ALLOWED_DIST_PATHS = {TARGET_BUNDLE.as_posix()}
 
 
-def run(command: list[str]) -> None:
+def run(command: list[str], *, env: dict[str, str] | None = None) -> None:
     print(f"\n$ {' '.join(command)}", flush=True)
-    subprocess.run(command, cwd=ROOT, check=True)
+    subprocess.run(command, cwd=ROOT, check=True, env=env)
 
 
 def changed_dist_paths() -> list[str]:
@@ -31,6 +32,15 @@ def changed_dist_paths() -> list[str]:
 def main() -> None:
     require_clean_bundle = '--check-bundle-clean' in sys.argv[1:]
     pnpm = ['corepack', 'pnpm'] if shutil.which('corepack') else ['pnpm']
+    build_env = os.environ.copy()
+    if require_clean_bundle:
+        build_env['WB_BUILD_COMMIT'] = subprocess.run(
+            ['git', 'show', '-s', '--format=%h', 'HEAD:dist/worldbook_assistant_build/index.js'],
+            cwd=ROOT,
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout.strip()
     checks = [
         'scripts/check-worldbook-build-hygiene.py',
         'scripts/check-worldbook-quality-gates.py',
@@ -53,7 +63,7 @@ def main() -> None:
     run([*pnpm, 'test:worldbook-domain'])
     run([*pnpm, 'test:worldbook-components'])
     run([*pnpm, 'test:worldbook-composables'])
-    run([*pnpm, 'build:worldbook'])
+    run([*pnpm, 'build:worldbook'], env=build_env)
     run([*pnpm, 'test:worldbook-e2e'])
 
     maps = sorted((ROOT / 'dist').rglob('*.map'))
