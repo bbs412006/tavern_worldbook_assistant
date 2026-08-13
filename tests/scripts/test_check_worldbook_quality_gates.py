@@ -23,6 +23,7 @@ class WorldbookQualityGateGuardTest(unittest.TestCase):
             'package pins pnpm 10.12.4',
             'worldbook typecheck uses vue-tsc',
             'worldbook typecheck includes App.vue',
+            'worldbook generated type declarations are tracked inputs',
             'package exposes test:worldbook-e2e',
             'package exposes CI bundle consistency verification',
             'verification runner executes lint',

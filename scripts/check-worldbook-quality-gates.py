@@ -17,6 +17,7 @@ def collect_checks(root: Path) -> dict[str, bool]:
     webpack = (root / 'webpack.config.ts').read_text(encoding='utf-8')
     e2e_config = e2e_config_path.read_text(encoding='utf-8') if e2e_config_path.is_file() else ''
     typecheck = typecheck_path.read_text(encoding='utf-8') if typecheck_path.is_file() else ''
+    gitignore = (root / '.gitignore').read_text(encoding='utf-8')
 
     return {
         'package exposes lint:worldbook': 'lint:worldbook' in scripts,
@@ -24,6 +25,12 @@ def collect_checks(root: Path) -> dict[str, bool]:
         'package pins pnpm 10.12.4': package.get('packageManager') == 'pnpm@10.12.4',
         'worldbook typecheck uses vue-tsc': scripts.get('typecheck:worldbook', '').startswith('vue-tsc '),
         'worldbook typecheck includes App.vue': 'src/worldbook_assistant_build/**/*.vue' in typecheck,
+        'worldbook generated type declarations are tracked inputs': (
+            (root / 'auto-imports.d.ts').is_file()
+            and (root / 'components.d.ts').is_file()
+            and 'auto-imports.d.ts' not in gitignore
+            and 'components.d.ts' not in gitignore
+        ),
         'package exposes test:worldbook-e2e': 'test:worldbook-e2e' in scripts,
         'package exposes CI bundle consistency verification': 'verify:worldbook:ci' in scripts,
         'verification runner executes lint': 'lint:worldbook' in verifier,
