@@ -35,7 +35,7 @@ def main() -> None:
     build_env = os.environ.copy()
     if require_clean_bundle:
         build_env['WB_BUILD_COMMIT'] = subprocess.run(
-            ['git', 'show', '-s', '--format=%h', 'HEAD:dist/worldbook_assistant_build/index.js'],
+            ['git', 'log', '-1', '--format=%h', '--', TARGET_BUNDLE.as_posix()],
             cwd=ROOT,
             check=True,
             text=True,
