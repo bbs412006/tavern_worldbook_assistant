@@ -25,6 +25,7 @@ class WorldbookQualityGateGuardTest(unittest.TestCase):
             'verification runner executes lint',
             'verification runner executes typecheck',
             'verification runner executes host e2e',
+            'verification runner supports pnpm without corepack',
             'worldbook typecheck config exists',
             'worldbook host e2e config exists',
             'worldbook CI workflow exists',
