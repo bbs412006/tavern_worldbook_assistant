@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import shutil
 from pathlib import Path
 
 
@@ -29,6 +30,7 @@ def changed_dist_paths() -> list[str]:
 
 def main() -> None:
     require_clean_bundle = '--check-bundle-clean' in sys.argv[1:]
+    pnpm = ['corepack', 'pnpm'] if shutil.which('corepack') else ['pnpm']
     checks = [
         'scripts/check-worldbook-build-hygiene.py',
         'scripts/check-worldbook-quality-gates.py',
@@ -46,13 +48,13 @@ def main() -> None:
 
     run(['python3', '-m', 'unittest', 'tests/scripts/test_check_worldbook_unified_controls.py'])
     run(['python3', '-m', 'unittest', 'tests/scripts/test_check_worldbook_quality_gates.py'])
-    run(['corepack', 'pnpm', 'lint:worldbook'])
-    run(['corepack', 'pnpm', 'typecheck:worldbook'])
-    run(['corepack', 'pnpm', 'test:worldbook-domain'])
-    run(['corepack', 'pnpm', 'test:worldbook-components'])
-    run(['corepack', 'pnpm', 'test:worldbook-composables'])
-    run(['corepack', 'pnpm', 'build:worldbook'])
-    run(['corepack', 'pnpm', 'test:worldbook-e2e'])
+    run([*pnpm, 'lint:worldbook'])
+    run([*pnpm, 'typecheck:worldbook'])
+    run([*pnpm, 'test:worldbook-domain'])
+    run([*pnpm, 'test:worldbook-components'])
+    run([*pnpm, 'test:worldbook-composables'])
+    run([*pnpm, 'build:worldbook'])
+    run([*pnpm, 'test:worldbook-e2e'])
 
     maps = sorted((ROOT / 'dist').rglob('*.map'))
     for source_map in maps:
