@@ -1,12 +1,12 @@
-import { computed, ref, type ComputedRef } from 'vue';
+import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { clampNumber } from '../domain/persistedState';
 import type { CrossCopyMobileStep } from '../domain/types';
 
 export function useCrossCopyMobileSteps(options: {
   hasCompared: ComputedRef<boolean>;
   rowCount: ComputedRef<number>;
-  compareLoading: ComputedRef<boolean>;
-  canApply: ComputedRef<boolean>;
+  compareLoading: Ref<boolean> | ComputedRef<boolean>;
+  canApply: Ref<boolean> | ComputedRef<boolean>;
   notifyBlocked: () => void;
 }) {
   const step = ref<CrossCopyMobileStep>(1);

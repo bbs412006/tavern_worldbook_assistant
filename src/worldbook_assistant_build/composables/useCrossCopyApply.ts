@@ -21,7 +21,7 @@ export function useCrossCopyApply(options: {
   updateWorldbookWith: (
     name: string,
     updater: (entries: WorldbookEntry[]) => WorldbookEntry[],
-    options?: { render?: 'immediate' | 'silent' },
+    options?: { render?: 'immediate' | 'debounced' },
   ) => Promise<WorldbookEntry[]>;
   saveCurrentWorldbook: () => Promise<void>;
   pushSnapshot: (worldbookName: string, entries: WorldbookEntry[], label: string) => void;

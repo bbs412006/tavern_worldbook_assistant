@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    variant?: 'default' | 'primary' | 'danger' | 'ghost';
+    variant?: 'default' | 'primary' | 'secondary' | 'danger' | 'ghost';
     size?: 'sm' | 'md' | 'lg';
     loading?: boolean;
     disabled?: boolean;

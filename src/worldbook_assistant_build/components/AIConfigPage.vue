@@ -4,7 +4,7 @@
       <BaseButton
         v-if="stage !== 'generating'"
         class="utility-page-back"
-        @click="$emit(stage === 'preview' ? 'back-to-input' : 'back')"
+        @click="emitBack"
       >
         ← 返回
       </BaseButton>
@@ -154,7 +154,7 @@ function getConfigChangeKey(change: { name: string; field: string }): string {
   return `${change.name}\u0000${change.field}`;
 }
 
-defineEmits<{
+const emit = defineEmits<{
   back: [];
   'back-to-input': [];
   'update:targetWorldbook': [value: string];
@@ -164,6 +164,14 @@ defineEmits<{
   generate: [];
   apply: [];
 }>();
+
+function emitBack(): void {
+  if (stage.value === 'preview') {
+    emit('back-to-input');
+  } else {
+    emit('back');
+  }
+}
 </script>
 
 <style scoped>

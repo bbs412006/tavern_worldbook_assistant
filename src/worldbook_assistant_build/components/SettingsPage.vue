@@ -69,7 +69,7 @@
               aria-labelledby="settings-theme-label"
               :model-value="currentTheme"
               :options="themeSelectOptions"
-              @update:model-value="$emit('set-theme', String($event))"
+              @update:model-value="$emit('set-theme', String($event) as ThemeKey)"
             />
           </label>
           <BaseSwitch
@@ -220,6 +220,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { ThemeKey } from '../domain/uiConstants';
 
 import BaseButton from './controls/BaseButton.vue';
 import BaseInput from './controls/BaseInput.vue';
@@ -241,8 +242,8 @@ const props = defineProps<{
   persistedState: any;
   fabVisible: boolean;
   floorBtnVisible: boolean;
-  currentTheme: string;
-  themeOptions: Array<{ key: string; label: string }>;
+  currentTheme: ThemeKey;
+  themeOptions: Array<{ key: ThemeKey; label: string }>;
   apiModelList: string[];
   apiModelLoading: boolean;
   versionInfo: VersionInfo;
@@ -256,7 +257,7 @@ const emit = defineEmits<{
   'toggle-floor-btns': [value: boolean];
   'update-persisted-state': [updater: (state: any) => void];
   'set-tag-delete-parent-mode': [value: string];
-  'set-theme': [value: string];
+  'set-theme': [value: ThemeKey];
   'update-api-config': [patch: Record<string, unknown>];
   'load-model-list': [];
   'check-latest-version': [];

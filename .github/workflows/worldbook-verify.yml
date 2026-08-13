@@ -22,12 +22,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - name: Verify worldbook quality gates and tracked bundle
-        env:
-          WB_BUILD_COMMIT: abc2efb40667
-          WB_BUILD_TIME: 2026-08-13T03:36:30.000Z
-          WB_BUILD_BRANCH: ST-Manager-STscript
-        run: pnpm verify:worldbook:ci
+      - run: pnpm verify:worldbook:ci
       - name: Ensure verification leaves the repository clean
         run: |
           git status --short

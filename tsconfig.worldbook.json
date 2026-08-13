@@ -3,7 +3,9 @@
   "compilerOptions": {
     "skipLibCheck": true,
     "types": ["jquery", "jqueryui", "lodash", "toastr", "type-fest"],
-    "noEmit": true
+    "noEmit": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
   "include": [
     "src/worldbook_assistant_build/**/*.ts",
@@ -14,6 +16,7 @@
     "auto-imports.d.ts",
     "components.d.ts",
     "@types/function/worldbook.d.ts",
+    "@types/function/character.d.ts",
     "@types/function/variables.d.ts",
     "@types/function/script.d.ts",
     "@types/function/generate.d.ts",

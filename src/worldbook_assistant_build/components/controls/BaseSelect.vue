@@ -112,10 +112,10 @@ const searchAttrs = computed(() => {
   return {
     'aria-labelledby': labelledby ? `${labelledby} ${searchLabelId}` : undefined,
     'aria-label': labelledby ? (label || undefined) : `${label ? `${label} ` : ''}搜索选项`,
-    'aria-describedby': attrs['aria-describedby'],
-    'aria-description': attrs['aria-description'],
-    'aria-details': attrs['aria-details'],
-    title: attrs.title,
+    'aria-describedby': typeof attrs['aria-describedby'] === 'string' ? attrs['aria-describedby'] : undefined,
+    'aria-description': typeof attrs['aria-description'] === 'string' ? attrs['aria-description'] : undefined,
+    'aria-details': typeof attrs['aria-details'] === 'string' ? attrs['aria-details'] : undefined,
+    title: typeof attrs.title === 'string' ? attrs.title : undefined,
   };
 });
 const menuStyle = computed(() => ({

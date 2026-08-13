@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const browserExecutablePath = process.env.WORLD_BOOK_PLAYWRIGHT_EXECUTABLE_PATH;
+
 export default defineConfig({
   testDir: './tests/worldbook_assistant_build/e2e',
   testMatch: '**/*.spec.ts',
@@ -11,9 +13,7 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4188',
     browserName: 'chromium',
     headless: true,
-    launchOptions: {
-      executablePath: '/opt/hermes/.playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell',
-    },
+    launchOptions: browserExecutablePath ? { executablePath: browserExecutablePath } : undefined,
   },
   webServer: {
     command: 'python3 -m http.server 4188 --bind 127.0.0.1',

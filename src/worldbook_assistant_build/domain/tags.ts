@@ -26,7 +26,7 @@ export function isTagDescendantOf(
 
 export function collectTagSubtreeIds(
   rootId: string,
-  tagChildrenMap: Map<string, WorldbookTagDefinition[]>,
+  tagChildrenMap: Map<string | null, WorldbookTagDefinition[]>,
 ): string[] {
   const ids: string[] = [];
   const queue: string[] = [rootId];

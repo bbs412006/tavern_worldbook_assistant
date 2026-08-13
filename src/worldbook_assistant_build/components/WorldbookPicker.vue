@@ -122,7 +122,8 @@ const tagFilterSearchText = ref('');
 const expandedTagIds = ref<string[]>([]);
 
 interface TagRow { id: string; name: string; path: string; depth: number; hasChildren: boolean; color: string }
-const definitions = computed(() => props.tagDefinitions.map((definition: any, index) => ({
+interface TagDefinitionView { id: string; name: string; parentId: string | null; sort: number; color: string }
+const definitions = computed<TagDefinitionView[]>(() => props.tagDefinitions.map((definition: any, index) => ({
   id: String(definition.id),
   name: String(definition.name ?? definition.id),
   parentId: definition.parent_id ? String(definition.parent_id) : null,
@@ -149,7 +150,7 @@ function pathFor(tagId: string): string {
   let cursor: string | null = tagId;
   while (cursor && definitionMap.value.has(cursor) && !seen.has(cursor)) {
     seen.add(cursor);
-    const definition = definitionMap.value.get(cursor)!;
+    const definition: TagDefinitionView = definitionMap.value.get(cursor)!;
     names.unshift(definition.name);
     cursor = definition.parentId;
   }

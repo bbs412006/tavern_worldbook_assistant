@@ -323,9 +323,9 @@
                     <BaseCheckbox
                       v-if="mobileMultiSelectMode"
                       class="mobile-multi-checkbox"
-                      :checked="selectedEntryUidSet.has(entry.uid)"
+                      :model-value="selectedEntryUidSet.has(entry.uid)"
                       @click.stop
-                      @change="toggleMobileEntrySelection(entry.uid)"
+                      @update:model-value="toggleMobileEntrySelection(entry.uid)"
                     />
                     <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
                     <div class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</div>
@@ -2014,8 +2014,8 @@
           <BaseTextarea
             class="text-input"
             rows="2"
-            :value="persistedState.extract_ignore_tags.join(', ')"
-            @change="updateIgnoreTags(($event.target as HTMLTextAreaElement).value)"
+            :model-value="persistedState.extract_ignore_tags.join(', ')"
+            @update:model-value="updateIgnoreTags($event)"
             style="width:100%;font-size:12px;"
           ></BaseTextarea>
           <BaseButton class="btn" type="button" style="margin-top:4px;font-size:11px;" @click="resetIgnoreTags">🔄 恢复默认</BaseButton>
@@ -2571,7 +2571,7 @@
                   <span>{{ getFindFieldLabel(activeFindHit.field) }} · {{ activeFindHit.preview }}</span>
                 </div>
                 <div class="batch-exclude-note">
-                  示例: `#12, name:世界观, content:{{user}}, keys:吸血鬼`（默认命中名称/内容/关键词即排除）
+                  示例: <span v-pre>`#12, name:世界观, content:{{user}}, keys:吸血鬼`</span>（默认命中名称/内容/关键词即排除）
                 </div>
                 <div v-if="batchExcludeTokensPreview.length" class="batch-exclude-chips">
                   <span v-for="token in batchExcludeTokensPreview" :key="token" class="exclude-chip">{{ token }}</span>
@@ -2807,6 +2807,7 @@ import type {
 } from './domain/types';
 import {
   createDefaultPersistedState,
+  createDefaultTagFilterState,
   normalizePersistedState,
   normalizeLayoutState,
   normalizeTagFilterState,
@@ -2840,6 +2841,9 @@ import {
   generateCrossCopyUniqueName,
   getCrossCopyRowDiffSummary,
   getCrossCopyActionLabel,
+  getCrossCopyEntryProfile,
+  getCrossCopyPreviewText,
+  getCrossCopyStatusBadgeClass,
   getCrossCopyStatusLabel,
   normalizeCrossCopyContentKey,
   normalizeCrossCopyNameKey,
@@ -3569,6 +3573,8 @@ interface TagTreeRow {
   hasChildren: boolean;
   parentId: string | null;
   color: string;
+  parent_id: string | null;
+  sort: number;
 }
 
 const tagDefinitionMap = computed(() => {
@@ -3608,7 +3614,7 @@ function getTagPathLabel(tagId: string): string {
   let cursor: string | null = tagId;
   while (cursor && map.has(cursor) && !seen.has(cursor)) {
     seen.add(cursor);
-    const current = map.get(cursor)!;
+    const current: WorldbookTagDefinition = map.get(cursor)!;
     names.push(current.name);
     cursor = current.parent_id && map.has(current.parent_id) ? current.parent_id : null;
   }
@@ -3678,6 +3684,8 @@ const tagTreeRows = computed<TagTreeRow[]>(() => {
         hasChildren: (tagChildrenMap.value.get(child.id) ?? []).length > 0,
         parentId: child.parent_id,
         color: child.color,
+        parent_id: child.parent_id,
+        sort: child.sort,
       };
       const hit = !keyword || row.name.toLowerCase().includes(keyword) || row.path.toLowerCase().includes(keyword);
       if (hit) {
@@ -3706,6 +3714,8 @@ const tagManagementRows = computed<TagTreeRow[]>(() => {
         hasChildren: (tagChildrenMap.value.get(child.id) ?? []).length > 0,
         parentId: child.parent_id,
         color: child.color,
+        parent_id: child.parent_id,
+        sort: child.sort,
       });
       walk(child.id, depth + 1);
     }
@@ -5180,7 +5190,7 @@ function setEntryPositionSelectValue(entry: WorldbookEntry, value: string | numb
   const option = positionSelectOptions.find(item => item.value === value);
   if (!option) return;
   entry.position.type = option.type;
-  if (option.role) entry.position.role = option.role;
+  if ('role' in option) entry.position.role = option.role;
 }
 
 function getEntryVisualStatus(entry: WorldbookEntry): EntryVisualStatus {
@@ -5428,7 +5438,7 @@ function normalizeEntry(rawInput: unknown, fallbackUid: number): WorldbookEntry 
     ...base,
     uid,
     name,
-    enabled: raw.enabled === undefined ? raw.disable !== true : raw.enabled,
+    enabled: raw.enabled === undefined ? raw.disable !== true : Boolean(raw.enabled),
     strategy: {
       type: strategyType,
       keys,
@@ -5547,7 +5557,8 @@ function switchToEditorForEntry(uid: number): void {
   selectEntry(uid);
 }
 
-function switchPanelMode(mode: 'browse' | 'editor'): void {
+function switchPanelMode(mode: 'browse' | 'editor' | string): void {
+  if (mode !== 'browse' && mode !== 'editor') return;
   panelMode.value = mode;
   updatePersistedState(s => { s.panel_mode = mode; });
 }
@@ -6820,8 +6831,7 @@ function getEntryPairDiffSummary(
   if (
     left.effect.sticky !== right.effect.sticky ||
     left.effect.cooldown !== right.effect.cooldown ||
-    left.effect.delay !== right.effect.delay ||
-    left.effect.delay_until !== right.effect.delay_until
+    left.effect.delay !== right.effect.delay
   ) {
     diff.push('效果设置不同');
   }
@@ -9597,10 +9607,12 @@ function toggleTheme(): void {
   setStatus(`已切换主题: ${THEMES[currentTheme.value].name}`);
 }
 
-function setTheme(key: ThemeKey): void {
-  currentTheme.value = key;
+function setTheme(key: ThemeKey | string): void {
+  if (!(key in THEMES)) return;
+  const themeKey = key as ThemeKey;
+  currentTheme.value = themeKey;
   themePickerOpen.value = false;
-  setStatus(`已切换主题: ${THEMES[key].label}`);
+  setStatus(`已切换主题: ${THEMES[themeKey].label}`);
 }
 
 function onSetThemeEvent(event: Event): void {

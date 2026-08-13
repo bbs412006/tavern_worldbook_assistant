@@ -33,12 +33,15 @@ def changed_dist_paths() -> list[str]:
 
 def normalized_bundle(path: Path) -> str:
     content = path.read_text(encoding='utf-8')
-    content = re.sub(r"\}\}\}\('[^']+','[^']+'\),", "}}}('[BUILD_COMMIT]','[BUILD_TIME]'),", content, count=1)
+    metadata = re.search(r"\}\}\}\('([^']+)','([^']+)'\),", content)
+    if metadata:
+        commit, build_time = metadata.groups()
+        content = content.replace(commit, '[BUILD_COMMIT]')
+        content = content.replace(build_time, '[BUILD_TIME]')
     content = re.sub(
         r"!0===globalThis\.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__\|\|'[^']*'\.includes\('debug'\)",
         "!0===globalThis.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__||'[BUILD_BRANCH]'.includes('debug')",
         content,
-        count=1,
     )
     return content
 

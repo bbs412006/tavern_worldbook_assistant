@@ -20,6 +20,9 @@ class WorldbookQualityGateGuardTest(unittest.TestCase):
         required = {
             'package exposes lint:worldbook',
             'package exposes typecheck:worldbook',
+            'package pins pnpm 10.12.4',
+            'worldbook typecheck uses vue-tsc',
+            'worldbook typecheck includes App.vue',
             'package exposes test:worldbook-e2e',
             'package exposes CI bundle consistency verification',
             'verification runner executes lint',
@@ -28,10 +31,11 @@ class WorldbookQualityGateGuardTest(unittest.TestCase):
             'verification runner supports pnpm without corepack',
             'worldbook typecheck config exists',
             'worldbook host e2e config exists',
+            'worldbook host e2e has no machine-specific browser path',
             'worldbook CI workflow exists',
             'CI runs canonical worldbook verification',
             'CI installs Chromium for host E2E',
-            'CI supplies tracked bundle metadata',
+            'bundle verifier normalizes every embedded build metadata occurrence',
             'worldbook build time is reproducible',
             'worldbook runtime externals are version pinned',
         }

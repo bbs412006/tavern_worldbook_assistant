@@ -46,6 +46,28 @@ export function getCrossCopyActionLabel(action: CrossCopyAction): string {
   return CROSS_COPY_ACTION_LABELS[action];
 }
 
+export function getCrossCopyStatusBadgeClass(status: CrossCopyRowStatus): string {
+  return {
+    new: 'new',
+    same_name_changed: 'changed',
+    duplicate_exact: 'duplicate',
+    content_duplicate_other_name: 'content-duplicate',
+    invalid_same_source_target: 'invalid',
+  }[status];
+}
+
+export function getCrossCopyEntryProfile(entry: WorldbookEntry): string {
+  const position = entry.position.type === 'at_depth'
+    ? `${entry.position.type}/${entry.position.role ?? 'system'}`
+    : entry.position.type;
+  return `${entry.enabled ? '启用' : '禁用'} · ${entry.strategy.type} · ${position}`;
+}
+
+export function getCrossCopyPreviewText(content: unknown, limit = 160): string {
+  const normalized = String(content ?? '').replace(/\s+/g, ' ').trim();
+  return normalized ? normalized.slice(0, Math.max(0, limit)) : '(空内容)';
+}
+
 function stringifyKeyword(value: unknown): string {
   return value instanceof RegExp ? value.toString() : String(value ?? '');
 }

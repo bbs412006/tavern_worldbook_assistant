@@ -2,7 +2,7 @@
   <aside class="cross-copy-left">
     <div class="cross-copy-list-head"><strong>来源条目</strong><span>{{ totalCount }} 条</span></div>
     <div class="cross-copy-list-tools">
-      <BaseInput :model-value="searchText" class="text-input" placeholder="搜索来源名称 / 内容" @update:model-value="$emit('update:search-text', $event)" />
+      <BaseInput :model-value="searchText" class="text-input" placeholder="搜索来源名称 / 内容" @update:model-value="$emit('update:search-text', String($event ?? ''))" />
       <div class="cross-copy-mini-actions">
         <BaseButton class="btn mini" size="sm" :disabled="!rows.length" @click="$emit('select-filtered', true)">全选显示</BaseButton>
         <BaseButton class="btn mini" size="sm" :disabled="!totalCount" @click="$emit('select-all', false)">全不选</BaseButton>
@@ -19,10 +19,11 @@
   </aside>
 </template>
 <script setup lang="ts">
+import type { CrossCopyRowStatus } from '../domain/types';
 import BaseButton from './controls/BaseButton.vue';
 import BaseCheckbox from './controls/BaseCheckbox.vue';
 import BaseInput from './controls/BaseInput.vue';
-type CrossCopySourceRow = { id: string; selected: boolean; status: string; source_entry: { uid: number; name: string } };
-defineProps<{ rows: CrossCopySourceRow[]; totalCount: number; searchText: string; applyLoading: boolean; idPrefix: string; mobile?: boolean; statusBadgeClass: (status: string) => string }>();
+type CrossCopySourceRow = { id: string; selected: boolean; status: CrossCopyRowStatus; source_entry: { uid: number; name: string } };
+defineProps<{ rows: CrossCopySourceRow[]; totalCount: number; searchText: string; applyLoading: boolean; idPrefix: string; mobile?: boolean; statusBadgeClass: (status: CrossCopyRowStatus) => string }>();
 defineEmits<{ 'update:search-text': [value: string]; 'select-filtered': [selected: boolean]; 'select-all': [selected: boolean]; 'set-selected': [id: string, selected: boolean] }>();
 </script>
