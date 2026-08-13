@@ -38,6 +38,7 @@ class WorldbookQualityGateGuardTest(unittest.TestCase):
             'worldbook CI workflow exists',
             'CI runs canonical worldbook verification',
             'CI installs Chromium for host E2E',
+            'CI reports repository cleanliness diffs',
             'bundle verifier normalizes every embedded build metadata occurrence',
             'worldbook build time is reproducible',
             'worldbook runtime externals are version pinned',

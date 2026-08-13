@@ -25,6 +25,11 @@ jobs:
       - run: pnpm verify:worldbook:ci
       - name: Ensure verification leaves the repository clean
         run: |
-          git status --short
           git diff --check
-          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          status="$(git status --porcelain=v1 --untracked-files=all)"
+          if [ -n "$status" ]; then
+            printf '%s\n' "$status"
+            git diff --stat
+            git diff -- auto-imports.d.ts components.d.ts dist/worldbook_assistant_build/index.js
+            exit 1
+          fi
