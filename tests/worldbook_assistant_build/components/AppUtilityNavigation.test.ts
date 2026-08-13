@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../../src/worldbook_assistant_build/App.vue';
 import BaseSelect from '../../../src/worldbook_assistant_build/components/controls/BaseSelect.vue';
 import { normalizeEntry } from '../../../src/worldbook_assistant_build/domain/persistedState';
+import { STORAGE_KEY } from '../../../src/worldbook_assistant_build/domain/uiConstants';
 
 const SettingsPageStub = defineComponent({
   name: 'SettingsPage',
@@ -294,6 +295,16 @@ describe('App utility navigation', () => {
   });
 
   it('preserves representative toolbar mappings and AI target across utility round trips', async () => {
+    const globals = globalThis as Record<string, any>;
+    globals.getWorldbook = vi.fn(async (name: string) => name === '世界书 A'
+      ? [normalizeEntry({
+          uid: 4,
+          comment: 'Entry',
+          content: 'Draft',
+          strategy: { type: 'selective', keys: [], keys_secondary: { logic: 'not_any', keys: [] } },
+          position: { type: 'at_depth', role: 'assistant', depth: 4, order: 100 },
+        }, 4)]
+      : []);
     const wrapper = mountApp();
     const vm = wrapper.vm as unknown as {
       selectedWorldbookName: string;
@@ -305,7 +316,6 @@ describe('App utility navigation', () => {
       selectedEntryUids: number[];
       selectedPositionSelectValue: string;
     };
-    vm.selectedWorldbookName = '世界书 A';
     vm.aiTargetWorldbook = '世界书 B';
     vm.selectedGlobalPresetId = '';
     vm.panelMode = 'editor';
@@ -318,7 +328,10 @@ describe('App utility navigation', () => {
     }, 4)];
     vm.selectedEntryUid = 4;
     vm.selectedEntryUids = [4];
-    await nextTick();
+    vm.selectedWorldbookName = '世界书 A';
+    await vi.waitFor(() => {
+      expect(vm.selectedPositionSelectValue).toBe('at_depth_as_assistant');
+    });
 
     expect(vm.selectedPositionSelectValue).toBe('at_depth_as_assistant');
     await openUtility(wrapper, 'settings');
@@ -798,6 +811,92 @@ describe('App utility navigation', () => {
     await nextTick();
     expect(wrapper.findAll('.mobile-entry-list .entry-item')).toHaveLength(18);
     expect(wrapper.get('.mobile-entry-list .entry-item').text()).toContain('世界书 B');
+    wrapper.unmount();
+  });
+
+  it('fetches the initial worldbook once after restoring the persisted selection', async () => {
+    const globals = globalThis as Record<string, any>;
+    const entries = [normalizeEntry({ uid: 1, name: '首开条目', content: '正文' }, 1)];
+    globals.getVariables = vi.fn(() => ({
+      [STORAGE_KEY]: {
+        last_worldbook: '首开世界书',
+      },
+    }));
+    globals.getWorldbookNames = vi.fn(() => ['首开世界书']);
+    globals.getWorldbook = vi.fn(async () => entries);
+
+    const wrapper = mountApp();
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('首开条目');
+    });
+
+    expect(globals.getWorldbook).toHaveBeenCalledTimes(1);
+    expect(globals.getWorldbook).toHaveBeenCalledWith('首开世界书');
+    wrapper.unmount();
+  });
+
+  it('coalesces overlapping loads for the same selected worldbook into one host read', async () => {
+    const globals = globalThis as Record<string, any>;
+    let resolveEntries: (entries: any[]) => void = () => {};
+    globals.getWorldbookNames = vi.fn(() => ['并发世界书']);
+    globals.getWorldbook = vi.fn(() => new Promise<any[]>(resolve => {
+      resolveEntries = resolve;
+    }));
+
+    const wrapper = mountApp();
+    await nextTick();
+    const vm = wrapper.vm as unknown as {
+      loadWorldbook(name: string): Promise<void>;
+    };
+    const overlapping = vm.loadWorldbook('并发世界书');
+    expect(globals.getWorldbook).toHaveBeenCalledTimes(1);
+
+    resolveEntries([normalizeEntry({ uid: 1, name: '并发条目' }, 1)]);
+    await overlapping;
+    expect(globals.getWorldbook).toHaveBeenCalledTimes(1);
+    wrapper.unmount();
+  });
+
+  it('refreshes the already loaded selected worldbook with a new host read', async () => {
+    const globals = globalThis as Record<string, any>;
+    globals.getWorldbookNames = vi.fn(() => ['刷新世界书']);
+    globals.getWorldbook = vi.fn(async () => [normalizeEntry({ uid: 1, name: '刷新条目' }, 1)]);
+
+    const wrapper = mountApp();
+    await vi.waitFor(() => expect(globals.getWorldbook).toHaveBeenCalledTimes(1));
+    const vm = wrapper.vm as unknown as {
+      hardRefresh(options?: Record<string, unknown>): Promise<void>;
+    };
+
+    await vm.hardRefresh({ source: 'manual', reason: '测试强制刷新' });
+    expect(globals.getWorldbook).toHaveBeenCalledTimes(2);
+    wrapper.unmount();
+  });
+
+  it('does not reuse an obsolete same-name load after switching away and back', async () => {
+    const globals = globalThis as Record<string, any>;
+    const pending = new Map<string, Array<(entries: any[]) => void>>();
+    globals.getWorldbookNames = vi.fn(() => ['世界书 A', '世界书 B']);
+    globals.getWorldbook = vi.fn((name: string) => new Promise<any[]>(resolve => {
+      const queue = pending.get(name) ?? [];
+      queue.push(resolve);
+      pending.set(name, queue);
+    }));
+
+    const wrapper = mountApp();
+    await nextTick();
+    const vm = wrapper.vm as unknown as {
+      switchWorldbookSelection(name: string, options?: Record<string, unknown>): boolean;
+    };
+    vm.switchWorldbookSelection('世界书 B', { source: 'manual', allowDirty: true });
+    await nextTick();
+    vm.switchWorldbookSelection('世界书 A', { source: 'manual', allowDirty: true });
+    await nextTick();
+
+    expect(globals.getWorldbook.mock.calls.map((call: any[]) => call[0])).toEqual(['世界书 A', '世界书 B', '世界书 A']);
+    pending.get('世界书 A')?.forEach(resolve => resolve([normalizeEntry({ uid: 1, name: 'A' }, 1)]));
+    pending.get('世界书 B')?.forEach(resolve => resolve([normalizeEntry({ uid: 1, name: 'B' }, 1)]));
+    await vi.waitFor(() => expect(wrapper.text()).toContain('A'));
     wrapper.unmount();
   });
 

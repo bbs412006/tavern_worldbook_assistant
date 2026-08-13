@@ -3111,6 +3111,7 @@ let secondaryKeysDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let entriesDigestTimer: ReturnType<typeof setTimeout> | null = null;
 let worldbookLoadRequestId = 0;
 let pendingWorldbookLoadCount = 0;
+let activeWorldbookLoad: { name: string; promise: Promise<void> } | null = null;
 const globalAddSearchText = ref('');
 const globalFilterText = ref('');
 const roleBindSearchText = ref('');
@@ -9644,10 +9645,25 @@ function onHostKeyDownForOpenMenus(event: KeyboardEvent): void {
   }
 }
 
-async function loadWorldbook(name: string): Promise<void> {
+function loadWorldbook(name: string): Promise<void> {
   if (!name) {
-    return;
+    return Promise.resolve();
   }
+  if (activeWorldbookLoad?.name === name && selectedWorldbookName.value === name) {
+    return activeWorldbookLoad.promise;
+  }
+  const promise = loadWorldbookUncoalesced(name);
+  activeWorldbookLoad = { name, promise };
+  const clearActiveLoad = () => {
+    if (activeWorldbookLoad?.promise === promise) {
+      activeWorldbookLoad = null;
+    }
+  };
+  void promise.then(clearActiveLoad, clearActiveLoad);
+  return promise;
+}
+
+async function loadWorldbookUncoalesced(name: string): Promise<void> {
   const requestId = ++worldbookLoadRequestId;
   pendingWorldbookLoadCount += 1;
   isBusy.value = true;
@@ -9751,7 +9767,8 @@ async function hardRefresh(options: HardRefreshOptions = {}): Promise<void> {
   if (!reloaded) {
     return;
   }
-  // Always re-fetch current worldbook data so external changes are synced
+  // The selection watcher and this refresh can request the same worldbook in one turn.
+  // loadWorldbook coalesces those calls into one host read while this await preserves refresh ordering.
   if (selectedWorldbookName.value) {
     await loadWorldbook(selectedWorldbookName.value);
     // Sync raw keyword refs after reload
@@ -10352,6 +10369,7 @@ function onPanelDiscard(): void {
 }
 
 let _mobileResizeHandler: (() => void) | null = null;
+let _mobileHeightSyncTimer: ReturnType<typeof setTimeout> | null = null;
 
 onMounted(() => {
   performanceDiagnostics.incrementMount('main');
@@ -10375,11 +10393,22 @@ onMounted(() => {
     // Initial + delayed (wait for layout)
     syncHeight();
     requestAnimationFrame(syncHeight);
-    setTimeout(syncHeight, 300);
+    _mobileHeightSyncTimer = setTimeout(() => {
+      _mobileHeightSyncTimer = null;
+      syncHeight();
+    }, 300);
 
     // Only recalculate on orientation change (screen rotation),
     // NOT on resize (keyboard open/close triggers resize and would compress the panel)
-    _mobileResizeHandler = () => setTimeout(syncHeight, 300);
+    _mobileResizeHandler = () => {
+      if (_mobileHeightSyncTimer) {
+        clearTimeout(_mobileHeightSyncTimer);
+      }
+      _mobileHeightSyncTimer = setTimeout(() => {
+        _mobileHeightSyncTimer = null;
+        syncHeight();
+      }, 300);
+    };
     hostWin.addEventListener('orientationchange', _mobileResizeHandler);
   }
   persistedState.value = readPersistedState();
@@ -10477,6 +10506,10 @@ onUnmounted(() => {
   if (_mobileResizeHandler) {
     try { (window.parent || window).removeEventListener('orientationchange', _mobileResizeHandler); } catch { /* ignore */ }
     _mobileResizeHandler = null;
+  }
+  if (_mobileHeightSyncTimer) {
+    clearTimeout(_mobileHeightSyncTimer);
+    _mobileHeightSyncTimer = null;
   }
   const target = window as unknown as Record<string, unknown>;
   target[DIRTY_STATE_KEY] = false;

@@ -54,6 +54,17 @@ describe('usePersistedState', () => {
     expect(state.persistedState.value.glass_mode).toBe(false);
   });
 
+  it('returns the in-memory authority after hydration without reading the host again', () => {
+    variables[STORAGE_KEY] = {
+      last_worldbook: '只读取一次',
+    };
+    const state = usePersistedState();
+
+    expect(state.readPersistedState().last_worldbook).toBe('只读取一次');
+    expect(state.readPersistedState().last_worldbook).toBe('只读取一次');
+    expect(globals.getVariables).toHaveBeenCalledTimes(1);
+  });
+
   it('coalesces multiple updates into one host write when a scheduler is supplied', () => {
     const scheduled: Array<() => void> = [];
     const state = usePersistedState(undefined, {

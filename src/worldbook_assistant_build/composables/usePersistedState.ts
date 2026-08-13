@@ -21,8 +21,12 @@ export function usePersistedState(
   let hydrated = false;
 
   function readPersistedState(): PersistedState {
+    if (hydrated) {
+      return persistedState.value;
+    }
     const vars = getVariables({ type: 'script', script_id: getScriptId() });
     const state = normalizePersistedState(vars[STORAGE_KEY]);
+    persistedState.value = state;
     hydrated = true;
     return state;
   }
