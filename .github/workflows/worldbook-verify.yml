@@ -22,7 +22,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm verify:worldbook:ci
+      - name: Verify worldbook quality gates and tracked bundle
+        run: |
+          if ! pnpm verify:worldbook:ci 2>&1 | tee /tmp/worldbook-verify.log; then
+            echo '::group::Worldbook verification tail'
+            tail -n 160 /tmp/worldbook-verify.log
+            echo '::endgroup::'
+            exit 1
+          fi
       - name: Ensure verification leaves the repository clean
         run: |
           git diff --check
