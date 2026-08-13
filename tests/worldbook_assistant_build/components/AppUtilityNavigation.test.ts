@@ -684,6 +684,18 @@ describe('App utility navigation', () => {
     vi.useRealTimers();
   });
 
+  it('uses the extracted large-list search composable instead of declaring debounce and index state inline', () => {
+    const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
+    const composableSource = readFileSync('src/worldbook_assistant_build/composables/useEntrySearch.ts', 'utf8');
+
+    expect(appSource).toContain("from './composables/useEntrySearch'");
+    expect(appSource).toContain('useEntrySearch({');
+    expect(appSource).not.toContain('const SEARCH_DEBOUNCE_MS = 120;');
+    expect(appSource).not.toContain('let searchDebounceTimer:');
+    expect(composableSource).toContain('export function useEntrySearch');
+    expect(composableSource).toContain('const SEARCH_DEBOUNCE_MS = 120;');
+  });
+
   it('renders desktop entries in bounded batches so large worldbooks do not mount every row at once', async () => {
     Object.defineProperty(window.screen, 'width', { configurable: true, value: 1440 });
     Object.defineProperty(window.screen, 'height', { configurable: true, value: 900 });

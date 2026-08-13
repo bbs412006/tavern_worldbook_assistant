@@ -2815,6 +2815,7 @@ import {
 import { getHostWindow } from './host/hostBridge';
 import { useVersionInfo } from './composables/useVersionInfo';
 import { usePersistedState } from './composables/usePersistedState';
+import { useEntrySearch } from './composables/useEntrySearch';
 import { useCrossCopyResize } from './composables/useCrossCopyResize';
 import { useCoalescedFrame } from './composables/useCoalescedFrame';
 import { useWorkspaceActivity } from './composables/useWorkspaceActivity';
@@ -3292,43 +3293,15 @@ const selectedPositionSelectValue = computed<PositionSelectValue>({
 });
 
 const viewSortActive = ref(false);
-const SEARCH_DEBOUNCE_MS = 120;
-const debouncedSearchText = ref('');
-let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-const entrySearchIndex = computed(() => new Map(
-  draftEntries.value.map(entry => [
-    entry.uid,
-    `${entry.name}\n${entry.content}\n${entry.strategy.keys.map(stringifyKeyword).join(' ')}`.toLowerCase(),
-  ]),
-));
-
-watch(searchText, value => {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer);
-  }
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) {
-    debouncedSearchText.value = '';
-    searchDebounceTimer = null;
-    return;
-  }
-  searchDebounceTimer = setTimeout(() => {
-    searchDebounceTimer = null;
-    debouncedSearchText.value = normalized;
-  }, SEARCH_DEBOUNCE_MS);
-}, { immediate: true });
+const { searchedEntries } = useEntrySearch({
+  entries: draftEntries,
+  searchText,
+  onlyEnabled,
+  stringifyKeyword,
+});
 
 const filteredEntries = computed(() => {
-  const keyword = debouncedSearchText.value;
-  const result = draftEntries.value.filter(entry => {
-    if (onlyEnabled.value && !entry.enabled) {
-      return false;
-    }
-    if (!keyword) {
-      return true;
-    }
-    return entrySearchIndex.value.get(entry.uid)?.includes(keyword) ?? false;
-  });
+  const result = searchedEntries.value;
   if (viewSortActive.value) {
     return [...result].sort(compareEntriesByPositionThenOrder);
   }

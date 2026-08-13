@@ -11,8 +11,8 @@ import {
 } from '../../../src/worldbook_assistant_build/domain/version';
 
 describe('version domain', () => {
-  it('reports the P1 engineering baseline release version', () => {
-    expect(APP_VERSION).toBe('2.3.0');
+  it('reports the P2 architecture and WebView optimization release version', () => {
+    expect(APP_VERSION).toBe('2.4.0');
   });
 
   it('normalizes whitespace and a leading v prefix', () => {

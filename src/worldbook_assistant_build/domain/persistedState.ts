@@ -22,13 +22,17 @@ import {
   secondaryLogicOptions,
   positionTypeOptions,
 } from './uiConstants';
+import {
+  normalizePersistedEntryHistory,
+  normalizePersistedWorldbookHistory,
+} from './persistedHistory';
 import type {
   AIApiConfig,
   AIGeneratorState,
   AIChatMessage,
   AIChatSession,
   CrossCopyPersistState,
-  EntrySnapshot,
+
   GlobalWorldbookPreset,
   LayoutState,
   MultiEditPersistState,
@@ -40,7 +44,6 @@ import type {
   StrategyType,
   TagEditorPersistState,
   TagFilterState,
-  WorldbookSnapshot,
   WorldbookTagDefinition,
 } from './types';
 
@@ -666,65 +669,22 @@ export function normalizePersistedState(input: unknown): PersistedState {
     return createDefaultPersistedState();
   }
 
-  const historyRoot = asRecord(root.history) ?? {};
-  const history: Record<string, WorldbookSnapshot[]> = {};
-  for (const [name, rawSnapshots] of Object.entries(historyRoot)) {
-    if (!Array.isArray(rawSnapshots)) {
-      continue;
-    }
-    history[name] = rawSnapshots
-      .map(item => {
-        const record = asRecord(item);
-        if (!record) {
-          return null;
-        }
-        const entriesRaw = Array.isArray(record.entries) ? record.entries : [];
-        return {
-          id: toStringSafe(record.id, createId('snapshot')),
-          label: toStringSafe(record.label, '快照'),
-          ts: toNumberSafe(record.ts, Date.now()),
-          entries: normalizeEntryList(entriesRaw),
-        } satisfies WorldbookSnapshot;
-      })
-      .filter((item): item is WorldbookSnapshot => item !== null)
-      .slice(0, HISTORY_LIMIT);
-  }
-
-  const entryHistoryRoot = asRecord(root.entry_history) ?? {};
-  const entryHistory: Record<string, Record<string, EntrySnapshot[]>> = {};
-  for (const [worldbookName, rawByUid] of Object.entries(entryHistoryRoot)) {
-    const uidRecord = asRecord(rawByUid);
-    if (!uidRecord) {
-      continue;
-    }
-    const normalizedByUid: Record<string, EntrySnapshot[]> = {};
-    for (const [uidKey, rawItems] of Object.entries(uidRecord)) {
-      if (!Array.isArray(rawItems)) {
-        continue;
-      }
-      const uidNumber = Math.max(0, Math.floor(toNumberSafe(uidKey, 0)));
-      normalizedByUid[uidKey] = rawItems
-        .map(item => {
-          const record = asRecord(item);
-          if (!record) {
-            return null;
-          }
-          return {
-            id: toStringSafe(record.id, createId('entry-snapshot')),
-            label: toStringSafe(record.label, '条目快照'),
-            ts: toNumberSafe(record.ts, Date.now()),
-            uid: uidNumber,
-            name: toStringSafe(record.name, `条目 ${uidNumber}`),
-            entry: normalizeEntry(record.entry, uidNumber),
-          } satisfies EntrySnapshot;
-        })
-        .filter((item): item is EntrySnapshot => item !== null)
-        .slice(0, ENTRY_HISTORY_LIMIT);
-    }
-    if (Object.keys(normalizedByUid).length > 0) {
-      entryHistory[worldbookName] = normalizedByUid;
-    }
-  }
+  const history = normalizePersistedWorldbookHistory(root.history, {
+    asRecord,
+    createId,
+    historyLimit: HISTORY_LIMIT,
+    normalizeEntryList,
+    toNumberSafe,
+    toStringSafe,
+  });
+  const entryHistory = normalizePersistedEntryHistory(root.entry_history, {
+    asRecord,
+    createId,
+    entryHistoryLimit: ENTRY_HISTORY_LIMIT,
+    normalizeEntry,
+    toNumberSafe,
+    toStringSafe,
+  });
 
   const globalPresetsRaw = Array.isArray(root.global_presets) ? root.global_presets : [];
   const globalPresets = globalPresetsRaw
@@ -836,6 +796,7 @@ export function normalizePersistedState(input: unknown): PersistedState {
   normalizedTagFilter.selected_ids = normalizedTagFilter.selected_ids.filter(id => tagIdSetFromDefs.has(id));
 
   return {
+    ...klona(root),
     last_worldbook: toStringSafe(root.last_worldbook),
     history,
     entry_history: entryHistory,

@@ -10,6 +10,15 @@ async function openAssistant(page: import('@playwright/test').Page): Promise<voi
   await expect(page.locator('[data-main-workspace]')).toBeVisible();
 }
 
+async function openUtilityPage(
+  page: import('@playwright/test').Page,
+  label: '⚙️ 设置' | '🔧 AI配置',
+  heading: '⚙️ 设置中心' | '🔧 AI 配置世界书',
+): Promise<void> {
+  await page.getByRole('button', { name: label, exact: true }).first().click();
+  await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+}
+
 test('loads the tracked production bundle in a mobile host without overflow', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
   await openAssistant(page);
@@ -55,6 +64,61 @@ test('reopens the retained panel repeatedly without duplicate roots or runtime e
   await expect(page.locator('#wb-assistant-panel .wb-assistant-root')).toHaveCount(1);
   const errors = await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? []);
   expect(errors).toEqual([]);
+});
+
+test('keeps the production workspace and owned resources bounded across 20 utility round trips', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.addInitScript(() => {
+    (globalThis as Record<string, unknown>).__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__ = true;
+  });
+  await openAssistant(page);
+
+  const originalWorkspace = page.locator('[data-main-workspace]');
+  await originalWorkspace.evaluate(element => {
+    (globalThis as Record<string, unknown>).__WB_E2E_WORKSPACE__ = element;
+  });
+
+  for (let cycle = 0; cycle < 20; cycle += 1) {
+    await openUtilityPage(page, '⚙️ 设置', '⚙️ 设置中心');
+    await page.locator('.utility-page-back').click();
+    await expect(originalWorkspace).toBeVisible();
+
+    await openUtilityPage(page, '🔧 AI配置', '🔧 AI 配置世界书');
+    await page.locator('.utility-page-back').click();
+    await expect(originalWorkspace).toBeVisible();
+  }
+
+  const snapshot = await page.evaluate(() => {
+    const target = globalThis as Record<string, any>;
+    const workspace = document.querySelector('[data-main-workspace]');
+    return {
+      sameWorkspace: workspace === target.__WB_E2E_WORKSPACE__,
+      workspaceCount: document.querySelectorAll('[data-main-workspace]').length,
+      utilityPageCount: document.querySelectorAll('.utility-page').length,
+      diagnostics: target.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__?.(),
+      errors: target.__WB_E2E_ERRORS__ ?? [],
+    };
+  });
+
+  expect(snapshot.sameWorkspace).toBe(true);
+  expect(snapshot.workspaceCount).toBe(1);
+  expect(snapshot.utilityPageCount).toBe(0);
+  expect(snapshot.diagnostics).toMatchObject({
+    metrics: {
+      'open-settings': { count: 20 },
+      'open-ai-config': { count: 20 },
+      'return-main': { count: 40 },
+    },
+    mainWorkspaceMounts: 1,
+    utilityPageMounts: { settings: 20, 'ai-config': 20 },
+  });
+  expect(snapshot.diagnostics.resources['navigation-frame']).toBe(0);
+  expect(snapshot.diagnostics.resources['workspace-frame']).toBe(0);
+  expect(snapshot.diagnostics.resources['pane-session']).toBe(0);
+  expect(snapshot.diagnostics.resources['content-session']).toBe(0);
+  expect(snapshot.diagnostics.resources['top-session']).toBe(0);
+  expect(snapshot.diagnostics.resources['floating-session']).toBe(0);
+  expect(snapshot.errors).toEqual([]);
 });
 
 test('keeps the desktop large-list initial DOM bounded', async ({ page }) => {

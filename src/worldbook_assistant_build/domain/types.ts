@@ -285,6 +285,7 @@ export interface LayoutState {
 }
 
 export interface PersistedState {
+  [key: string]: unknown;
   last_worldbook: string;
   history: Record<string, WorldbookSnapshot[]>;
   entry_history: Record<string, Record<string, EntrySnapshot[]>>;

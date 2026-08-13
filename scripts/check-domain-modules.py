@@ -8,6 +8,12 @@ types_path = root / 'src/worldbook_assistant_build/domain/types.ts'
 types = types_path.read_text(encoding='utf-8') if types_path.exists() else ''
 persisted_composable_path = root / 'src/worldbook_assistant_build/composables/usePersistedState.ts'
 persisted_composable = persisted_composable_path.read_text(encoding='utf-8') if persisted_composable_path.exists() else ''
+persisted_state_path = root / 'src/worldbook_assistant_build/domain/persistedState.ts'
+persisted_state = persisted_state_path.read_text(encoding='utf-8') if persisted_state_path.exists() else ''
+persisted_history_path = root / 'src/worldbook_assistant_build/domain/persistedHistory.ts'
+persisted_history = persisted_history_path.read_text(encoding='utf-8') if persisted_history_path.exists() else ''
+entry_search_path = root / 'src/worldbook_assistant_build/composables/useEntrySearch.ts'
+entry_search = entry_search_path.read_text(encoding='utf-8') if entry_search_path.exists() else ''
 ai_config_path = root / 'src/worldbook_assistant_build/domain/aiConfig.ts'
 ai_config = ai_config_path.read_text(encoding='utf-8') if ai_config_path.exists() else ''
 cross_copy_path = root / 'src/worldbook_assistant_build/domain/crossCopy.ts'
@@ -37,9 +43,13 @@ checks = {
     'app no longer declares persisted state inline': 'interface PersistedState' not in app,
     'app no longer declares ai api config inline': 'interface AIApiConfig' not in app,
     'app no longer declares version info inline': 'interface VersionInfo' not in app,
-    'persisted state module exists': (root / 'src/worldbook_assistant_build/domain/persistedState.ts').exists(),
-    'persisted state exports defaults': 'export function createDefaultPersistedState' in ((root / 'src/worldbook_assistant_build/domain/persistedState.ts').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/domain/persistedState.ts').exists() else ''),
-    'persisted state exports normalizer': 'export function normalizePersistedState' in ((root / 'src/worldbook_assistant_build/domain/persistedState.ts').read_text(encoding='utf-8') if (root / 'src/worldbook_assistant_build/domain/persistedState.ts').exists() else ''),
+    'persisted state module exists': persisted_state_path.exists(),
+    'persisted state exports defaults': 'export function createDefaultPersistedState' in persisted_state,
+    'persisted state exports normalizer': 'export function normalizePersistedState' in persisted_state,
+    'persisted history schema module exists': persisted_history_path.exists(),
+    'persisted history schema exports normalizers': 'export function normalizePersistedWorldbookHistory' in persisted_history and 'export function normalizePersistedEntryHistory' in persisted_history,
+    'persisted state delegates history schema': "from './persistedHistory'" in persisted_state and 'normalizePersistedWorldbookHistory(root.history, {' in persisted_state and 'normalizePersistedEntryHistory(root.entry_history, {' in persisted_state,
+    'persisted state no longer implements history schema inline': 'const historyRoot =' not in persisted_state and 'const entryHistoryRoot =' not in persisted_state,
     'app imports persisted state helpers': "from './domain/persistedState'" in app,
     'app imports tag filter normalizer': 'normalizeTagFilterState' in app.split("from './domain/persistedState'", 1)[0],
     'global preset sync has safe default state': 'function syncSelectedGlobalPresetFromState(state: PersistedState = persistedState.value)' in app,
@@ -50,6 +60,10 @@ checks = {
     'persisted state composable owns variable bridge': 'readPersistedState' in persisted_composable and 'writePersistedState' in persisted_composable and 'updatePersistedState' in persisted_composable,
     'app imports persisted state composable': "from './composables/usePersistedState'" in app and 'usePersistedState' in app,
     'app no longer declares persisted state bridge inline': 'function readPersistedState' not in app and 'function writePersistedState' not in app and 'function updatePersistedState' not in app,
+    'entry search composable exists': entry_search_path.exists(),
+    'entry search composable owns debounce and index': 'export function useEntrySearch' in entry_search and 'SEARCH_DEBOUNCE_MS = 120' in entry_search and 'entrySearchIndex' in entry_search,
+    'app imports entry search composable': "from './composables/useEntrySearch'" in app and 'useEntrySearch({' in app,
+    'app no longer declares entry search debounce inline': 'const SEARCH_DEBOUNCE_MS = 120;' not in app and 'let searchDebounceTimer:' not in app and 'const entrySearchIndex = computed' not in app,
     'ai config domain module exists': ai_config_path.exists(),
     'ai config domain exports prompt builder': 'export function buildConfigSystemPrompt' in ai_config,
     'ai config domain exports json extractor': 'export function extractJsonArray' in ai_config,
