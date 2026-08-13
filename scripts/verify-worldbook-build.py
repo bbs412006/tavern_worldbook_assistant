@@ -6,6 +6,7 @@ import sys
 import shutil
 import os
 import re
+import tempfile
 from pathlib import Path
 
 
@@ -81,7 +82,20 @@ def main() -> None:
     run([*pnpm, 'test:worldbook-domain'])
     run([*pnpm, 'test:worldbook-components'])
     run([*pnpm, 'test:worldbook-composables'])
+    tracked_bundle = (ROOT / TARGET_BUNDLE).read_bytes() if require_clean_bundle else None
     run([*pnpm, 'build:worldbook'], env=build_env)
+
+    if require_clean_bundle and tracked_bundle is not None:
+        with tempfile.NamedTemporaryFile(suffix='.js', delete=False) as tracked_file:
+            tracked_file.write(tracked_bundle)
+            tracked_path = Path(tracked_file.name)
+        try:
+            if normalized_bundle(tracked_path) != normalized_bundle(ROOT / TARGET_BUNDLE):
+                raise SystemExit('Tracked worldbook bundle is stale; rebuild and commit dist/worldbook_assistant_build/index.js')
+        finally:
+            tracked_path.unlink(missing_ok=True)
+        (ROOT / TARGET_BUNDLE).write_bytes(tracked_bundle)
+
     run([*pnpm, 'test:worldbook-e2e'])
 
     maps = sorted((ROOT / 'dist').rglob('*.map'))
@@ -92,28 +106,6 @@ def main() -> None:
 
     run(['node', '--check', TARGET_BUNDLE.as_posix()])
 
-    if require_clean_bundle:
-        result = subprocess.run(
-            ['git', 'status', '--porcelain=v1', '--', TARGET_BUNDLE.as_posix()],
-            cwd=ROOT,
-            check=True,
-            text=True,
-            capture_output=True,
-        )
-        if result.stdout.strip():
-            committed_path = ROOT / '.git' / 'worldbook-bundle-committed.js'
-            committed_path.write_bytes(subprocess.run(
-                ['git', 'show', f'HEAD:{TARGET_BUNDLE.as_posix()}'],
-                cwd=ROOT,
-                check=True,
-                capture_output=True,
-            ).stdout)
-            try:
-                if normalized_bundle(committed_path) != normalized_bundle(ROOT / TARGET_BUNDLE):
-                    raise SystemExit('Tracked worldbook bundle is stale; rebuild and commit dist/worldbook_assistant_build/index.js')
-            finally:
-                committed_path.unlink(missing_ok=True)
-            run(['git', 'checkout', '--', TARGET_BUNDLE.as_posix()])
 
     unexpected = sorted(set(changed_dist_paths()) - ALLOWED_DIST_PATHS)
     if unexpected:
