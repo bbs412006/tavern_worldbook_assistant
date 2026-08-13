@@ -46,6 +46,7 @@ def main() -> None:
             raise SystemExit('Unable to read build metadata from the tracked worldbook bundle')
         build_env['WB_BUILD_COMMIT'] = metadata.group(1)
         build_env['WB_BUILD_TIME'] = metadata.group(2)
+        build_env['WB_BUILD_BRANCH'] = 'ST-Manager-STscript'
     checks = [
         'scripts/check-worldbook-build-hygiene.py',
         'scripts/check-worldbook-quality-gates.py',
