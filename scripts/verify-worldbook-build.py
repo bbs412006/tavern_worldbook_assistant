@@ -13,7 +13,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TARGET_BUNDLE = Path('dist/worldbook_assistant_build/index.js')
 ALLOWED_DIST_PATHS = {TARGET_BUNDLE.as_posix()}
-GENERATED_TYPE_DECLARATIONS = (Path('auto-imports.d.ts'), Path('components.d.ts'))
+GENERATED_BUILD_INPUTS = (
+    Path('.tmp_build_13/webpack.config.js'),
+    Path('.tmp_build_13/webpack.config.mjs'),
+    Path('auto-imports.d.ts'),
+    Path('components.d.ts'),
+)
 
 
 def run(command: list[str], *, env: dict[str, str] | None = None) -> None:
@@ -87,8 +92,8 @@ def main() -> None:
     run([*pnpm, 'test:worldbook-components'])
     run([*pnpm, 'test:worldbook-composables'])
     tracked_bundle = (ROOT / TARGET_BUNDLE).read_bytes() if require_clean_bundle else None
-    tracked_type_declarations = {
-        path: (ROOT / path).read_bytes() for path in GENERATED_TYPE_DECLARATIONS
+    tracked_build_inputs = {
+        path: (ROOT / path).read_bytes() for path in GENERATED_BUILD_INPUTS
     } if require_clean_bundle else None
     run([*pnpm, 'build:worldbook'], env=build_env)
 
@@ -103,19 +108,18 @@ def main() -> None:
             tracked_path.unlink(missing_ok=True)
         (ROOT / TARGET_BUNDLE).write_bytes(tracked_bundle)
 
-    if require_clean_bundle and tracked_type_declarations is not None:
-        changed_declarations = [
+    if require_clean_bundle and tracked_build_inputs is not None:
+        changed_build_inputs = [
             path
-            for path, tracked_content in tracked_type_declarations.items()
+            for path, tracked_content in tracked_build_inputs.items()
             if (ROOT / path).read_bytes() != tracked_content
         ]
-        if changed_declarations:
-            formatted = '\n'.join(f'  - {path.as_posix()}' for path in changed_declarations)
-            raise SystemExit(f'Generated type declarations are stale; rebuild and commit:\n{formatted}')
-        for path, tracked_content in tracked_type_declarations.items():
+        if changed_build_inputs:
+            formatted = '\n'.join(f'  - {path.as_posix()}' for path in changed_build_inputs)
+            raise SystemExit(f'Generated build inputs are stale; rebuild and commit:\n{formatted}')
+        for path, tracked_content in tracked_build_inputs.items():
+            (ROOT / path).parent.mkdir(parents=True, exist_ok=True)
             (ROOT / path).write_bytes(tracked_content)
-
-    shutil.rmtree(ROOT / '.tmp_build_13', ignore_errors=True)
 
     run([*pnpm, 'test:worldbook-e2e'])
 

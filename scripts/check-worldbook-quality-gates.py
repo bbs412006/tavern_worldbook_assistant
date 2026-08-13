@@ -53,7 +53,7 @@ def collect_checks(root: Path) -> dict[str, bool]:
         'verification runner executes typecheck': 'typecheck:worldbook' in verifier,
         'verification runner executes host e2e': 'test:worldbook-e2e' in verifier,
         'verification runner supports pnpm without corepack': "shutil.which('corepack')" in verifier,
-        'verification runner restores generated build inputs': 'GENERATED_TYPE_DECLARATIONS' in verifier and 'Generated type declarations are stale' in verifier and "shutil.rmtree(ROOT / '.tmp_build_13'" in verifier,
+        'verification runner restores generated build inputs': 'GENERATED_BUILD_INPUTS' in verifier and 'Generated build inputs are stale' in verifier,
         'worldbook typecheck config exists': typecheck_path.is_file(),
         'worldbook host e2e config exists': e2e_config_path.is_file(),
         'worldbook host e2e has no machine-specific browser path': '/opt/hermes/' not in e2e_config,
