@@ -53,6 +53,11 @@ function installHostBoundaryStubs(): void {
   globals.getChatMessages = vi.fn(() => []);
   globals.createWorldbookEntries = vi.fn(async () => undefined);
   globals.generateRaw = vi.fn(async () => '[]');
+  globals.IntersectionObserver = class {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  };
   globals.eventOn = vi.fn(() => ({ stop: vi.fn() }));
   globals.tavern_events = {
     WORLD_INFO_ACTIVATED: 'WORLD_INFO_ACTIVATED',
@@ -354,6 +359,18 @@ describe('App utility navigation', () => {
     wrapper.unmount();
   });
 
+  it('keeps only one serialized baseline and does not stringify the unchanged original entries after every edit', () => {
+    const appSource = readFileSync('src/worldbook_assistant_build/App.vue', 'utf8');
+
+    const syncDigestBody = appSource.match(/function syncEntriesDigestNow\(\): void \{([^}]*)\}/)?.[1] ?? '';
+    const baselineBody = appSource.match(/function establishEntriesBaseline\(\): void \{([^}]*)\}/)?.[1] ?? '';
+
+    expect(appSource).toMatch(/const originalEntriesDigest = ref\('(?:\[\]|)'\);/);
+    expect(syncDigestBody).toMatch(/draftEntriesDigest\.value = JSON\.stringify\(draftEntries\.value\);/);
+    expect(syncDigestBody).not.toContain('originalEntriesDigest');
+    expect(baselineBody).toMatch(/originalEntriesDigest\.value = JSON\.stringify\(originalEntries\.value\);/);
+  });
+
   it('keeps the current worldbook when dirty-switch confirmation is cancelled and switches when accepted', async () => {
     const wrapper = mountApp();
     const vm = wrapper.vm as unknown as {
@@ -637,6 +654,64 @@ describe('App utility navigation', () => {
     expect(keysRule).toMatch(/grid-column:\s*1 \/ -1;/);
     expect(detailsRule).toMatch(/grid-column:\s*1 \/ -1;/);
     expect(loadMoreRule).toMatch(/padding:\s*4px 0 calc\(8px \+ env\(safe-area-inset-bottom,\s*0px\)\);/);
+  });
+
+  it('debounces large-list search and reuses a normalized search index', async () => {
+    vi.useFakeTimers();
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      draftEntries: ReturnType<typeof normalizeEntry>[];
+      searchText: string;
+      filteredEntries: ReturnType<typeof normalizeEntry>[];
+    };
+    vm.draftEntries = Array.from({ length: 500 }, (_, index) => normalizeEntry({
+      uid: index + 1,
+      comment: `Entry ${index + 1}`,
+      content: index === 499 ? 'unique-search-target' : 'ordinary content',
+    }, index + 1));
+    await nextTick();
+
+    vm.searchText = 'unique-search-target';
+    await nextTick();
+    expect(vm.filteredEntries).toHaveLength(500);
+
+    await vi.advanceTimersByTimeAsync(150);
+    await nextTick();
+    expect(vm.filteredEntries).toHaveLength(1);
+    expect(vm.filteredEntries[0]?.uid).toBe(500);
+
+    wrapper.unmount();
+    vi.useRealTimers();
+  });
+
+  it('renders desktop entries in bounded batches so large worldbooks do not mount every row at once', async () => {
+    Object.defineProperty(window.screen, 'width', { configurable: true, value: 1440 });
+    Object.defineProperty(window.screen, 'height', { configurable: true, value: 900 });
+    const globals = globalThis as Record<string, any>;
+    globals.getWorldbookNames = vi.fn(() => ['桌面大型世界书']);
+    globals.getWorldbook = vi.fn(async () =>
+      Array.from({ length: 120 }, (_, index) => normalizeEntry({
+        uid: index + 1,
+        name: `桌面条目 ${index + 1}`,
+        content: `桌面内容 ${index + 1}`,
+      }, index + 1)),
+    );
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      panelMode: string;
+      reloadWorldbookNames(preferred?: string): Promise<boolean>;
+      desktopEditorLoadMore(): void;
+    };
+    vm.panelMode = 'editor';
+    await vm.reloadWorldbookNames('桌面大型世界书');
+    await nextTick();
+
+    expect(wrapper.findAll('.list-scroll .entry-item')).toHaveLength(48);
+    vm.desktopEditorLoadMore();
+    await nextTick();
+    expect(wrapper.findAll('.list-scroll .entry-item')).toHaveLength(96);
+    wrapper.unmount();
   });
 
   it('renders mobile entries in bounded batches so opening a large worldbook stays responsive', async () => {

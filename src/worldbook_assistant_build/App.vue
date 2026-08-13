@@ -1606,9 +1606,9 @@
               <div v-if="selectedEntryCount > 1 && !isMobile" class="list-multi-edit-hint" :class="{ off: !multiEditEnabled }">
                 {{ multiEditHintText }}
               </div>
-              <TransitionGroup name="list" tag="div" class="list-scroll">
+              <TransitionGroup name="list" tag="div" class="list-scroll" @scroll.passive="onDesktopEditorScroll">
                 <BaseButton
-                  v-for="entry in filteredEntries"
+                  v-for="entry in desktopEditorVisibleEntries"
                   :key="entry.uid"
                   type="button"
                   class="entry-item"
@@ -1643,6 +1643,9 @@
                   </div>
                   <div v-if="!isDesktopFocusMode" class="entry-item-preview">{{ getEntryKeyPreview(entry) }}</div>
                 </BaseButton>
+                <div v-if="desktopEditorHasMoreEntries" class="desktop-entry-load-more">
+                  已加载 {{ desktopEditorVisibleEntries.length }} / {{ filteredEntries.length }} …
+                </div>
               </TransitionGroup>
               <div v-if="!isDesktopFocusMode" class="list-actions">
                 <BaseButton class="btn" type="button" :disabled="!selectedWorldbookName" @click="addEntry">新增</BaseButton>
@@ -2888,8 +2891,10 @@ const crossCopyMode = ref(false);
 const panelMode = ref<'browse' | 'editor'>('browse');
 const expandedBrowseCardUids = ref<Set<number>>(new Set());
 const BROWSE_RENDER_BATCH = 30;
+const DESKTOP_EDITOR_RENDER_BATCH = 48;
 const MOBILE_EDITOR_RENDER_BATCH = 18;
 const browseRenderLimit = ref(BROWSE_RENDER_BATCH);
+const desktopEditorRenderLimit = ref(DESKTOP_EDITOR_RENDER_BATCH);
 const mobileEditorRenderLimit = ref(MOBILE_EDITOR_RENDER_BATCH);
 const browseLoadMoreSentinelRef = ref<HTMLElement | null>(null);
 const rootRef = ref<HTMLElement | null>(null);
@@ -3283,9 +3288,34 @@ const selectedPositionSelectValue = computed<PositionSelectValue>({
 });
 
 const viewSortActive = ref(false);
+const SEARCH_DEBOUNCE_MS = 120;
+const debouncedSearchText = ref('');
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const entrySearchIndex = computed(() => new Map(
+  draftEntries.value.map(entry => [
+    entry.uid,
+    `${entry.name}\n${entry.content}\n${entry.strategy.keys.map(stringifyKeyword).join(' ')}`.toLowerCase(),
+  ]),
+));
+
+watch(searchText, value => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer);
+  }
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) {
+    debouncedSearchText.value = '';
+    searchDebounceTimer = null;
+    return;
+  }
+  searchDebounceTimer = setTimeout(() => {
+    searchDebounceTimer = null;
+    debouncedSearchText.value = normalized;
+  }, SEARCH_DEBOUNCE_MS);
+}, { immediate: true });
 
 const filteredEntries = computed(() => {
-  const keyword = searchText.value.trim().toLowerCase();
+  const keyword = debouncedSearchText.value;
   const result = draftEntries.value.filter(entry => {
     if (onlyEnabled.value && !entry.enabled) {
       return false;
@@ -3293,12 +3323,7 @@ const filteredEntries = computed(() => {
     if (!keyword) {
       return true;
     }
-    const keysJoined = entry.strategy.keys.map(stringifyKeyword).join(' ').toLowerCase();
-    return (
-      entry.name.toLowerCase().includes(keyword) ||
-      entry.content.toLowerCase().includes(keyword) ||
-      keysJoined.includes(keyword)
-    );
+    return entrySearchIndex.value.get(entry.uid)?.includes(keyword) ?? false;
   });
   if (viewSortActive.value) {
     return [...result].sort(compareEntriesByPositionThenOrder);
@@ -3917,7 +3942,7 @@ const { applySelection: applyCrossCopySelection } = useCrossCopyApply({
   syncCurrentTargetEntries: entries => {
     draftEntries.value = klona(entries);
     originalEntries.value = klona(entries);
-    syncEntriesDigestNow();
+    establishEntriesBaseline();
     ensureSelectedEntryExists();
   },
   refreshComparison: refreshCrossCopyComparison,
@@ -4615,13 +4640,22 @@ function ensureRefreshAllowed(options: HardRefreshOptions = {}): boolean {
   return ok;
 }
 
-function syncEntriesDigestNow(): void {
+function clearEntriesDigestTimer(): void {
   if (entriesDigestTimer) {
     clearTimeout(entriesDigestTimer);
     entriesDigestTimer = null;
   }
+}
+
+function syncEntriesDigestNow(): void {
+  clearEntriesDigestTimer();
   draftEntriesDigest.value = JSON.stringify(draftEntries.value);
+}
+
+function establishEntriesBaseline(): void {
+  clearEntriesDigestTimer();
   originalEntriesDigest.value = JSON.stringify(originalEntries.value);
+  draftEntriesDigest.value = JSON.stringify(draftEntries.value);
 }
 
 function scheduleEntriesDigestSync(delay = ENTRIES_DIGEST_DEBOUNCE_MS): void {
@@ -4629,16 +4663,14 @@ function scheduleEntriesDigestSync(delay = ENTRIES_DIGEST_DEBOUNCE_MS): void {
     syncEntriesDigestNow();
     return;
   }
-  if (entriesDigestTimer) {
-    clearTimeout(entriesDigestTimer);
-  }
+  clearEntriesDigestTimer();
   entriesDigestTimer = setTimeout(() => {
     entriesDigestTimer = null;
     syncEntriesDigestNow();
   }, delay);
 }
 
-watch([draftEntries, originalEntries], () => {
+watch(draftEntries, () => {
   scheduleEntriesDigestSync();
 }, { deep: true, immediate: true, flush: 'post' });
 
@@ -5558,6 +5590,8 @@ function applyPanelModeFromPersisted(): void {
 
 const browseVisibleEntries = computed(() => filteredEntries.value.slice(0, browseRenderLimit.value));
 const browseHasMoreEntries = computed(() => browseRenderLimit.value < filteredEntries.value.length);
+const desktopEditorVisibleEntries = computed(() => filteredEntries.value.slice(0, desktopEditorRenderLimit.value));
+const desktopEditorHasMoreEntries = computed(() => desktopEditorRenderLimit.value < filteredEntries.value.length);
 const mobileEditorVisibleEntries = computed(() => filteredEntries.value.slice(0, mobileEditorRenderLimit.value));
 const mobileEditorHasMoreEntries = computed(() => mobileEditorRenderLimit.value < filteredEntries.value.length);
 
@@ -5572,8 +5606,26 @@ function mobileEditorLoadMore(): void {
   );
 }
 
+function desktopEditorLoadMore(): void {
+  desktopEditorRenderLimit.value = Math.min(
+    desktopEditorRenderLimit.value + DESKTOP_EDITOR_RENDER_BATCH,
+    filteredEntries.value.length,
+  );
+}
+
+function onDesktopEditorScroll(event: Event): void {
+  if (!desktopEditorHasMoreEntries.value) {
+    return;
+  }
+  const target = event.currentTarget as HTMLElement | null;
+  if (target && target.scrollHeight - target.scrollTop - target.clientHeight <= 240) {
+    desktopEditorLoadMore();
+  }
+}
+
 function resetEntryRenderLimits(): void {
   browseRenderLimit.value = BROWSE_RENDER_BATCH;
+  desktopEditorRenderLimit.value = DESKTOP_EDITOR_RENDER_BATCH;
   mobileEditorRenderLimit.value = MOBILE_EDITOR_RENDER_BATCH;
 }
 
@@ -9629,7 +9681,7 @@ async function loadWorldbook(name: string): Promise<void> {
     const normalized = normalizeEntryList(rawEntries);
     draftEntries.value = klona(normalized);
     originalEntries.value = klona(normalized);
-    syncEntriesDigestNow();
+    establishEntriesBaseline();
     ensureSelectedEntryExists();
     setStatus(`已加载 "${name}"，条目 ${normalized.length}`);
   } catch (error) {
@@ -9757,7 +9809,7 @@ async function saveCurrentWorldbook(): Promise<void> {
     const savedEntrySnapshotCount = pushEntrySnapshotsBulk(pendingEntrySnapshots);
     await replaceWorldbook(selectedWorldbookName.value, klona(draftEntries.value), { render: 'immediate' });
     originalEntries.value = klona(draftEntries.value);
-    syncEntriesDigestNow();
+    establishEntriesBaseline();
     pushSnapshot('保存后快照');
     await refreshBindings();
     toastr.success(`已保存: ${selectedWorldbookName.value}`);
@@ -10304,7 +10356,7 @@ function discardUnsavedDraft(): void {
     return;
   }
   draftEntries.value = klona(originalEntries.value);
-  syncEntriesDigestNow();
+  establishEntriesBaseline();
   ensureSelectedEntryExists();
   resetFindState();
   setStatus('已放弃未保存修改');
@@ -13178,6 +13230,13 @@ watch(hasUnsavedChanges, (val) => {
   position: relative;
   padding: 4px 4px 4px 4px;
   transition: padding 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.desktop-entry-load-more {
+  padding: 10px 8px;
+  color: var(--wb-text-muted);
+  font-size: 11px;
+  text-align: center;
 }
 
 .entry-item {

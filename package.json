@@ -4,9 +4,13 @@
     "build": "webpack --mode production",
     "build:worldbook": "WORLD_BOOK_ONLY=1 WORLD_BOOK_SOURCE_MAP=0 webpack --mode production",
     "verify:worldbook": "python3 scripts/verify-worldbook-build.py",
+    "verify:worldbook:ci": "python3 scripts/verify-worldbook-build.py --check-bundle-clean",
+    "lint:worldbook": "eslint src/worldbook_assistant_build tests/worldbook_assistant_build",
+    "typecheck:worldbook": "tsc --noEmit --pretty false -p tsconfig.worldbook.json",
     "test:worldbook-domain": "vitest run --config vitest.config.ts tests/worldbook_assistant_build/domain",
     "test:worldbook-components": "vitest run --config vitest.config.ts tests/worldbook_assistant_build/components",
     "test:worldbook-composables": "vitest run --config vitest.config.ts tests/worldbook_assistant_build/composables",
+    "test:worldbook-e2e": "playwright test --config playwright.worldbook.config.ts",
     "watch": "webpack --mode development --watch --progress",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,scss,html,vue}\" --no-error-on-unmatched-pattern",
     "lint": "eslint",
@@ -19,6 +23,7 @@
   ],
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "1.61.1",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/jquery": "^3.5.34",
     "@types/jqueryui": "^1.12.24",
@@ -52,7 +57,7 @@
     "javascript-obfuscator": "^4.2.2",
     "jsdom": "^29.1.1",
     "mini-css-extract-plugin": "^2.10.0",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.23",
     "postcss-cli": "^11.0.1",
     "postcss-load-config": "^6.0.1",
     "postcss-loader": "^8.2.1",
@@ -107,12 +112,12 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "toastr": "^2.1.4",
-    "vue": "^3.5.29",
+    "vue": "^3.5.31",
     "vue-final-modal": "^4.5.5",
     "vue-router": "^4.6.4",
     "vue-word-highlighter": "^1.2.6",
     "vue3-pixi": "1.0.0-beta.3",
-    "yaml": "^2.8.2",
+    "yaml": "^2.8.3",
     "zod": "^4.3.6"
   },
   "pnpm": {
@@ -120,6 +125,9 @@
       "@parcel/watcher",
       "unrs-resolver",
       "vue-demi"
-    ]
+    ],
+    "overrides": {
+      "postcss": "8.5.23"
+    }
   }
 }

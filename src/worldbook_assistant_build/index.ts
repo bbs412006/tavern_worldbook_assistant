@@ -169,7 +169,8 @@ function bindPanelInteractionShield($panel: JQuery): void {
   const handleStart = (event: JQuery.Event): void => {
     event.stopPropagation();
     const panel = $panel[0] as HTMLDivElement | undefined;
-    if (!panel || isTextEntryTarget(event.target)) {
+    const eventTarget = (event as unknown as { target?: EventTarget | null }).target ?? null;
+    if (!panel || isTextEntryTarget(eventTarget)) {
       return;
     }
     blurHostActiveInput(panel);

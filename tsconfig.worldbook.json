@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "types": ["jquery", "jqueryui", "lodash", "toastr", "type-fest"],
+    "noEmit": true
+  },
+  "include": [
+    "src/worldbook_assistant_build/**/*.ts",
+    "src/worldbook_assistant_build/**/*.d.ts",
+    "src/worldbook_assistant_build/**/*.vue",
+    "util/script.ts",
+    "global.d.ts",
+    "auto-imports.d.ts",
+    "components.d.ts",
+    "@types/function/worldbook.d.ts",
+    "@types/function/variables.d.ts",
+    "@types/function/script.d.ts",
+    "@types/function/generate.d.ts",
+    "@types/function/extension.d.ts",
+    "@types/function/import_raw.d.ts",
+    "@types/function/chat_message.d.ts",
+    "@types/function/util.d.ts",
+    "@types/iframe/event.d.ts",
+    "@types/iframe/util.d.ts",
+    "@types/iframe/script.d.ts",
+    "@types/iframe/exported.sillytavern.d.ts"
+  ],
+  "exclude": ["dist", "node_modules", "tests", "示例", "初始模板"]
+}

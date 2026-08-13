@@ -30,6 +30,18 @@ function read_git_value(command: string, fallback: string): string {
   }
 }
 
+function resolve_worldbook_build_time(): string {
+  const sourceDateEpoch = Number.parseInt(process.env.SOURCE_DATE_EPOCH ?? '', 10);
+  if (Number.isFinite(sourceDateEpoch)) {
+    return new Date(sourceDateEpoch * 1000).toISOString();
+  }
+  const commitEpoch = Number.parseInt(read_git_value('git show -s --format=%ct HEAD', ''), 10);
+  if (Number.isFinite(commitEpoch)) {
+    return new Date(commitEpoch * 1000).toISOString();
+  }
+  return new Date(0).toISOString();
+}
+
 interface Config {
   port: number;
   entries: Entry[];
@@ -486,7 +498,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
           __WB_ASSISTANT_BUILD_COMMIT__: JSON.stringify(read_git_value('git rev-parse --short=12 HEAD', 'unknown')),
           __WB_ASSISTANT_BUILD_BRANCH__: JSON.stringify(read_git_value('git rev-parse --abbrev-ref HEAD', 'unknown')),
-          __WB_ASSISTANT_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+          __WB_ASSISTANT_BUILD_TIME__: JSON.stringify(resolve_worldbook_build_time()),
         }),
       )
       .concat(

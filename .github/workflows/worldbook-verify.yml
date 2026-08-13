@@ -1,0 +1,30 @@
+name: Worldbook Verify
+
+on:
+  push:
+    branches: [ST-Manager-STscript]
+  pull_request:
+    branches: [ST-Manager-STscript]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm verify:worldbook:ci
+      - name: Ensure verification leaves the repository clean
+        run: |
+          git status --short
+          git diff --check
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"

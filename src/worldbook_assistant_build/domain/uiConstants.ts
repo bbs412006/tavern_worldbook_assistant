@@ -221,6 +221,7 @@ export const STORAGE_KEY = 'worldbook_assistant_state_v1';
 export const DIRTY_STATE_KEY = '__WB_ASSISTANT_HAS_UNSAVED_CHANGES__';
 export const HISTORY_LIMIT = 12;
 export const ENTRY_HISTORY_LIMIT = 7;
+export const HISTORY_BYTE_BUDGET = 8 * 1024 * 1024;
 export const ACTIVATION_LOG_LIMIT = 120;
 export const RESIZE_HANDLE_SIZE = 10;
 export const MAIN_PANE_DEFAULT = 280;

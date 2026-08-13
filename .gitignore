@@ -14,3 +14,7 @@ components.d.ts
 
 # Webpack source maps are local debugging artifacts, not release inputs.
 *.map
+
+# Browser-test outputs are local verification artifacts.
+test-results/
+playwright-report/

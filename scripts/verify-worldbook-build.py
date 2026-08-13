@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -27,8 +28,10 @@ def changed_dist_paths() -> list[str]:
 
 
 def main() -> None:
+    require_clean_bundle = '--check-bundle-clean' in sys.argv[1:]
     checks = [
         'scripts/check-worldbook-build-hygiene.py',
+        'scripts/check-worldbook-quality-gates.py',
         'scripts/check-domain-modules.py',
         # This guard intentionally stays early so missing inline utility pages
         # fail before domain tests or a production build can mask the regression.
@@ -42,10 +45,14 @@ def main() -> None:
         run(['python3', check])
 
     run(['python3', '-m', 'unittest', 'tests/scripts/test_check_worldbook_unified_controls.py'])
+    run(['python3', '-m', 'unittest', 'tests/scripts/test_check_worldbook_quality_gates.py'])
+    run(['corepack', 'pnpm', 'lint:worldbook'])
+    run(['corepack', 'pnpm', 'typecheck:worldbook'])
     run(['corepack', 'pnpm', 'test:worldbook-domain'])
     run(['corepack', 'pnpm', 'test:worldbook-components'])
     run(['corepack', 'pnpm', 'test:worldbook-composables'])
     run(['corepack', 'pnpm', 'build:worldbook'])
+    run(['corepack', 'pnpm', 'test:worldbook-e2e'])
 
     maps = sorted((ROOT / 'dist').rglob('*.map'))
     for source_map in maps:
@@ -54,6 +61,17 @@ def main() -> None:
         print(f"Removed {len(maps)} generated source map(s).")
 
     run(['node', '--check', TARGET_BUNDLE.as_posix()])
+
+    if require_clean_bundle:
+        result = subprocess.run(
+            ['git', 'status', '--porcelain=v1', '--', TARGET_BUNDLE.as_posix()],
+            cwd=ROOT,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        if result.stdout.strip():
+            raise SystemExit('Tracked worldbook bundle is stale; rebuild and commit dist/worldbook_assistant_build/index.js')
 
     unexpected = sorted(set(changed_dist_paths()) - ALLOWED_DIST_PATHS)
     if unexpected:

@@ -1,8 +1,10 @@
 import { klona } from 'klona';
 import {
+  type ThemeKey,
   TAG_COLORS,
   HISTORY_LIMIT,
   ENTRY_HISTORY_LIMIT,
+  HISTORY_BYTE_BUDGET,
   MAIN_PANE_DEFAULT,
   MAIN_PANE_MIN,
   FOCUS_MAIN_PANE_DEFAULT,
@@ -44,6 +46,71 @@ import type {
 
 const AI_CHAT_SESSION_LIMIT = 50;
 const AI_CHAT_MESSAGE_LIMIT = 200;
+
+export function estimatePersistedValueBytes(value: unknown): number {
+  const serialized = JSON.stringify(value);
+  if (typeof TextEncoder !== 'undefined') {
+    return new TextEncoder().encode(serialized).byteLength;
+  }
+  return serialized.length * 2;
+}
+
+type HistoryEvictionCandidate = {
+  ts: number;
+  remove: () => void;
+};
+
+export function enforceHistoryByteBudget(
+  state: Pick<PersistedState, 'history' | 'entry_history'>,
+  budget = HISTORY_BYTE_BUDGET,
+): { bytes: number; evicted: number } {
+  const measure = () => estimatePersistedValueBytes({ history: state.history, entry_history: state.entry_history });
+  let bytes = measure();
+  let evicted = 0;
+
+  while (bytes > budget) {
+    const candidates: HistoryEvictionCandidate[] = [];
+    for (const [worldbookName, snapshots] of Object.entries(state.history)) {
+      snapshots.forEach(snapshot => {
+        candidates.push({
+          ts: snapshot.ts,
+          remove: () => {
+            const current = state.history[worldbookName];
+            if (!current) return;
+            const index = current.findIndex(item => item.id === snapshot.id);
+            if (index >= 0) current.splice(index, 1);
+            if (!current.length) delete state.history[worldbookName];
+          },
+        });
+      });
+    }
+    for (const [worldbookName, byUid] of Object.entries(state.entry_history)) {
+      for (const [uidKey, snapshots] of Object.entries(byUid)) {
+        snapshots.forEach(snapshot => {
+          candidates.push({
+            ts: snapshot.ts,
+            remove: () => {
+              const currentByUid = state.entry_history[worldbookName];
+              const current = currentByUid?.[uidKey];
+              if (!current) return;
+              const index = current.findIndex(item => item.id === snapshot.id);
+              if (index >= 0) current.splice(index, 1);
+              if (!current.length) delete currentByUid[uidKey];
+              if (!Object.keys(currentByUid).length) delete state.entry_history[worldbookName];
+            },
+          });
+        });
+      }
+    }
+    const oldest = candidates.sort((left, right) => left.ts - right.ts)[0];
+    if (!oldest) break;
+    oldest.remove();
+    evicted += 1;
+    bytes = measure();
+  }
+
+  return { bytes, evicted };
+}
 
 function createId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
@@ -380,7 +447,7 @@ export function normalizeEntry(rawInput: unknown, fallbackUid: number): Worldboo
     ...base,
     uid,
     name,
-    enabled: raw.enabled === undefined ? raw.disable !== true : raw.enabled,
+    enabled: raw.enabled === undefined ? raw.disable !== true : Boolean(raw.enabled),
     strategy: {
       type: strategyType,
       keys,

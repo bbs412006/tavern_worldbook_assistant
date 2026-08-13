@@ -11,6 +11,7 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
+const inputId = computed(() => (typeof attrs.id === 'string' ? attrs.id : undefined));
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 const inputRef = ref<HTMLInputElement | null>(null);
 
@@ -32,7 +33,7 @@ function onChange(event: Event): void {
 </script>
 
 <template>
-  <label class="wb-control-choice" :class="{ 'is-disabled': disabled }" :for="attrs.id as string | undefined">
+  <label class="wb-control-choice" :class="{ 'is-disabled': disabled }" :for="inputId">
     <input
       ref="inputRef"
       v-bind="$attrs"

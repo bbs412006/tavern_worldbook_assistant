@@ -2,6 +2,7 @@
 defineOptions({ inheritAttrs: false });
 
 const attrs = useAttrs();
+const inputId = computed(() => (typeof attrs.id === 'string' ? attrs.id : undefined));
 
 withDefaults(
   defineProps<{
@@ -22,7 +23,7 @@ function onChange(event: Event): void {
   <label
     class="wb-control-choice wb-control-switch"
     :class="{ 'is-disabled': disabled }"
-    :for="attrs.id as string | undefined"
+    :for="inputId"
   >
     <input
       v-bind="$attrs"
