@@ -32,6 +32,7 @@ class WorldbookQualityGateGuardTest(unittest.TestCase):
             'verification runner executes typecheck',
             'verification runner executes host e2e',
             'verification runner supports pnpm without corepack',
+            'verification runner restores generated build inputs',
             'worldbook typecheck config exists',
             'worldbook host e2e config exists',
             'worldbook host e2e has no machine-specific browser path',

@@ -30,6 +30,7 @@ jobs:
           if [ -n "$status" ]; then
             printf '%s\n' "$status"
             git diff --stat
-            git diff -- auto-imports.d.ts components.d.ts dist/worldbook_assistant_build/index.js
+            git diff -- .tmp_build_13 auto-imports.d.ts components.d.ts dist/worldbook_assistant_build/index.js
+            find .tmp_build_13 -maxdepth 2 -type f -print 2>/dev/null || true
             exit 1
           fi
