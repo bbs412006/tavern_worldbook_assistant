@@ -30,6 +30,18 @@ def changed_dist_paths() -> list[str]:
     return [line[3:] for line in result.stdout.splitlines() if line.strip()]
 
 
+def normalized_bundle(path: Path) -> str:
+    content = path.read_text(encoding='utf-8')
+    content = re.sub(r"\}\}\}\('[^']+','[^']+'\),", "}}}('[BUILD_COMMIT]','[BUILD_TIME]'),", content, count=1)
+    content = re.sub(
+        r"!0===globalThis\.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__\|\|'[^']*'\.includes\('debug'\)",
+        "!0===globalThis.__WB_ASSISTANT_ENABLE_PERFORMANCE_DIAGNOSTICS__||'[BUILD_BRANCH]'.includes('debug')",
+        content,
+        count=1,
+    )
+    return content
+
+
 def main() -> None:
     require_clean_bundle = '--check-bundle-clean' in sys.argv[1:]
     pnpm = ['corepack', 'pnpm'] if shutil.which('corepack') else ['pnpm']
@@ -89,7 +101,19 @@ def main() -> None:
             capture_output=True,
         )
         if result.stdout.strip():
-            raise SystemExit('Tracked worldbook bundle is stale; rebuild and commit dist/worldbook_assistant_build/index.js')
+            committed_path = ROOT / '.git' / 'worldbook-bundle-committed.js'
+            committed_path.write_bytes(subprocess.run(
+                ['git', 'show', f'HEAD:{TARGET_BUNDLE.as_posix()}'],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+            ).stdout)
+            try:
+                if normalized_bundle(committed_path) != normalized_bundle(ROOT / TARGET_BUNDLE):
+                    raise SystemExit('Tracked worldbook bundle is stale; rebuild and commit dist/worldbook_assistant_build/index.js')
+            finally:
+                committed_path.unlink(missing_ok=True)
+            run(['git', 'checkout', '--', TARGET_BUNDLE.as_posix()])
 
     unexpected = sorted(set(changed_dist_paths()) - ALLOWED_DIST_PATHS)
     if unexpected:
