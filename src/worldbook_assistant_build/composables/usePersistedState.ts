@@ -18,10 +18,19 @@ export function usePersistedState(
 ) {
   const persistedState = ref<PersistedState>(createDefaultPersistedState());
   let writeScheduled = false;
+  let hydrated = false;
 
   function readPersistedState(): PersistedState {
     const vars = getVariables({ type: 'script', script_id: getScriptId() });
-    return normalizePersistedState(vars[STORAGE_KEY]);
+    const state = normalizePersistedState(vars[STORAGE_KEY]);
+    hydrated = true;
+    return state;
+  }
+
+  function ensureHydrated(): void {
+    if (!hydrated) {
+      persistedState.value = readPersistedState();
+    }
   }
 
   function commitPersistedState(): void {
@@ -46,11 +55,13 @@ export function usePersistedState(
   }
 
   function writePersistedState(state: PersistedState): void {
+    hydrated = true;
     persistedState.value = klona(state);
     schedulePersistedStateWrite();
   }
 
   function updatePersistedState(mutator: (state: PersistedState) => void): void {
+    ensureHydrated();
     const state = klona(persistedState.value);
     mutator(state);
     persistedState.value = state;

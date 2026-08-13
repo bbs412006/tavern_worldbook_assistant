@@ -36,6 +36,24 @@ describe('usePersistedState', () => {
     expect((variables[STORAGE_KEY] as Record<string, unknown>).theme).toBe('forest');
   });
 
+  it('hydrates once before the first update so an early watcher cannot overwrite stored settings with defaults', () => {
+    variables[STORAGE_KEY] = {
+      theme: 'forest',
+      show_ai_chat: true,
+    };
+    const state = usePersistedState();
+    vi.mocked(globals.getVariables).mockClear();
+
+    state.updatePersistedState(current => {
+      current.glass_mode = false;
+    });
+
+    expect(globals.getVariables).toHaveBeenCalledTimes(2);
+    expect(state.persistedState.value.theme).toBe('forest');
+    expect(state.persistedState.value.show_ai_chat).toBe(true);
+    expect(state.persistedState.value.glass_mode).toBe(false);
+  });
+
   it('coalesces multiple updates into one host write when a scheduler is supplied', () => {
     const scheduled: Array<() => void> = [];
     const state = usePersistedState(undefined, {
