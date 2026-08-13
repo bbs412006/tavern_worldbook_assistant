@@ -31,6 +31,9 @@ function read_git_value(command: string, fallback: string): string {
 }
 
 function resolve_worldbook_build_time(): string {
+  if (process.env.WB_BUILD_TIME) {
+    return process.env.WB_BUILD_TIME;
+  }
   const sourceDateEpoch = Number.parseInt(process.env.SOURCE_DATE_EPOCH ?? '', 10);
   if (Number.isFinite(sourceDateEpoch)) {
     return new Date(sourceDateEpoch * 1000).toISOString();

@@ -5,6 +5,7 @@ import subprocess
 import sys
 import shutil
 import os
+import re
 from pathlib import Path
 
 
@@ -34,13 +35,17 @@ def main() -> None:
     pnpm = ['corepack', 'pnpm'] if shutil.which('corepack') else ['pnpm']
     build_env = os.environ.copy()
     if require_clean_bundle:
-        build_env['WB_BUILD_COMMIT'] = subprocess.run(
-            ['git', 'log', '-1', '--format=%h', '--', TARGET_BUNDLE.as_posix()],
+        committed_bundle = subprocess.run(
+            ['git', 'show', f'HEAD:{TARGET_BUNDLE.as_posix()}'],
             cwd=ROOT,
             check=True,
-            text=True,
             capture_output=True,
-        ).stdout.strip()
+        ).stdout.decode('utf-8')
+        metadata = re.search(r"\}\}\}\('([^']+)','([^']+)'\),", committed_bundle)
+        if not metadata:
+            raise SystemExit('Unable to read build metadata from the tracked worldbook bundle')
+        build_env['WB_BUILD_COMMIT'] = metadata.group(1)
+        build_env['WB_BUILD_TIME'] = metadata.group(2)
     checks = [
         'scripts/check-worldbook-build-hygiene.py',
         'scripts/check-worldbook-quality-gates.py',
