@@ -2,7 +2,26 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
+
+
+def tracked_and_not_ignored(root: Path, relative_path: str) -> bool:
+    tracked = subprocess.run(
+        ['git', 'ls-files', '--error-unmatch', '--', relative_path],
+        cwd=root,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode == 0
+    ignored = subprocess.run(
+        ['git', 'check-ignore', '-q', '--no-index', '--', relative_path],
+        cwd=root,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode == 0
+    return tracked and not ignored
 
 
 def collect_checks(root: Path) -> dict[str, bool]:
@@ -17,7 +36,6 @@ def collect_checks(root: Path) -> dict[str, bool]:
     webpack = (root / 'webpack.config.ts').read_text(encoding='utf-8')
     e2e_config = e2e_config_path.read_text(encoding='utf-8') if e2e_config_path.is_file() else ''
     typecheck = typecheck_path.read_text(encoding='utf-8') if typecheck_path.is_file() else ''
-    gitignore = (root / '.gitignore').read_text(encoding='utf-8')
 
     return {
         'package exposes lint:worldbook': 'lint:worldbook' in scripts,
@@ -26,10 +44,8 @@ def collect_checks(root: Path) -> dict[str, bool]:
         'worldbook typecheck uses vue-tsc': scripts.get('typecheck:worldbook', '').startswith('vue-tsc '),
         'worldbook typecheck includes App.vue': 'src/worldbook_assistant_build/**/*.vue' in typecheck,
         'worldbook generated type declarations are tracked inputs': (
-            (root / 'auto-imports.d.ts').is_file()
-            and (root / 'components.d.ts').is_file()
-            and 'auto-imports.d.ts' not in gitignore
-            and 'components.d.ts' not in gitignore
+            tracked_and_not_ignored(root, 'auto-imports.d.ts')
+            and tracked_and_not_ignored(root, 'components.d.ts')
         ),
         'package exposes test:worldbook-e2e': 'test:worldbook-e2e' in scripts,
         'package exposes CI bundle consistency verification': 'verify:worldbook:ci' in scripts,

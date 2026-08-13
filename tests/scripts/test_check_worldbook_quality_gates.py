@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -42,6 +44,30 @@ class WorldbookQualityGateGuardTest(unittest.TestCase):
         }
         self.assertTrue(required.issubset(checks))
         self.assertTrue(all(checks[label] for label in required))
+
+    def test_generated_type_declarations_must_be_tracked_and_not_ignored(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            subprocess.run(['git', 'init', '-q'], cwd=root, check=True)
+            for filename in ('auto-imports.d.ts', 'components.d.ts'):
+                (root / filename).write_text('export {}\n', encoding='utf-8')
+            subprocess.run(['git', 'add', '-f', 'auto-imports.d.ts', 'components.d.ts'], cwd=root, check=True)
+
+            self.assertTrue(GUARD.tracked_and_not_ignored(root, 'auto-imports.d.ts'))
+            self.assertTrue(GUARD.tracked_and_not_ignored(root, 'components.d.ts'))
+
+            (root / '.gitignore').write_text('*.d.ts\n', encoding='utf-8')
+            self.assertFalse(GUARD.tracked_and_not_ignored(root, 'auto-imports.d.ts'))
+            self.assertFalse(GUARD.tracked_and_not_ignored(root, 'components.d.ts'))
+
+            subprocess.run(
+                ['git', 'rm', '--cached', 'components.d.ts'],
+                cwd=root,
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            (root / '.gitignore').write_text('', encoding='utf-8')
+            self.assertFalse(GUARD.tracked_and_not_ignored(root, 'components.d.ts'))
 
 
 if __name__ == '__main__':
