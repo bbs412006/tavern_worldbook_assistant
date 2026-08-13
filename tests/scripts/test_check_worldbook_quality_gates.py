@@ -32,6 +32,7 @@ class WorldbookQualityGateGuardTest(unittest.TestCase):
             'CI runs canonical worldbook verification',
             'CI installs Chromium for host E2E',
             'worldbook build time is reproducible',
+            'worldbook runtime externals are version pinned',
         }
         self.assertTrue(required.issubset(checks))
         self.assertTrue(all(checks[label] for label in required))

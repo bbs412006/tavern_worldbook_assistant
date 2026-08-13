@@ -31,6 +31,7 @@ def collect_checks(root: Path) -> dict[str, bool]:
         'CI runs canonical worldbook verification': 'verify:worldbook:ci' in workflow,
         'CI installs Chromium for host E2E': 'playwright install --with-deps chromium' in workflow,
         'worldbook build time is reproducible': 'resolve_worldbook_build_time()' in webpack,
+        'worldbook runtime externals are version pinned': "klona: '2.0.6'" in webpack and "diff: '8.0.4'" in webpack,
     }
 
 

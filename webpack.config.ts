@@ -45,6 +45,11 @@ function resolve_worldbook_build_time(): string {
   return new Date(0).toISOString();
 }
 
+const WORLD_BOOK_EXTERNAL_VERSIONS: Record<string, string> = {
+  klona: '2.0.6',
+  diff: '8.0.4',
+};
+
 interface Config {
   port: number;
   entries: Entry[];
@@ -601,7 +606,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       };
       return callback(
         null,
-        'module-import ' + (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${request}/+esm`),
+        'module-import ' + (
+          cdn[request as keyof typeof cdn]
+          ?? `https://testingcf.jsdelivr.net/npm/${request}${WORLD_BOOK_EXTERNAL_VERSIONS[request] ? `@${WORLD_BOOK_EXTERNAL_VERSIONS[request]}` : ''}/+esm`
+        ),
       );
     },
   });
