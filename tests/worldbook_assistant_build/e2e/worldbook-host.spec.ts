@@ -137,6 +137,57 @@ test('searches entries and opens a browse card in the full mobile editor', async
   expect(await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? [])).toEqual([]);
 });
 
+test('edits mobile keyword chips and saves an unconfirmed draft', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAssistant(page);
+  await page.locator('.mobile-archive-entry').filter({ hasText: '大型世界书条目 2' }).first().locator('.mobile-archive-entry-main').click();
+
+  const editor = page.locator('.mobile-editor-pane:visible');
+  await expect(editor.locator('.editor-comment input')).toHaveValue('大型世界书条目 2');
+  await editor.getByRole('button', { name: '删除关键词 关键词2', exact: true }).click();
+
+  await editor.getByRole('button', { name: '添加主要关键词', exact: true }).click();
+  const primaryInput = editor.getByRole('textbox', { name: '添加主要关键词' });
+  const primaryField = editor.locator('.mobile-keyword-field').first();
+  await primaryInput.fill('新增文字');
+  await primaryField.getByRole('button', { name: '添加', exact: true }).click();
+  await editor.getByRole('button', { name: '添加主要关键词', exact: true }).click();
+  await primaryInput.fill('/needle/i');
+  await primaryInput.press('Enter');
+  await expect(editor.getByRole('button', { name: '删除关键词 /needle/i', exact: true })).toBeVisible();
+
+  const save = editor.locator('.mobile-editor-heading').getByRole('button', { name: '保存', exact: true });
+  await save.click();
+  const readSavedKeywords = () => page.evaluate(async () => {
+    const entries = await (globalThis as any).getWorldbook('大型世界书 A');
+    const entry = entries.find((item: { uid: number }) => item.uid === 2);
+    const describe = (key: string | RegExp) => key instanceof RegExp
+      ? { type: 'regexp', source: key.source, flags: key.flags }
+      : { type: 'string', value: key };
+    return {
+      primary: entry.strategy.keys.map(describe),
+      secondary: entry.strategy.keys_secondary.keys.map(describe),
+    };
+  });
+  await expect.poll(readSavedKeywords).toEqual({
+    primary: [
+      { type: 'string', value: '移动端测试' },
+      { type: 'string', value: '新增文字' },
+      { type: 'regexp', source: 'needle', flags: 'i' },
+    ],
+    secondary: [],
+  });
+  await expect(save).toBeDisabled();
+
+  // Saving from a focused input must not lose the text even if 添加 was never pressed.
+  await editor.getByRole('button', { name: '添加次要关键词', exact: true }).click();
+  await editor.getByRole('textbox', { name: '添加次要关键词' }).fill('尚未确认');
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect.poll(readSavedKeywords).toMatchObject({ secondary: [{ type: 'string', value: '尚未确认' }] });
+  expect(await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? [])).toEqual([]);
+});
+
 test('saves mobile browse changes to the selected worldbook', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openAssistant(page);

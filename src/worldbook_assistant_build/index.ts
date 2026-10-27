@@ -453,7 +453,7 @@ function ensurePanelStyle(): void {
     margin: auto !important;
     transform: none !important;
     width: calc(100vw - 16px) !important;
-    height: min(720px, calc(100lvh - 24px)) !important;
+    height: calc(100lvh - 24px) !important;
     min-width: unset;
     min-height: 0;
     max-width: 520px;

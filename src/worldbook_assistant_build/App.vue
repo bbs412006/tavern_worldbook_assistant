@@ -65,9 +65,10 @@
         <div class="mobile-browse-view">
           <!-- Mobile browse toolbar -->
           <section v-if="!browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" class="wb-toolbar browse-toolbar mobile-browse-toolbar">
-            <div class="mobile-page-heading"><div><h2>世界书</h2><span class="mobile-save-state">共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span></div><div class="mobile-heading-actions"><BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook"><StudioIcon name="save" :size="18" /></BaseButton></div></div>
-            <WorldbookPicker :model-value="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择世界书" @update:model-value="handleWorldbookSelectionUpdate" />
-            <BaseInput v-model="searchText" class="browse-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目" />
+            <div class="mobile-page-heading"><h2>世界书</h2><div class="mobile-heading-actions"><BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook"><StudioIcon name="save" :size="18" /></BaseButton></div></div>
+            <WorldbookPicker class="archive-book-picker" :model-value="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择世界书" @update:model-value="handleWorldbookSelectionUpdate" />
+            <span class="mobile-book-meta">共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span>
+            <BaseInput v-model="searchText" class="browse-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目"><template #prefix><StudioIcon name="search" :size="17" /></template></BaseInput>
             <div class="mobile-archive-filters" aria-label="条目筛选">
               <BaseButton size="sm" :class="{ active: !onlyEnabled && !studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = false">全部</BaseButton>
               <BaseButton size="sm" :class="{ active: onlyEnabled }" @click="onlyEnabled = true; studioConstantOnly = false">已启用</BaseButton>
@@ -222,12 +223,13 @@
             <div v-show="mobileTab === 'list'" class="mobile-pane">
               <section class="wb-toolbar mobile-library-toolbar mobile-archive-library">
                 <div class="mobile-library-heading">
-                  <div><h2>世界书</h2><span>共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span></div>
+                  <div><h2>世界书</h2></div>
                   <BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook"><StudioIcon name="save" :size="18" /></BaseButton>
                 </div>
                 <label class="toolbar-label mobile-library-picker">
                   <span class="sr-only">世界书</span>
                   <WorldbookPicker
+                    class="archive-book-picker"
                     :model-value="selectedWorldbookName"
                     :names="selectableWorldbookNames"
                     placeholder="请选择世界书"
@@ -247,7 +249,8 @@
                     @update:tag-filter-match-mode="updateTagFilterMatchMode"
                   />
                 </label>
-                <BaseInput v-model="searchText" class="mobile-list-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目" />
+                <span class="mobile-book-meta">共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span>
+                <BaseInput v-model="searchText" class="mobile-list-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目"><template #prefix><StudioIcon name="search" :size="17" /></template></BaseInput>
                 <div class="mobile-archive-filters" aria-label="条目筛选">
               <BaseButton size="sm" :class="{ active: !onlyEnabled && !studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = false">全部</BaseButton>
               <BaseButton size="sm" :class="{ active: onlyEnabled }" @click="onlyEnabled = true; studioConstantOnly = false">已启用</BaseButton>
@@ -418,7 +421,7 @@
 
           <!-- Tab: 编辑 -->
           <Transition name="mobile-tab">
-            <div v-show="mobileTab === 'edit'" class="mobile-pane">
+            <div v-show="mobileTab === 'edit'" class="mobile-pane mobile-editor-pane">
               <template v-if="selectedEntry">
               <div class="mobile-editor-heading"><BaseButton type="button" @click="mobileTab = 'list'">‹ 返回</BaseButton><h2>编辑条目</h2><BaseButton variant="primary" size="sm" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">保存</BaseButton></div>
               <div class="mobile-editor-save-state">{{ hasUnsavedChanges ? '● 未保存的更改' : '已保存' }}</div>
@@ -435,14 +438,17 @@
                 </div>
               </header>
               <section class="editor-grid two-cols editor-keyword-grid">
-                <label class="field">
-                  <span>主要关键词</span>
-                  <BaseTextarea :model-value="selectedKeysRaw" @update:model-value="selectedKeysRaw = $event" @blur="commitKeysFromRaw" class="text-area compact"></BaseTextarea>
-                </label>
-                <label class="field">
-                  <span>次要关键词</span>
-                  <BaseTextarea :model-value="selectedSecondaryKeysRaw" @update:model-value="selectedSecondaryKeysRaw = $event" @blur="commitSecondaryKeysFromRaw" class="text-area compact"></BaseTextarea>
-                </label>
+                <div v-for="secondary in [false, true]" :key="String(secondary)" class="mobile-keyword-field">
+                  <span>{{ secondary ? '次要关键词' : '主要关键词' }}</span>
+                  <div class="mobile-keyword-chips">
+                    <BaseButton v-for="(key, index) in (secondary ? selectedEntry.strategy.keys_secondary.keys : selectedEntry.strategy.keys)" :key="`${secondary}-${index}-${stringifyKeyword(key)}`" class="mobile-keyword-chip" size="sm" :aria-label="`删除关键词 ${stringifyKeyword(key)}`" @click="removeMobileKeyword(secondary, index)">{{ stringifyKeyword(key) }} <span aria-hidden="true">×</span></BaseButton>
+                  </div>
+                  <div class="mobile-keyword-actions">
+                    <BaseButton v-if="!mobileKeywordAdding[secondary ? 'secondary' : 'primary']" class="mobile-keyword-open" size="sm" :aria-label="secondary ? '添加次要关键词' : '添加主要关键词'" @click="mobileKeywordAdding[secondary ? 'secondary' : 'primary'] = true">＋ 添加关键词</BaseButton>
+                    <div v-else class="mobile-keyword-add"><BaseInput v-model="mobileKeywordDraft[secondary ? 'secondary' : 'primary']" :aria-label="secondary ? '添加次要关键词' : '添加主要关键词'" placeholder="输入关键词" @keydown.enter.prevent="finishMobileKeywords(secondary)" @blur="finishMobileKeywords(secondary)" /><BaseButton size="sm" @click="finishMobileKeywords(secondary)">添加</BaseButton></div>
+                    <details class="mobile-keyword-raw"><summary>批量编辑</summary><BaseTextarea v-if="secondary" :model-value="selectedSecondaryKeysRaw" class="text-area compact" aria-label="批量编辑次要关键词" @update:model-value="selectedSecondaryKeysRaw = $event" @blur="commitSecondaryKeysFromRaw" /><BaseTextarea v-else :model-value="selectedKeysRaw" class="text-area compact" aria-label="批量编辑主要关键词" @update:model-value="selectedKeysRaw = $event" @blur="commitKeysFromRaw" /></details>
+                  </div>
+                </div>
               </section>
               <section class="editor-content-block" ref="editorContentBlockRef">
                 <div v-if="isMobile" class="content-top-drag-handle" @pointerdown="startContentTopDrag">
@@ -824,7 +830,7 @@
         <BaseButton v-if="mobileTab === 'ai'" class="active" type="button" @click="mobileTab = 'ai'">
           <span class="tab-icon"><StudioIcon name="sparkle" :size="19" /></span><span class="tab-label">AI</span>
         </BaseButton>
-        <BaseButton @click="mobileTab = 'tags'" :class="{ active: mobileTab === 'tags' }">
+        <BaseButton v-if="mobileTab === 'tags'" @click="mobileTab = 'tags'" class="active">
           <span class="tab-icon"><StudioIcon name="tags" :size="19" /></span><span class="tab-label">标签</span>
         </BaseButton>
       </div>
@@ -3758,6 +3764,8 @@ const searchText = ref('');
 const onlyEnabled = ref(false);
 const importFileInput = ref<HTMLInputElement | null>(null);
 const selectedExtraText = ref('');
+const mobileKeywordDraft = reactive({ primary: '', secondary: '' });
+const mobileKeywordAdding = reactive({ primary: false, secondary: false });
 const selectedKeysRaw = ref('');
 const selectedSecondaryKeysRaw = ref('');
 let keysDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -4011,7 +4019,7 @@ const totalContentChars = computed(() =>
   }, 0),
 );
 
-const hasUnsavedChanges = computed(() => draftEntriesDigest.value !== originalEntriesDigest.value);
+const hasUnsavedChanges = computed(() => draftEntriesDigest.value !== originalEntriesDigest.value || Boolean(mobileKeywordDraft.primary.trim() || mobileKeywordDraft.secondary.trim()) || (selectedEntry.value !== null && (selectedKeysRaw.value !== selectedKeysText.value || selectedSecondaryKeysRaw.value !== selectedSecondaryKeysText.value)));
 const isCompactLayout = computed(() => isCompactLayoutWidth(viewportWidth.value));
 const isDesktopFocusMode = computed(() => isDesktopFocusLayout(isMobile.value, isCompactLayout.value, isFocusEditing.value));
 const canResizeHistorySections = computed(() => !isMobile.value && viewportWidth.value > 1380);
@@ -4983,16 +4991,57 @@ const selectedEntryConfigDigest = computed(() => {
 
 function commitKeysFromRaw(): void {
   if (keysDebounceTimer) { clearTimeout(keysDebounceTimer); keysDebounceTimer = null; }
-  if (!selectedEntry.value) return;
+  if (!selectedEntry.value || selectedKeysRaw.value === selectedKeysText.value) return;
   selectedEntry.value.strategy.keys = parseKeywordsFromText(selectedKeysRaw.value);
   selectedKeysRaw.value = selectedEntry.value.strategy.keys.map(stringifyKeyword).join(', ');
+  syncEntriesDigestNow();
 }
 
 function commitSecondaryKeysFromRaw(): void {
   if (secondaryKeysDebounceTimer) { clearTimeout(secondaryKeysDebounceTimer); secondaryKeysDebounceTimer = null; }
-  if (!selectedEntry.value) return;
+  if (!selectedEntry.value || selectedSecondaryKeysRaw.value === selectedSecondaryKeysText.value) return;
   selectedEntry.value.strategy.keys_secondary.keys = parseKeywordsFromText(selectedSecondaryKeysRaw.value);
   selectedSecondaryKeysRaw.value = selectedEntry.value.strategy.keys_secondary.keys.map(stringifyKeyword).join(', ');
+  syncEntriesDigestNow();
+}
+
+function addMobileKeywords(secondary: boolean): void {
+  if (!selectedEntry.value) return;
+  if (secondary) commitSecondaryKeysFromRaw(); else commitKeysFromRaw();
+  const field = secondary ? 'secondary' : 'primary';
+  const additions = parseKeywordsFromText(mobileKeywordDraft[field]);
+  if (!additions.length) return;
+  const keys = secondary ? selectedEntry.value.strategy.keys_secondary.keys : selectedEntry.value.strategy.keys;
+  const updated = normalizeKeywordList([...keys, ...additions]);
+  if (secondary) {
+    selectedEntry.value.strategy.keys_secondary.keys = updated;
+    selectedSecondaryKeysRaw.value = updated.map(stringifyKeyword).join(', ');
+  } else {
+    selectedEntry.value.strategy.keys = updated;
+    selectedKeysRaw.value = updated.map(stringifyKeyword).join(', ');
+  }
+  syncEntriesDigestNow();
+  mobileKeywordDraft[field] = '';
+}
+
+function finishMobileKeywords(secondary: boolean): void {
+  addMobileKeywords(secondary);
+  mobileKeywordAdding[secondary ? 'secondary' : 'primary'] = false;
+}
+
+function removeMobileKeyword(secondary: boolean, index: number): void {
+  if (!selectedEntry.value) return;
+  if (secondary) commitSecondaryKeysFromRaw(); else commitKeysFromRaw();
+  const keys = secondary ? selectedEntry.value.strategy.keys_secondary.keys : selectedEntry.value.strategy.keys;
+  const updated = keys.filter((_, keyIndex) => keyIndex !== index);
+  if (secondary) {
+    selectedEntry.value.strategy.keys_secondary.keys = updated;
+    selectedSecondaryKeysRaw.value = updated.map(stringifyKeyword).join(', ');
+  } else {
+    selectedEntry.value.strategy.keys = updated;
+    selectedKeysRaw.value = updated.map(stringifyKeyword).join(', ');
+  }
+  syncEntriesDigestNow();
 }
 
 const selectedScanDepthText = computed({
@@ -5388,6 +5437,10 @@ watch(
     }
 
     syncExtraTextWithSelection();
+    mobileKeywordDraft.primary = '';
+    mobileKeywordDraft.secondary = '';
+    mobileKeywordAdding.primary = false;
+    mobileKeywordAdding.secondary = false;
     // Sync raw keyword text when entry selection changes
     selectedKeysRaw.value = selectedKeysText.value;
     selectedSecondaryKeysRaw.value = selectedSecondaryKeysText.value;
@@ -10640,6 +10693,13 @@ async function hardRefreshUncoalesced(options: HardRefreshOptions = {}): Promise
 }
 
 async function saveCurrentWorldbook(): Promise<void> {
+  if (isMobile.value && selectedEntry.value) {
+    commitKeysFromRaw();
+    commitSecondaryKeysFromRaw();
+    addMobileKeywords(false);
+    addMobileKeywords(true);
+  }
+  syncEntriesDigestNow();
   if (!selectedWorldbookName.value) {
     toastr.warning('请先选择世界书');
     return;
@@ -20386,3 +20446,6 @@ watch(hasUnsavedChanges, (val) => {
 .is-mobile .mobile-entry-list .mobile-archive-entry::before { display: none; }
 .is-mobile .mobile-pane .editor-keyword-grid :deep(textarea) { min-height: 48px !important; height: 48px !important; }
 </style>
+
+<style scoped src="./mobile-browse-redesign.css"></style>
+<style scoped src="./mobile-editor-redesign.css"></style>
