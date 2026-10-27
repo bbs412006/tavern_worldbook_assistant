@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>世界书助手 · 新视觉设计稿</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page-bg: #e9ece5;
+    --page-bg-2: #f3f4ee;
+    --page-panel: rgba(250, 251, 246, .82);
+    --page-text: #18211c;
+    --page-muted: #68736c;
+    --page-line: #d6dcd3;
+    --page-accent: #0e7c66;
+    --page-accent-soft: #dfeee8;
+    --radius-xs: 7px;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+
+    --m-bg: #eef1e9;
+    --m-panel: #f9faf5;
+    --m-surface: #ffffff;
+    --m-surface-2: #f3f5ef;
+    --m-surface-3: #e9ede4;
+    --m-text: #17201b;
+    --m-muted: #68746c;
+    --m-faint: #96a097;
+    --m-line: #dfe4da;
+    --m-line-strong: #c9d2c6;
+    --m-primary: #0e7c66;
+    --m-primary-soft: #e2f1ec;
+    --m-primary-ink: #075a49;
+    --m-accent: #b45d09;
+    --m-accent-soft: #fbedd8;
+    --m-danger: #b2473f;
+    --m-danger-soft: #f8e5e1;
+    --m-blue: #2f6fb5;
+    --m-blue-soft: #e6eff9;
+    --m-shadow: 0 22px 60px rgba(30, 42, 34, .11);
+    --m-shadow-sm: 0 8px 24px rgba(30, 42, 34, .07);
+    --m-overlay: rgba(18, 27, 22, .38);
+  }
+
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --page-bg: #0b100d;
+    --page-bg-2: #111713;
+    --page-panel: rgba(18, 25, 21, .82);
+    --page-text: #e9efea;
+    --page-muted: #91a097;
+    --page-line: #28352e;
+    --page-accent: #5ad9b4;
+    --page-accent-soft: rgba(90, 217, 180, .12);
+
+    --m-bg: #0d120f;
+    --m-panel: #131a16;
+    --m-surface: #18211c;
+    --m-surface-2: #1d2923;
+    --m-surface-3: #25342c;
+    --m-text: #e9efea;
+    --m-muted: #96a49b;
+    --m-faint: #68786e;
+    --m-line: #29362f;
+    --m-line-strong: #3a4b41;
+    --m-primary: #5ad9b4;
+    --m-primary-soft: rgba(90, 217, 180, .12);
+    --m-primary-ink: #9beed4;
+    --m-accent: #e9b35e;
+    --m-accent-soft: rgba(233, 179, 94, .13);
+    --m-danger: #ee8a80;
+    --m-danger-soft: rgba(238, 138, 128, .12);
+    --m-blue: #79b8f0;
+    --m-blue-soft: rgba(121, 184, 240, .12);
+    --m-shadow: 0 24px 70px rgba(0, 0, 0, .48);
+    --m-shadow-sm: 0 10px 28px rgba(0, 0, 0, .32);
+    --m-overlay: rgba(0, 0, 0, .58);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 600px at 12% -8%, var(--page-accent-soft), transparent 58%),
+      radial-gradient(900px 500px at 92% 4%, rgba(180, 93, 9, .07), transparent 55%),
+      var(--page-bg);
+    color: var(--page-text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button, input, textarea, select { font: inherit; }
+  button { color: inherit; }
+  svg.icon { width: 16px; height: 16px; display: block; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+  .site-head {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-height: 66px;
+    padding: 12px clamp(18px, 3vw, 42px);
+    border-bottom: 1px solid color-mix(in srgb, var(--page-line) 80%, transparent);
+    background: color-mix(in srgb, var(--page-bg) 78%, transparent);
+    backdrop-filter: blur(18px) saturate(1.2);
+  }
+  .site-brand { display: flex; align-items: center; gap: 11px; min-width: 220px; }
+  .site-mark {
+    display: grid; place-items: center;
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: var(--page-text);
+    color: var(--page-bg);
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -.06em;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+  }
+  .site-brand b { display: block; font-size: 13px; letter-spacing: -.01em; }
+  .site-brand small { display: block; margin-top: 2px; font-family: var(--mono); font-size: 9px; letter-spacing: .13em; color: var(--page-muted); }
+  .site-head-meta { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--page-muted); font-size: 11px; }
+  .site-head-meta .version-chip { padding: 5px 8px; border: 1px solid var(--page-line); border-radius: 999px; font-family: var(--mono); font-size: 9px; letter-spacing: .08em; }
+  .theme-switch { display: flex; padding: 3px; border: 1px solid var(--page-line); border-radius: 999px; background: color-mix(in srgb, var(--page-panel) 75%, transparent); }
+  .theme-switch button {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px;
+    border: 0; border-radius: 999px;
+    background: transparent;
+    color: var(--page-muted);
+    font-size: 11px;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+  }
+  .theme-switch button.on { background: var(--page-text); color: var(--page-bg); }
+  .theme-switch svg { width: 13px; height: 13px; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 222px minmax(0, 1fr);
+    gap: clamp(22px, 3vw, 48px);
+    width: min(1460px, calc(100vw - 36px));
+    margin: 0 auto;
+    padding: 30px 0 80px;
+  }
+  .toc { position: sticky; top: 92px; align-self: start; }
+  .toc-label { margin: 0 0 14px; font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--page-muted); }
+  .toc a {
+    position: relative;
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 0 8px 16px;
+    color: var(--page-muted);
+    font-size: 12px;
+    transition: color .16s ease;
+  }
+  .toc a::before {
+    content: "";
+    position: absolute; left: 0; top: 50%;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--page-line);
+    transform: translateY(-50%);
+    transition: background .16s ease, transform .16s ease;
+  }
+  .toc a:hover, .toc a.active { color: var(--page-text); }
+  .toc a.active::before { background: var(--page-accent); transform: translateY(-50%) scale(1.5); }
+  .toc-rule { margin: 16px 0; border: 0; border-top: 1px solid var(--page-line); }
+  .toc-note { padding-left: 16px; font-size: 10px; line-height: 1.7; color: var(--page-muted); }
+  .toc-note b { color: var(--page-text); font-weight: 600; }
+
+  main { min-width: 0; }
+  section { scroll-margin-top: 96px; margin-bottom: clamp(54px, 7vw, 92px); }
+  .section-head { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 20px; }
+  .section-head .index { padding-bottom: 3px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--page-muted); }
+  .section-head h2 { margin: 0; font-size: clamp(22px, 2.2vw, 30px); font-weight: 620; letter-spacing: -.035em; line-height: 1.15; }
+  .section-head p { max-width: 470px; margin: 0 0 2px auto; color: var(--page-muted); font-size: 12px; line-height: 1.65; text-align: right; }
+
+  .hero { padding-top: 10px; }
+  .hero-eyebrow { display: flex; align-items: center; gap: 5px; margin: 0 0 18px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--page-muted); }
+  .hero-eyebrow i { display: block; width: 22px; height: 1px; background: var(--page-accent); }
+  .hero h1 { max-width: 820px; margin: 0; font-size: clamp(38px, 5.2vw, 72px); font-weight: 600; letter-spacing: -.055em; line-height: 1.02; }
+  .hero h1 em { font-style: normal; color: var(--page-accent); }
+  .hero-lede { max-width: 710px; margin: 22px 0 0; color: var(--page-muted); font-size: 14px; line-height: 1.8; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .hero-meta span { padding: 7px 10px; border: 1px solid var(--page-line); border-radius: 999px; background: color-mix(in srgb, var(--page-panel) 55%, transparent); color: var(--page-muted); font-size: 10px; }
+  .hero-meta span:first-child { border-color: color-mix(in srgb, var(--page-accent) 28%, var(--page-line)); color: var(--page-accent); }
+  .hero-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 42px; }
+  .hero-card { min-height: 122px; padding: 17px 18px; border: 1px solid var(--page-line); border-radius: var(--radius-md); background: color-mix(in srgb, var(--page-panel) 65%, transparent); }
+  .hero-card .metric { font-family: var(--mono); font-size: 25px; letter-spacing: -.06em; }
+  .hero-card .metric small { font-family: var(--font); font-size: 10px; letter-spacing: 0; color: var(--page-muted); }
+  .hero-card b { display: block; margin-top: 8px; font-size: 12px; font-weight: 600; }
+  .hero-card p { margin: 4px 0 0; color: var(--page-muted); font-size: 10px; line-height: 1.6; }
+
+  .principle-grid { display: grid; grid-template-columns: 1.15fr .85fr .85fr; gap: 10px; }
+  .principle {
+    position: relative;
+    min-height: 190px;
+    padding: 22px;
+    overflow: hidden;
+    border: 1px solid var(--page-line);
+    border-radius: var(--radius-lg);
+    background: var(--page-panel);
+  }
+  .principle:first-child { background: var(--page-text); color: var(--page-bg); }
+  .principle:first-child p { color: color-mix(in srgb, var(--page-bg) 64%, transparent); }
+  .principle .num { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; opacity: .55; }
+  .principle h3 { margin: 34px 0 8px; font-size: 17px; font-weight: 600; letter-spacing: -.025em; }
+  .principle p { max-width: 260px; margin: 0; color: var(--page-muted); font-size: 11px; line-height: 1.75; }
+  .principle .motif { position: absolute; right: 18px; bottom: 15px; font-family: var(--mono); font-size: 46px; line-height: 1; letter-spacing: -.1em; opacity: .07; }
+
+  .token-grid { display: grid; grid-template-columns: 1.35fr .85fr .85fr; gap: 10px; }
+  .token-card { padding: 20px; border: 1px solid var(--page-line); border-radius: var(--radius-lg); background: var(--page-panel); }
+  .token-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .token-title b { font-size: 11px; font-weight: 600; }
+  .token-title span { font-family: var(--mono); font-size: 8px; letter-spacing: .1em; color: var(--page-muted); }
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .swatch { position: relative; height: 62px; border: 1px solid var(--page-line); border-radius: 9px; overflow: hidden; }
+  .swatch span { position: absolute; left: 7px; bottom: 6px; font-family: var(--mono); font-size: 7px; letter-spacing: .04em; color: #fff; mix-blend-mode: difference; }
+  .type-stack { display: flex; flex-direction: column; gap: 10px; }
+  .type-line { display: flex; align-items: baseline; gap: 10px; padding-bottom: 9px; border-bottom: 1px solid var(--page-line); }
+  .type-line:last-child { padding-bottom: 0; border-bottom: 0; }
+  .type-line span { width: 24px; font-family: var(--mono); font-size: 8px; color: var(--page-muted); }
+  .type-line b { font-size: 18px; font-weight: 600; letter-spacing: -.03em; }
+  .type-line em { font-style: normal; font-size: 11px; color: var(--page-muted); }
+  .scale-bars { display: flex; align-items: flex-end; gap: 7px; height: 63px; margin-bottom: 14px; }
+  .scale-bars i { display: block; width: 20px; border-radius: 3px 3px 0 0; background: var(--page-accent); opacity: .22; }
+  .scale-bars i:nth-child(2) { height: 28%; opacity: .3; } .scale-bars i:nth-child(3) { height: 42%; opacity: .4; } .scale-bars i:nth-child(4) { height: 58%; opacity: .52; } .scale-bars i:nth-child(5) { height: 74%; opacity: .68; } .scale-bars i:nth-child(6) { height: 100%; opacity: .9; }
+  .scale-caption { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 8px; color: var(--page-muted); }
+  .icon-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  .icon-tile { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--page-line); border-radius: 9px; background: color-mix(in srgb, var(--page-bg-2) 70%, transparent); color: var(--page-muted); }
+
+  .canvas-shell {
+    position: relative;
+    padding: clamp(12px, 2vw, 24px);
+    overflow-x: auto;
+    border: 1px solid var(--page-line);
+    border-radius: var(--radius-xl);
+    background:
+      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--page-line) 55%, transparent) 1px, transparent 0) 0 0 / 18px 18px,
+      color-mix(in srgb, var(--page-bg-2) 72%, transparent);
+  }
+  .canvas-caption { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; padding: 0 2px; color: var(--page-muted); font-size: 10px; }
+  .canvas-caption b { color: var(--page-text); font-weight: 600; }
+  .canvas-caption span { padding: 4px 7px; border: 1px solid var(--page-line); border-radius: 999px; font-family: var(--mono); font-size: 8px; letter-spacing: .04em; }
+  .artboard {
+    width: 100%;
+    min-width: 1060px;
+    overflow: hidden;
+    border: 1px solid var(--m-line-strong);
+    border-radius: var(--radius-lg);
+    background: var(--m-bg);
+    color: var(--m-text);
+    box-shadow: var(--m-shadow);
+    font-size: 12px;
+  }
+  .artboard, .artboard * { letter-spacing: 0; }
+  .mock-note { display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 2px 0; color: var(--page-muted); font-size: 10px; line-height: 1.6; }
+  .mock-note span { display: inline-flex; align-items: center; gap: 5px; }
+  .mock-note span::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--page-accent); }
+
+  /* shared mock atoms */
+  .m-iconbtn { display: grid; place-items: center; width: 29px; height: 29px; padding: 0; border: 1px solid var(--m-line); border-radius: 8px; background: var(--m-surface); color: var(--m-muted); }
+  .m-iconbtn.ghost { border-color: transparent; background: transparent; }
+  .m-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 31px; padding: 0 11px; border: 1px solid var(--m-line); border-radius: 8px; background: var(--m-surface); color: var(--m-text); font-size: 10px; font-weight: 560; white-space: nowrap; }
+  .m-btn.primary { border-color: var(--m-primary); background: var(--m-primary); color: var(--m-bg); }
+  .m-btn.soft { border-color: var(--m-primary-soft); background: var(--m-primary-soft); color: var(--m-primary-ink); }
+  .m-btn.danger { border-color: var(--m-danger-soft); background: var(--m-danger-soft); color: var(--m-danger); }
+  .m-btn.sm { height: 26px; padding: 0 8px; font-size: 9px; }
+  .m-kbd { padding: 2px 5px; border: 1px solid var(--m-line); border-radius: 5px; background: var(--m-surface-2); color: var(--m-faint); font-family: var(--mono); font-size: 8px; }
+  .m-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border: 1px solid var(--m-line); border-radius: 999px; background: var(--m-surface); color: var(--m-muted); font-size: 8px; white-space: nowrap; }
+  .m-chip i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .m-chip.green { border-color: color-mix(in srgb, var(--m-primary) 22%, var(--m-line)); background: var(--m-primary-soft); color: var(--m-primary-ink); }
+  .m-chip.blue { border-color: color-mix(in srgb, var(--m-blue) 22%, var(--m-line)); background: var(--m-blue-soft); color: var(--m-blue); }
+  .m-chip.amber { border-color: color-mix(in srgb, var(--m-accent) 22%, var(--m-line)); background: var(--m-accent-soft); color: var(--m-accent); }
+  .m-chip.red { border-color: color-mix(in srgb, var(--m-danger) 22%, var(--m-line)); background: var(--m-danger-soft); color: var(--m-danger); }
+  .m-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--m-primary); box-shadow: 0 0 0 3px var(--m-primary-soft); }
+  .m-label { font-family: var(--mono); font-size: 8px; letter-spacing: .08em; color: var(--m-faint); }
+  .avatar { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--m-surface-3); color: var(--m-muted); font-size: 8px; font-weight: 600; }
+
+  /* desktop app */
+  .desktop-app { height: 744px; display: flex; flex-direction: column; }
+  .appbar {
+    display: flex; align-items: center; gap: 14px;
+    height: 58px; padding: 0 16px;
+    border-bottom: 1px solid var(--m-line);
+    background: color-mix(in srgb, var(--m-panel) 93%, transparent);
+  }
+  .app-brand { display: flex; align-items: center; gap: 8px; min-width: 184px; }
+  .app-brand .mini-mark { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 8px; background: var(--m-primary); color: var(--m-bg); font-family: var(--mono); font-size: 10px; font-weight: 700; }
+  .app-brand b { display: block; font-size: 11px; font-weight: 600; }
+  .app-brand small { display: block; margin-top: 1px; font-family: var(--mono); font-size: 7px; letter-spacing: .11em; color: var(--m-faint); }
+  .app-sep { width: 1px; height: 22px; background: var(--m-line); }
+  .app-crumb { display: flex; align-items: center; gap: 7px; color: var(--m-faint); font-size: 10px; white-space: nowrap; }
+  .app-crumb b { color: var(--m-text); font-weight: 560; }
+  .app-bindings { display: flex; gap: 4px; }
+  .app-search {
+    display: flex; align-items: center; gap: 7px;
+    flex: 1; min-width: 150px; max-width: 310px; height: 31px;
+    margin-left: auto; padding: 0 9px;
+    border: 1px solid var(--m-line); border-radius: 8px;
+    background: var(--m-surface-2); color: var(--m-faint);
+    font-size: 9px;
+  }
+  .app-search .m-kbd { margin-left: auto; }
+  .app-actions { display: flex; align-items: center; gap: 6px; }
+  .save-state { display: flex; align-items: center; gap: 5px; margin-right: 4px; color: var(--m-muted); font-size: 8px; white-space: nowrap; }
+  .save-state i { width: 6px; height: 6px; border-radius: 50%; background: var(--m-primary); }
+  .workspace { display: grid; grid-template-columns: 212px 326px minmax(0, 1fr); flex: 1; min-height: 0; }
+  .rail { display: flex; flex-direction: column; min-height: 0; padding: 13px 11px 10px; border-right: 1px solid var(--m-line); background: color-mix(in srgb, var(--m-panel) 62%, var(--m-bg)); }
+  .switch-card { padding: 11px; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-surface); }
+  .switch-card .m-label { display: block; margin-bottom: 7px; }
+  .switch-title { display: flex; align-items: center; gap: 8px; }
+  .switch-title .book-glyph { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 7px; background: var(--m-primary-soft); color: var(--m-primary-ink); }
+  .switch-title b { flex: 1; font-size: 11px; font-weight: 600; }
+  .switch-title svg { color: var(--m-faint); }
+  .switch-meta { display: flex; gap: 10px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--m-line); color: var(--m-faint); font-size: 8px; }
+  .switch-meta b { color: var(--m-text); font-family: var(--mono); font-size: 9px; font-weight: 500; }
+  .mode-switch { display: flex; gap: 2px; margin-top: 10px; padding: 2px; border: 1px solid var(--m-line); border-radius: 7px; background: var(--m-surface-2); }
+  .mode-switch span { flex: 1; padding: 5px 0; border-radius: 5px; color: var(--m-muted); font-size: 8px; text-align: center; }
+  .mode-switch span.on { background: var(--m-surface); color: var(--m-text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .rail-nav { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; }
+  .rail-nav a { display: flex; align-items: center; gap: 8px; height: 31px; padding: 0 8px; border-radius: 7px; color: var(--m-muted); font-size: 10px; }
+  .rail-nav a.active { background: var(--m-primary-soft); color: var(--m-primary-ink); font-weight: 560; }
+  .rail-nav a .count { margin-left: auto; font-family: var(--mono); font-size: 8px; color: var(--m-faint); }
+  .rail-section { margin-top: 17px; }
+  .rail-section-head { display: flex; align-items: center; justify-content: space-between; padding: 0 8px 7px; }
+  .rail-section-head b { font-family: var(--mono); font-size: 8px; letter-spacing: .1em; color: var(--m-faint); font-weight: 500; }
+  .tag-row { display: flex; align-items: center; gap: 7px; height: 27px; padding: 0 8px; border-radius: 6px; color: var(--m-muted); font-size: 9px; }
+  .tag-row span { width: 5px; height: 5px; border-radius: 50%; background: var(--tag-color, var(--m-primary)); }
+  .tag-row b { margin-left: auto; font-family: var(--mono); font-size: 8px; font-weight: 400; color: var(--m-faint); }
+  .rail-bottom { margin-top: auto; padding: 10px; border: 1px solid var(--m-line); border-radius: 9px; background: var(--m-surface); }
+  .rail-bottom .row { display: flex; align-items: center; gap: 6px; font-size: 8px; color: var(--m-muted); }
+  .rail-bottom .bar { height: 3px; margin-top: 8px; overflow: hidden; border-radius: 99px; background: var(--m-surface-3); }
+  .rail-bottom .bar i { display: block; width: 64%; height: 100%; border-radius: inherit; background: var(--m-primary); }
+
+  .entry-pane { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--m-line); background: var(--m-panel); }
+  .pane-head { display: flex; align-items: center; gap: 8px; height: 50px; padding: 0 13px; border-bottom: 1px solid var(--m-line); }
+  .pane-head h3 { margin: 0; font-size: 12px; font-weight: 600; }
+  .pane-head .sub { color: var(--m-faint); font-family: var(--mono); font-size: 8px; }
+  .pane-head .actions { display: flex; gap: 5px; margin-left: auto; }
+  .pane-filters { display: flex; align-items: center; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--m-line); }
+  .pane-filters .m-chip { padding: 4px 7px; }
+  .pane-filters .m-chip.on { border-color: var(--m-primary-soft); background: var(--m-primary-soft); color: var(--m-primary-ink); }
+  .entry-scroll { flex: 1; min-height: 0; padding: 5px 7px 8px; overflow: hidden; }
+  .entry-row { position: relative; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 7px; padding: 9px 9px 9px 10px; border: 1px solid transparent; border-radius: 8px; }
+  .entry-row + .entry-row { margin-top: 1px; }
+  .entry-row.selected { border-color: color-mix(in srgb, var(--m-primary) 26%, var(--m-line)); background: var(--m-surface); box-shadow: 0 2px 8px rgba(0,0,0,.03); }
+  .entry-row.selected::before { content: ""; position: absolute; left: -1px; top: 11px; bottom: 11px; width: 2px; border-radius: 2px; background: var(--m-primary); }
+  .entry-status { width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; background: var(--m-primary); box-shadow: 0 0 0 3px var(--m-primary-soft); }
+  .entry-status.constant { background: var(--m-blue); box-shadow: 0 0 0 3px var(--m-blue-soft); }
+  .entry-status.off { background: var(--m-faint); box-shadow: none; }
+  .entry-title { display: flex; align-items: center; gap: 5px; }
+  .entry-title b { overflow: hidden; font-size: 10px; font-weight: 590; text-overflow: ellipsis; white-space: nowrap; }
+  .entry-title .lock { color: var(--m-faint); }
+  .entry-row p { margin: 4px 0 0; overflow: hidden; color: var(--m-muted); font-size: 8px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+  .entry-meta { display: flex; align-items: center; gap: 5px; margin-top: 6px; color: var(--m-faint); font-family: var(--mono); font-size: 7px; }
+  .entry-check { width: 13px; height: 13px; margin-top: 2px; border: 1px solid var(--m-line-strong); border-radius: 4px; background: var(--m-surface); }
+  .entry-row.selected .entry-check { border-color: var(--m-primary); background: var(--m-primary); }
+  .entry-row.selected .entry-check::after { content: "✓"; display: block; color: var(--m-bg); font-size: 8px; line-height: 11px; text-align: center; }
+  .entry-footer { display: flex; align-items: center; gap: 8px; height: 37px; padding: 0 13px; border-top: 1px solid var(--m-line); color: var(--m-faint); font-size: 8px; }
+  .entry-footer .progress { flex: 1; height: 3px; overflow: hidden; border-radius: 99px; background: var(--m-surface-3); }
+  .entry-footer .progress i { display: block; width: 38%; height: 100%; border-radius: inherit; background: var(--m-primary); }
+
+  .editor-pane { display: flex; flex-direction: column; min-width: 0; background: var(--m-panel); }
+  .doc-head { padding: 16px 20px 13px; border-bottom: 1px solid var(--m-line); }
+  .doc-eyebrow { display: flex; align-items: center; gap: 7px; color: var(--m-faint); font-family: var(--mono); font-size: 8px; letter-spacing: .06em; }
+  .doc-head-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 7px; }
+  .doc-head h2 { margin: 0; font-size: 20px; font-weight: 620; letter-spacing: -.035em; line-height: 1.18; }
+  .doc-head p { margin: 5px 0 0; color: var(--m-muted); font-size: 9px; }
+  .doc-actions { display: flex; gap: 4px; margin-left: auto; }
+  .meta-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--m-line); }
+  .meta-cell { padding: 9px 13px; border-right: 1px solid var(--m-line); }
+  .meta-cell:last-child { border-right: 0; }
+  .meta-cell span { display: block; color: var(--m-faint); font-size: 7px; }
+  .meta-cell b { display: block; margin-top: 4px; overflow: hidden; font-size: 9px; font-weight: 560; text-overflow: ellipsis; white-space: nowrap; }
+  .meta-cell b em { font-style: normal; color: var(--m-primary); }
+  .editor-scroll { flex: 1; min-height: 0; padding: 15px 20px 12px; overflow: hidden; }
+  .editor-section + .editor-section { margin-top: 14px; }
+  .editor-section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .editor-section-head b { font-size: 9px; font-weight: 600; }
+  .editor-section-head span { color: var(--m-faint); font-family: var(--mono); font-size: 7px; }
+  .tag-editor { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag-editor .m-chip { gap: 6px; }
+  .tag-editor .m-chip button { display: grid; place-items: center; width: 12px; height: 12px; padding: 0; border: 0; background: transparent; color: var(--m-faint); font-size: 9px; }
+  .paper {
+    min-height: 252px;
+    padding: 15px 17px;
+    border: 1px solid var(--m-line);
+    border-radius: 9px;
+    background:
+      linear-gradient(to bottom, transparent 31px, color-mix(in srgb, var(--m-line) 44%, transparent) 32px) 0 0 / 100% 32px,
+      var(--m-surface);
+    color: color-mix(in srgb, var(--m-text) 92%, transparent);
+    font-family: "Songti SC", "SimSun", var(--font);
+    font-size: 11px;
+    line-height: 2.05;
+  }
+  .paper p { margin: 0 0 10px; }
+  .paper p:last-child { margin-bottom: 0; }
+  .paper .cursor { display: inline-block; width: 1px; height: 13px; margin-left: 1px; background: var(--m-primary); vertical-align: -2px; }
+  .paper .highlight { padding: 1px 2px; border-radius: 3px; background: var(--m-accent-soft); color: var(--m-accent); }
+  .editor-foot { display: flex; align-items: center; gap: 8px; height: 39px; padding: 0 20px; border-top: 1px solid var(--m-line); color: var(--m-faint); font-size: 8px; }
+  .editor-foot .dirty { color: var(--m-accent); }
+  .editor-foot .grow { flex: 1; }
+
+  .appstatus { display: flex; align-items: center; gap: 10px; height: 28px; padding: 0 13px; border-top: 1px solid var(--m-line); background: var(--m-surface-2); color: var(--m-faint); font-family: var(--mono); font-size: 7px; }
+  .appstatus .grow { flex: 1; }
+
+  /* focus mode */
+  .focus-app { position: relative; height: 700px; overflow: hidden; background: var(--m-bg); }
+  .focus-app::before { content: ""; position: absolute; inset: 0; background: radial-gradient(700px 420px at 50% 20%, var(--m-primary-soft), transparent 66%); opacity: .55; pointer-events: none; }
+  .focus-topbar { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; height: 55px; padding: 0 17px; border-bottom: 1px solid var(--m-line); background: color-mix(in srgb, var(--m-panel) 88%, transparent); backdrop-filter: blur(10px); }
+  .focus-topbar .back { display: flex; align-items: center; gap: 5px; color: var(--m-muted); font-size: 9px; }
+  .focus-topbar .divider { width: 1px; height: 20px; background: var(--m-line); }
+  .focus-topbar .crumb { color: var(--m-faint); font-size: 9px; }
+  .focus-topbar .crumb b { color: var(--m-text); font-weight: 560; }
+  .focus-topbar .seg { display: flex; gap: 2px; margin-left: auto; padding: 2px; border: 1px solid var(--m-line); border-radius: 7px; background: var(--m-surface-2); }
+  .focus-topbar .seg span { padding: 5px 9px; border-radius: 5px; color: var(--m-muted); font-size: 8px; }
+  .focus-topbar .seg span.on { background: var(--m-surface); color: var(--m-text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .focus-main { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) 268px; gap: 24px; width: 100%; height: calc(100% - 55px); padding: 28px 34px 24px; }
+  .focus-stage { display: flex; justify-content: center; min-width: 0; overflow: hidden; }
+  .focus-paper { width: 620px; max-width: 100%; }
+  .focus-paper .kicker { display: flex; align-items: center; gap: 8px; color: var(--m-primary); font-family: var(--mono); font-size: 8px; letter-spacing: .11em; }
+  .focus-paper h2 { margin: 10px 0 0; font-size: 30px; font-weight: 600; letter-spacing: -.045em; line-height: 1.12; }
+  .focus-paper .dek { margin: 10px 0 0; color: var(--m-muted); font-size: 10px; line-height: 1.65; }
+  .focus-paper .meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 14px; }
+  .focus-paper .body { margin-top: 22px; color: var(--m-text); font-family: "Songti SC", "SimSun", var(--font); font-size: 13px; line-height: 2.15; }
+  .focus-paper .body p { margin: 0 0 16px; }
+  .focus-paper .body p:first-child::first-letter { float: left; margin: 7px 5px 0 0; color: var(--m-primary); font-size: 38px; line-height: .85; }
+  .focus-paper .body em { padding: 1px 2px; border-radius: 3px; background: var(--m-accent-soft); color: var(--m-accent); font-style: normal; }
+  .focus-paper .inline-note { display: flex; gap: 9px; margin: 19px 0; padding: 11px 13px; border-left: 2px solid var(--m-primary); border-radius: 0 7px 7px 0; background: var(--m-primary-soft); color: var(--m-primary-ink); font-family: var(--font); font-size: 9px; line-height: 1.65; }
+  .focus-inspector { overflow: hidden; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-panel); box-shadow: var(--m-shadow-sm); }
+  .inspector-head { display: flex; align-items: center; gap: 7px; height: 43px; padding: 0 12px; border-bottom: 1px solid var(--m-line); }
+  .inspector-head b { font-size: 10px; font-weight: 600; }
+  .inspector-head .m-chip { margin-left: auto; }
+  .inspector-body { padding: 11px 12px; }
+  .inspector-group { padding: 10px 0; border-bottom: 1px solid var(--m-line); }
+  .inspector-group:first-child { padding-top: 0; }
+  .inspector-group:last-child { border-bottom: 0; }
+  .inspector-group .m-label { display: block; margin-bottom: 7px; }
+  .inspector-line { display: flex; align-items: center; justify-content: space-between; min-height: 25px; color: var(--m-muted); font-size: 9px; }
+  .inspector-line b { color: var(--m-text); font-weight: 500; }
+  .toggle { position: relative; width: 27px; height: 16px; border-radius: 99px; background: var(--m-primary); }
+  .toggle::after { content: ""; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--m-bg); }
+  .focus-tools { position: absolute; z-index: 3; bottom: 20px; left: 50%; display: flex; align-items: center; gap: 2px; padding: 4px; border: 1px solid var(--m-line); border-radius: 10px; background: color-mix(in srgb, var(--m-panel) 88%, transparent); box-shadow: var(--m-shadow-sm); backdrop-filter: blur(12px); transform: translateX(-50%); }
+  .focus-tools .tool { display: flex; align-items: center; gap: 5px; height: 27px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--m-muted); font-size: 8px; white-space: nowrap; }
+  .focus-tools .tool.on { background: var(--m-surface); color: var(--m-text); }
+  .focus-tools .tool.danger { color: var(--m-danger); }
+  .focus-tools .sep { width: 1px; height: 17px; margin: 0 3px; background: var(--m-line); }
+
+  /* cross copy */
+  .cross-app { display: flex; flex-direction: column; height: 700px; }
+  .cross-top { display: flex; align-items: center; gap: 12px; height: 58px; padding: 0 17px; border-bottom: 1px solid var(--m-line); background: var(--m-panel); }
+  .cross-top .title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+  .cross-top .route { display: flex; align-items: center; gap: 6px; color: var(--m-faint); font-size: 9px; }
+  .cross-top .route b { color: var(--m-text); font-weight: 560; }
+  .cross-top .actions { display: flex; gap: 5px; margin-left: auto; }
+  .cross-progress { display: flex; align-items: center; gap: 0; padding: 11px 18px; border-bottom: 1px solid var(--m-line); background: var(--m-surface); }
+  .cross-step { display: flex; align-items: center; gap: 6px; color: var(--m-faint); font-size: 8px; }
+  .cross-step .n { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid var(--m-line); border-radius: 50%; background: var(--m-surface-2); font-family: var(--mono); font-size: 7px; }
+  .cross-step.done { color: var(--m-primary-ink); }
+  .cross-step.done .n { border-color: var(--m-primary); background: var(--m-primary); color: var(--m-bg); }
+  .cross-step.on { color: var(--m-text); }
+  .cross-step.on .n { border-color: var(--m-primary); background: var(--m-primary-soft); color: var(--m-primary-ink); }
+  .cross-line { width: 38px; height: 1px; margin: 0 10px; background: var(--m-line); }
+  .cross-summary { display: flex; gap: 7px; margin-left: auto; }
+  .summary-stat { padding: 5px 9px; border: 1px solid var(--m-line); border-radius: 7px; background: var(--m-surface-2); }
+  .summary-stat span { display: block; color: var(--m-faint); font-size: 7px; }
+  .summary-stat b { display: block; margin-top: 2px; font-family: var(--mono); font-size: 11px; font-weight: 500; }
+  .summary-stat b.amber { color: var(--m-accent); } .summary-stat b.green { color: var(--m-primary); } .summary-stat b.red { color: var(--m-danger); }
+  .cross-body { display: grid; grid-template-columns: 1fr 1fr; flex: 1; min-height: 0; gap: 10px; padding: 14px 17px 12px; background: var(--m-bg); }
+  .copy-column { display: flex; flex-direction: column; min-height: 0; overflow: hidden; border: 1px solid var(--m-line); border-radius: 11px; background: var(--m-panel); }
+  .copy-column-head { display: flex; align-items: center; gap: 7px; height: 44px; padding: 0 12px; border-bottom: 1px solid var(--m-line); }
+  .copy-column-head .role { display: grid; place-items: center; width: 21px; height: 21px; border-radius: 6px; background: var(--m-primary-soft); color: var(--m-primary-ink); font-family: var(--mono); font-size: 8px; }
+  .copy-column.target .role { background: var(--m-accent-soft); color: var(--m-accent); }
+  .copy-column-head b { font-size: 9px; font-weight: 600; }
+  .copy-column-head .m-chip { margin-left: auto; }
+  .copy-toolbar { display: flex; align-items: center; gap: 5px; padding: 7px 10px; border-bottom: 1px solid var(--m-line); background: var(--m-surface-2); color: var(--m-faint); font-size: 7px; }
+  .copy-toolbar .grow { flex: 1; }
+  .diff-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 7px; padding: 8px 11px; border-bottom: 1px solid var(--m-line); }
+  .diff-row:last-child { border-bottom: 0; }
+  .diff-row.changed { background: color-mix(in srgb, var(--m-accent-soft) 42%, transparent); }
+  .diff-row.new { background: color-mix(in srgb, var(--m-primary-soft) 45%, transparent); }
+  .diff-box { width: 12px; height: 12px; margin-top: 3px; border: 1px solid var(--m-line-strong); border-radius: 3px; background: var(--m-surface); }
+  .diff-row.changed .diff-box, .diff-row.new .diff-box { border-color: var(--m-primary); background: var(--m-primary); }
+  .diff-row.changed .diff-box::after, .diff-row.new .diff-box::after { content: "✓"; display: block; color: var(--m-bg); font-size: 8px; line-height: 10px; text-align: center; }
+  .diff-row b { display: block; overflow: hidden; font-size: 9px; font-weight: 560; text-overflow: ellipsis; white-space: nowrap; }
+  .diff-row p { display: block; margin: 4px 0 0; overflow: hidden; color: var(--m-muted); font-size: 8px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+  .diff-row .tag { color: var(--m-faint); font-family: var(--mono); font-size: 7px; white-space: nowrap; }
+  .diff-row.changed .tag { color: var(--m-accent); } .diff-row.new .tag { color: var(--m-primary); }
+  .cross-bottom { display: flex; align-items: center; gap: 8px; height: 54px; padding: 0 17px; border-top: 1px solid var(--m-line); background: var(--m-panel); }
+  .cross-bottom .selection { color: var(--m-muted); font-size: 8px; }
+  .cross-bottom .selection b { color: var(--m-text); font-family: var(--mono); font-size: 10px; font-weight: 500; }
+  .cross-bottom .grow { flex: 1; }
+  .cross-bottom .note { color: var(--m-faint); font-size: 7px; }
+
+  /* utility pages */
+  .utility-app { display: flex; flex-direction: column; height: 700px; }
+  .utility-topbar { display: flex; align-items: center; gap: 8px; height: 55px; padding: 0 17px; border-bottom: 1px solid var(--m-line); background: var(--m-panel); }
+  .utility-topbar .back { display: flex; align-items: center; gap: 5px; color: var(--m-muted); font-size: 9px; }
+  .utility-topbar .sep { width: 1px; height: 20px; background: var(--m-line); }
+  .utility-topbar .title { font-size: 12px; font-weight: 600; }
+  .utility-topbar .status { margin-left: auto; color: var(--m-faint); font-size: 8px; }
+  .utility-layout { display: grid; grid-template-columns: 192px minmax(0, 1fr); flex: 1; min-height: 0; }
+  .utility-nav { padding: 14px 11px; border-right: 1px solid var(--m-line); background: var(--m-panel); }
+  .utility-nav .m-label { padding: 0 8px 8px; }
+  .utility-nav a { display: flex; align-items: center; gap: 8px; height: 31px; padding: 0 8px; border-radius: 7px; color: var(--m-muted); font-size: 9px; }
+  .utility-nav a.on { background: var(--m-primary-soft); color: var(--m-primary-ink); font-weight: 560; }
+  .utility-nav .divider { margin: 13px 8px; border-top: 1px solid var(--m-line); }
+  .utility-nav .trust { margin-top: 22px; padding: 10px; border: 1px dashed var(--m-line-strong); border-radius: 8px; color: var(--m-faint); font-size: 7px; line-height: 1.7; }
+  .utility-nav .trust b { display: block; margin-bottom: 3px; color: var(--m-muted); font-size: 8px; font-weight: 600; }
+  .settings-content { min-height: 0; padding: 18px 21px; overflow: hidden; background: var(--m-bg); }
+  .settings-title { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 15px; }
+  .settings-title h2 { margin: 0; font-size: 19px; font-weight: 620; letter-spacing: -.035em; }
+  .settings-title span { padding-bottom: 2px; color: var(--m-faint); font-size: 8px; }
+  .settings-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 10px; }
+  .settings-card { padding: 14px; border: 1px solid var(--m-line); border-radius: 11px; background: var(--m-panel); }
+  .settings-card.wide { grid-column: 1 / -1; }
+  .settings-card-head { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+  .settings-card-head b { font-size: 10px; font-weight: 600; }
+  .settings-card-head span { margin-left: auto; color: var(--m-faint); font-size: 7px; }
+  .setting-line { display: flex; align-items: center; gap: 9px; min-height: 31px; padding: 4px 0; border-top: 1px solid var(--m-line); }
+  .settings-card-head + .setting-line { border-top: 0; }
+  .setting-line .copy { min-width: 0; }
+  .setting-line .copy b { display: block; color: var(--m-text); font-size: 9px; font-weight: 500; }
+  .setting-line .copy span { display: block; margin-top: 2px; color: var(--m-faint); font-size: 7px; line-height: 1.45; }
+  .setting-line .switch { flex: 0 0 auto; margin-left: auto; width: 27px; height: 16px; border-radius: 99px; background: var(--m-primary); position: relative; }
+  .setting-line .switch::after { content: ""; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--m-bg); }
+  .setting-line .switch.off { background: var(--m-surface-3); }
+  .setting-line .switch.off::after { right: auto; left: 2px; background: var(--m-faint); }
+  .theme-cards { display: flex; gap: 6px; }
+  .theme-card { flex: 1; padding: 7px; border: 1px solid var(--m-line); border-radius: 7px; background: var(--m-surface); }
+  .theme-card.on { border-color: var(--m-primary); box-shadow: inset 0 0 0 1px var(--m-primary); }
+  .theme-preview { display: flex; gap: 3px; height: 32px; margin-bottom: 6px; border-radius: 4px; overflow: hidden; }
+  .theme-preview i { flex: 1; display: block; }
+  .theme-card b { display: block; font-size: 7px; font-weight: 500; text-align: center; }
+  .version-box { padding: 9px 10px; border: 1px dashed var(--m-line-strong); border-radius: 7px; color: var(--m-muted); font-family: var(--mono); font-size: 7px; line-height: 1.7; }
+  .version-box b { color: var(--m-text); font-weight: 500; }
+  .section-foot { display: flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--m-faint); font-size: 7px; }
+  .section-foot .grow { flex: 1; }
+
+  .ai-content { display: grid; grid-template-columns: 138px minmax(0, 1fr) 360px; gap: 10px; min-height: 0; padding: 16px 18px; overflow: hidden; background: var(--m-bg); }
+  .ai-steps { padding: 9px 8px; border: 1px solid var(--m-line); border-radius: 9px; background: var(--m-panel); }
+  .ai-step { position: relative; display: flex; gap: 8px; padding: 9px 4px; color: var(--m-faint); font-size: 8px; line-height: 1.35; }
+  .ai-step:not(:last-child)::after { content: ""; position: absolute; left: 10px; top: 28px; bottom: -1px; width: 1px; background: var(--m-line); }
+  .ai-step .n { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid var(--m-line); border-radius: 50%; background: var(--m-surface-2); font-family: var(--mono); font-size: 7px; }
+  .ai-step.done { color: var(--m-primary-ink); }
+  .ai-step.done .n { border-color: var(--m-primary); background: var(--m-primary); color: var(--m-bg); }
+  .ai-step.on { color: var(--m-text); }
+  .ai-step.on .n { border-color: var(--m-primary); background: var(--m-primary-soft); color: var(--m-primary-ink); }
+  .ai-step b { display: block; margin-bottom: 2px; font-size: 8px; font-weight: 560; }
+  .ai-step span { display: block; font-size: 7px; }
+  .ai-form { min-height: 0; overflow: hidden; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-panel); }
+  .ai-form-head { display: flex; align-items: center; gap: 7px; height: 43px; padding: 0 13px; border-bottom: 1px solid var(--m-line); }
+  .ai-form-head b { font-size: 10px; font-weight: 600; }
+  .ai-form-head .m-chip { margin-left: auto; }
+  .ai-form-body { padding: 12px 14px; }
+  .field-box { margin-bottom: 10px; }
+  .field-box > span { display: block; margin-bottom: 5px; color: var(--m-muted); font-size: 8px; }
+  .field-input { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 9px; border: 1px solid var(--m-line); border-radius: 7px; background: var(--m-surface); color: var(--m-text); font-size: 9px; }
+  .field-input svg { color: var(--m-faint); margin-left: auto; }
+  .field-textarea { min-height: 142px; padding: 10px 11px; border: 1px solid var(--m-line); border-radius: 7px; background: var(--m-surface); color: var(--m-muted); font-size: 9px; line-height: 1.75; }
+  .field-textarea b { color: var(--m-text); font-weight: 560; }
+  .ai-actions { display: flex; align-items: center; gap: 7px; margin-top: 11px; }
+  .ai-actions .grow { flex: 1; }
+  .ai-preview { display: flex; flex-direction: column; min-height: 0; overflow: hidden; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-panel); }
+  .preview-head { display: flex; align-items: center; gap: 7px; height: 43px; padding: 0 12px; border-bottom: 1px solid var(--m-line); }
+  .preview-head b { font-size: 10px; font-weight: 600; }
+  .preview-head span { margin-left: auto; color: var(--m-faint); font-size: 7px; }
+  .preview-table { flex: 1; padding: 4px 10px; overflow: hidden; }
+  .preview-row { display: grid; grid-template-columns: 12px 1.1fr 1fr 1.1fr; gap: 7px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--m-line); font-size: 8px; }
+  .preview-row:last-child { border-bottom: 0; }
+  .preview-row.head { color: var(--m-faint); font-family: var(--mono); font-size: 7px; text-transform: uppercase; }
+  .preview-row .box { width: 12px; height: 12px; border: 1px solid var(--m-primary); border-radius: 3px; background: var(--m-primary); }
+  .preview-row .box::after { content: "✓"; display: block; color: var(--m-bg); font-size: 8px; line-height: 10px; text-align: center; }
+  .preview-row .change { color: var(--m-accent); }
+  .preview-row .entry { color: var(--m-text); font-weight: 500; }
+  .preview-foot { display: flex; align-items: center; gap: 7px; padding: 10px 12px; border-top: 1px solid var(--m-line); }
+  .preview-foot .grow { flex: 1; }
+
+  /* mobile phones */
+  .phones { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; padding: 10px 12px 8px; }
+  .phone { position: relative; width: 374px; height: 720px; padding: 9px; border-radius: 42px; background: var(--m-text); box-shadow: var(--m-shadow); }
+  .phone-screen { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; border-radius: 34px; background: var(--m-bg); color: var(--m-text); }
+  .phone-status { display: flex; align-items: center; gap: 4px; height: 26px; padding: 0 17px; color: var(--m-text); font-family: var(--mono); font-size: 7px; }
+  .phone-status .right { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+  .phone-status .right i { display: block; width: 9px; height: 5px; border: 1px solid currentColor; border-radius: 1px; opacity: .8; }
+  .phone-status .right i::after { content: ""; display: block; width: 6px; height: 3px; margin: 1px; background: currentColor; }
+  .mobile-head { display: flex; align-items: center; gap: 8px; padding: 6px 14px 10px; }
+  .mobile-head .mobile-title { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; font-weight: 600; }
+  .mobile-head .mobile-title span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-head .mobile-title svg { color: var(--m-faint); }
+  .mobile-head .mobile-actions { display: flex; gap: 4px; margin-left: auto; }
+  .mobile-search { display: flex; align-items: center; gap: 6px; height: 30px; margin: 0 14px 8px; padding: 0 9px; border: 1px solid var(--m-line); border-radius: 8px; background: var(--m-surface); color: var(--m-faint); font-size: 8px; }
+  .mobile-search .m-kbd { margin-left: auto; }
+  .mobile-bindings { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 14px 9px; }
+  .mobile-cards { flex: 1; min-height: 0; padding: 0 9px; overflow: hidden; }
+  .mobile-card { padding: 10px 10px 9px; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-panel); }
+  .mobile-card + .mobile-card { margin-top: 6px; }
+  .mobile-card.selected { border-color: color-mix(in srgb, var(--m-primary) 26%, var(--m-line)); background: var(--m-surface); box-shadow: 0 3px 10px rgba(0,0,0,.04); }
+  .mobile-card-head { display: flex; align-items: center; gap: 6px; }
+  .mobile-card-head .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--m-primary); }
+  .mobile-card-head b { overflow: hidden; font-size: 10px; font-weight: 590; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-card-head .check { margin-left: auto; width: 13px; height: 13px; border: 1px solid var(--m-line-strong); border-radius: 4px; background: var(--m-surface); }
+  .mobile-card.selected .check { border-color: var(--m-primary); background: var(--m-primary); }
+  .mobile-card.selected .check::after { content: "✓"; display: block; color: var(--m-bg); font-size: 8px; line-height: 11px; text-align: center; }
+  .mobile-card p { margin: 5px 0 0; overflow: hidden; color: var(--m-muted); font-size: 8px; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-card .keys { display: flex; gap: 4px; margin-top: 7px; }
+  .mobile-card .keys .m-chip { padding: 3px 5px; font-size: 7px; }
+  .mobile-card .meta { display: flex; justify-content: space-between; margin-top: 7px; color: var(--m-faint); font-family: var(--mono); font-size: 7px; }
+  .mobile-tabbar { display: flex; align-items: center; gap: 4px; height: 57px; padding: 0 14px 7px; border-top: 1px solid var(--m-line); background: color-mix(in srgb, var(--m-panel) 92%, transparent); }
+  .mobile-tab { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 3px; color: var(--m-faint); font-size: 7px; }
+  .mobile-tab.on { color: var(--m-primary); }
+  .mobile-tab svg { width: 17px; height: 17px; }
+  .mobile-fab { position: absolute; right: -9px; bottom: 88px; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--m-primary); color: var(--m-bg); box-shadow: 0 8px 20px rgba(0,0,0,.22); }
+  .mobile-fab.half { right: -31px; border-radius: 24px 12px 12px 24px; }
+  .mobile-editor-head { padding: 4px 14px 9px; }
+  .mobile-editor-title { display: flex; align-items: flex-start; gap: 8px; }
+  .mobile-editor-title h2 { margin: 0; font-size: 18px; font-weight: 620; letter-spacing: -.035em; line-height: 1.18; }
+  .mobile-editor-title .mobile-title-actions { display: flex; gap: 4px; margin-left: auto; }
+  .mobile-editor-sub { margin: 5px 14px 8px; color: var(--m-muted); font-size: 8px; }
+  .mobile-seg { display: flex; gap: 2px; margin: 0 14px 9px; padding: 2px; border: 1px solid var(--m-line); border-radius: 7px; background: var(--m-surface-2); }
+  .mobile-seg span { flex: 1; padding: 5px 0; border-radius: 5px; color: var(--m-muted); font-size: 8px; text-align: center; }
+  .mobile-seg span.on { background: var(--m-surface); color: var(--m-text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .mobile-editor-scroll { flex: 1; min-height: 0; padding: 0 14px 10px; overflow: hidden; }
+  .mobile-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+  .mobile-meta .field-box { margin: 0; }
+  .mobile-meta .field-input { height: 28px; font-size: 8px; }
+  .mobile-paper { min-height: 278px; padding: 12px 13px; border: 1px solid var(--m-line); border-radius: 9px; background: var(--m-surface); color: var(--m-text); font-family: "Songti SC", "SimSun", var(--font); font-size: 10px; line-height: 2; }
+  .mobile-paper p { margin: 0 0 8px; }
+  .mobile-editor-foot { display: flex; align-items: center; gap: 5px; padding: 9px 14px 12px; border-top: 1px solid var(--m-line); }
+  .mobile-editor-foot .grow { flex: 1; }
+
+  /* states */
+  .state-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 18px; }
+  .state-card { padding: 16px; border: 1px solid var(--page-line); border-radius: var(--radius-lg); background: var(--page-panel); }
+  .state-card > .m-label { margin-bottom: 10px; display: block; }
+  .modal-stage { position: relative; height: 360px; overflow: hidden; border-radius: 9px; background: var(--m-bg); }
+  .modal-overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 18px; background: var(--m-overlay); }
+  .modal { width: 520px; max-width: 100%; overflow: hidden; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-panel); box-shadow: var(--m-shadow); }
+  .modal-head { display: flex; align-items: flex-start; gap: 9px; padding: 13px 15px 11px; border-bottom: 1px solid var(--m-line); }
+  .modal-head .modal-icon { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--m-primary-soft); color: var(--m-primary-ink); }
+  .modal-head b { display: block; font-size: 11px; font-weight: 600; }
+  .modal-head span { display: block; margin-top: 3px; color: var(--m-faint); font-size: 8px; }
+  .modal-head .m-iconbtn { margin-left: auto; }
+  .modal-tabs { display: flex; gap: 2px; padding: 7px 14px 0; border-bottom: 1px solid var(--m-line); }
+  .modal-tab { padding: 6px 8px 8px; border-bottom: 2px solid transparent; color: var(--m-faint); font-size: 8px; }
+  .modal-tab.on { border-bottom-color: var(--m-primary); color: var(--m-text); }
+  .modal-body { padding: 7px 14px 11px; }
+  .history-row { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 7px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--m-line); }
+  .history-row:last-child { border-bottom: 0; }
+  .history-row .node { width: 7px; height: 7px; border-radius: 50%; background: var(--m-primary); }
+  .history-row .node.dim { background: var(--m-line-strong); }
+  .history-row b { display: block; font-size: 8px; font-weight: 560; }
+  .history-row span { display: block; margin-top: 2px; color: var(--m-faint); font-family: var(--mono); font-size: 7px; }
+  .history-row .m-btn { height: 22px; }
+  .modal-foot { display: flex; align-items: center; gap: 7px; padding: 10px 14px; border-top: 1px solid var(--m-line); }
+  .modal-foot .grow { flex: 1; }
+  .fab-states { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; height: 360px; }
+  .fab-preview { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 166px; padding: 12px; overflow: hidden; border: 1px dashed var(--m-line-strong); border-radius: 9px; background: var(--m-bg); }
+  .fab-preview .scene { position: absolute; inset: 9px; border: 1px solid var(--m-line); border-radius: 6px; background: var(--m-panel); opacity: .55; }
+  .fab-preview .fab { position: relative; z-index: 1; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--m-primary); color: var(--m-bg); box-shadow: 0 7px 18px rgba(0,0,0,.18); }
+  .fab-preview .fab.edge { position: absolute; bottom: 16px; width: 48px; border-radius: 24px 12px 12px 24px; }
+  .fab-preview .fab.left { left: -30px; }
+  .fab-preview .fab.right { right: -30px; border-radius: 12px 24px 24px 12px; }
+  .fab-preview .fab.open { background: var(--m-danger-soft); color: var(--m-danger); }
+  .fab-preview .caption { position: absolute; bottom: 11px; left: 12px; color: var(--m-faint); font-family: var(--mono); font-size: 7px; }
+  .toast-stack { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .toast { display: flex; align-items: flex-start; gap: 7px; padding: 9px 10px; border: 1px solid var(--m-line); border-radius: 8px; background: var(--m-panel); box-shadow: var(--m-shadow-sm); }
+  .toast .toast-icon { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--m-primary-soft); color: var(--m-primary); }
+  .toast.warn .toast-icon { background: var(--m-accent-soft); color: var(--m-accent); }
+  .toast b { display: block; font-size: 8px; font-weight: 600; }
+  .toast span { display: block; margin-top: 2px; color: var(--m-muted); font-size: 7px; line-height: 1.45; }
+
+  /* coverage + handoff */
+  .family-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .family-card { padding: 13px; border: 1px solid var(--page-line); border-radius: var(--radius-md); background: var(--page-panel); }
+  .family-card-head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+  .family-card-head b { font-size: 11px; font-weight: 600; }
+  .family-card-head span { margin-left: auto; color: var(--page-muted); font-family: var(--mono); font-size: 8px; }
+  .family-card > p { margin: 0 0 9px; color: var(--page-muted); font-size: 9px; line-height: 1.5; }
+  .mini-window { height: 118px; overflow: hidden; border: 1px solid var(--m-line); border-radius: 8px; background: var(--m-bg); color: var(--m-text); }
+  .mini-top { display: flex; align-items: center; gap: 6px; height: 25px; padding: 0 8px; border-bottom: 1px solid var(--m-line); background: var(--m-panel); color: var(--m-muted); font-size: 7px; }
+  .mini-top b { color: var(--m-text); font-size: 8px; font-weight: 560; }
+  .mini-top .m-chip { padding: 2px 5px; font-size: 6px; }
+  .mini-top .right { margin-left: auto; color: var(--m-faint); font-family: var(--mono); font-size: 6px; }
+  .mini-body { padding: 6px 8px; }
+  .mini-row { display: flex; align-items: center; gap: 6px; min-height: 20px; padding: 2px 0; border-bottom: 1px solid var(--m-line); color: var(--m-muted); font-size: 7px; }
+  .mini-row:last-child { border-bottom: 0; }
+  .mini-row b { color: var(--m-text); font-weight: 500; }
+  .mini-row .grow { flex: 1; }
+  .mini-row .tiny { color: var(--m-faint); font-family: var(--mono); font-size: 6px; }
+  .mini-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--m-primary); }
+  .mini-dot.blue { background: var(--m-blue); } .mini-dot.amber { background: var(--m-accent); } .mini-dot.red { background: var(--m-danger); } .mini-dot.grey { background: var(--m-faint); }
+  .mini-tree { padding-left: 11px; }
+  .mini-seg { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--m-line); border-radius: 5px; background: var(--m-surface-2); }
+  .mini-seg span { padding: 2px 5px; border-radius: 3px; font-size: 6px; }
+  .mini-seg span.on { background: var(--m-surface); color: var(--m-text); }
+  .mini-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 55px; margin-top: 4px; border: 1px dashed var(--m-line-strong); border-radius: 6px; color: var(--m-faint); font-size: 6px; text-align: center; }
+  .mini-drop b { color: var(--m-text); font-size: 7px; font-weight: 500; }
+  .mini-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 92px; color: var(--m-faint); font-size: 6px; text-align: center; }
+  .mini-empty .glyph { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--m-line); border-radius: 7px; background: var(--m-panel); color: var(--m-muted); }
+  .mini-empty b { color: var(--m-text); font-size: 8px; font-weight: 500; }
+  .mini-empty .m-btn { height: 19px; padding: 0 6px; font-size: 6px; }
+  .coverage { overflow: hidden; border: 1px solid var(--page-line); border-radius: var(--radius-lg); background: var(--page-panel); }
+  .coverage-row { display: grid; grid-template-columns: 1.15fr 2fr .6fr; gap: 18px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--page-line); }
+  .coverage-row:last-child { border-bottom: 0; }
+  .coverage-row.head { padding-top: 10px; padding-bottom: 10px; color: var(--page-muted); font-family: var(--mono); font-size: 8px; letter-spacing: .1em; }
+  .coverage-row b { font-size: 11px; font-weight: 560; }
+  .coverage-row small { display: block; margin-top: 3px; color: var(--page-muted); font-size: 8px; line-height: 1.5; }
+  .coverage-row p { margin: 0; color: var(--page-muted); font-size: 10px; line-height: 1.6; }
+  .coverage-row .status { justify-self: start; padding: 4px 7px; border-radius: 999px; background: var(--page-accent-soft); color: var(--page-accent); font-family: var(--mono); font-size: 8px; white-space: nowrap; }
+  .coverage-row .status.soon { background: color-mix(in srgb, var(--page-muted) 10%, transparent); color: var(--page-muted); }
+  .handoff { display: grid; grid-template-columns: 1.1fr .9fr; gap: 10px; }
+  .handoff-card { padding: 20px; border: 1px solid var(--page-line); border-radius: var(--radius-lg); background: var(--page-panel); }
+  .handoff-card h3 { margin: 0 0 11px; font-size: 14px; font-weight: 600; letter-spacing: -.02em; }
+  .handoff-card p { margin: 0 0 11px; color: var(--page-muted); font-size: 11px; line-height: 1.7; }
+  .handoff-card ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .handoff-card li { display: flex; gap: 8px; color: var(--page-muted); font-size: 10px; line-height: 1.55; }
+  .handoff-card li::before { content: "↳"; color: var(--page-accent); font-family: var(--mono); }
+  .handoff-card.dark { background: var(--page-text); color: var(--page-bg); }
+  .handoff-card.dark p, .handoff-card.dark li { color: color-mix(in srgb, var(--page-bg) 64%, transparent); }
+  .handoff-card.dark li::before { color: var(--page-accent); }
+  .decision-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; }
+  .decision { padding: 7px 9px; border: 1px solid var(--page-line); border-radius: 7px; color: var(--page-muted); font-size: 9px; }
+  .decision b { color: var(--page-text); font-weight: 560; }
+
+  footer { width: min(1460px, calc(100vw - 36px)); margin: 0 auto; padding: 24px 0 48px; border-top: 1px solid var(--page-line); color: var(--page-muted); font-family: var(--mono); font-size: 9px; display: flex; justify-content: space-between; gap: 18px; }
+
+  @media (max-width: 1150px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc { display: none; }
+    .section-head p { display: none; }
+    .hero-grid, .principle-grid, .token-grid { grid-template-columns: 1fr; }
+    .family-grid { grid-template-columns: repeat(2, 1fr); }
+    .principle { min-height: 150px; }
+    .state-grid, .handoff { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    .site-head { flex-wrap: wrap; gap: 10px; }
+    .site-head-meta { margin-left: 0; }
+    .site-head-meta .version-chip { display: none; }
+    .hero h1 { font-size: 40px; }
+    .hero-grid { gap: 7px; }
+    .hero-card { min-height: 100px; }
+    .section-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+    .canvas-shell { padding: 9px; border-radius: 16px; }
+    .artboard { min-width: 1000px; }
+    .phones { gap: 14px; }
+    .phone { transform: scale(.82); transform-origin: top center; margin: 0 -34px -120px; }
+    .family-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M8 14v6"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h9a6 6 0 0 1 6 6v1"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="m4 20 4.5-1.5L20 7a2.1 2.1 0 0 0-3-3L5.5 15.5 4 20Z"/><path d="m14 7 3 3"/></symbol>
+  <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-2.6V20a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1A1.7 1.7 0 0 0 8 15a1.7 1.7 0 0 0-1.6-1H6v-2.6h.4A1.7 1.7 0 0 0 8 10.4a1.7 1.7 0 0 0-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V5h2.6v.4a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v2.6h-.2a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3ZM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.6 11 23.2 1.8 14V4.8A3 3 0 0 1 4.8 1.8H14l6.6 6.6a3.7 3.7 0 0 1 0 5.2Z"/><circle cx="7.5" cy="7.5" r="1.2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m10 8 4 4-4 4"/></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.7"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4L3 10M3 4v6h6M4 13a8 8 0 0 0 14 4l3-3M21 20v-6h-6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.5 18a2 2 0 0 0 1.8 3h15.4a2 2 0 0 0 1.8-3L13.7 3.8a2 2 0 0 0-3.4 0Z"/></symbol>
+  <symbol id="i-command" viewBox="0 0 24 24"><path d="M9 6a3 3 0 1 0-3 3h3V6ZM15 6a3 3 0 1 1 3 3h-3V6ZM9 18a3 3 0 1 1-3-3h3v3ZM15 18a3 3 0 1 0 3-3h-3v3ZM9 9h6v6H9V9Z"/></symbol>
+</svg>
+
+<header class="site-head">
+  <a class="site-brand" href="#top">
+    <span class="site-mark">W/</span>
+    <span><b>世界书助手 · 视觉重构</b><small>WORLDBOOK STUDIO / DESIGN DRAFT</small></span>
+  </a>
+  <div class="site-head-meta">
+    <span>雾松纸 · Pine &amp; Paper</span>
+    <span class="version-chip">DRAFT 01</span>
+    <div class="theme-switch" aria-label="预览主题">
+      <button type="button" data-set-theme="light" class="on"><svg class="icon"><use href="#i-eye"/></svg>浅色</button>
+      <button type="button" data-set-theme="dark"><svg class="icon"><use href="#i-eye"/></svg>深色</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="toc">
+    <p class="toc-label">CONTENTS / 目录</p>
+    <nav>
+      <a href="#top" class="active">00 / 方向</a>
+      <a href="#principles">01 / 设计原则</a>
+      <a href="#tokens">02 / 视觉令牌</a>
+      <a href="#desktop">03 / 主工作台</a>
+      <a href="#focus">04 / 聚焦编辑</a>
+      <a href="#cross-copy">05 / 跨书复制</a>
+      <a href="#settings">06 / 设置中心</a>
+      <a href="#ai-config">07 / AI 配置</a>
+      <a href="#mobile">08 / 移动端</a>
+      <a href="#states">09 / 状态与浮球</a>
+      <a href="#coverage">10 / 页面覆盖</a>
+      <a href="#feature-map">11 / 功能地图</a>
+      <a href="#handoff">12 / 落地说明</a>
+    </nav>
+    <hr class="toc-rule">
+    <p class="toc-note"><b>本轮只出稿。</b><br>前两项已实现并通过 E2E；样式改造等待确认后再动 App.vue。</p>
+  </aside>
+
+  <main>
+    <section class="hero" id="top">
+      <p class="hero-eyebrow"><i></i>VISUAL SYSTEM / V1.0 &nbsp;·&nbsp; 2026.10</p>
+      <h1>把世界书，做成一间<br><em>安静的编辑室。</em></h1>
+      <p class="hero-lede">保留现有的高信息密度和全部功能，只重新组织视觉层级：更像文档工具，而不是设置面板堆叠。工具栏收口、正文回到纸面、状态使用统一的颜色语言，悬浮球贴边后只留一枚安静的书签。</p>
+      <div class="hero-meta">
+        <span>方向：雾松纸 / Pine &amp; Paper</span>
+        <span>覆盖 15 个视图</span>
+        <span>以现有组件为迁移单位</span>
+        <span>明 / 暗双主题</span>
+      </div>
+      <div class="hero-grid">
+        <div class="hero-card"><div class="metric">-32<small>% 视觉噪音</small></div><b>少一层框，多一层秩序</b><p>用背景层次、留白与细线代替重复描边卡片；主操作更明确。</p></div>
+        <div class="hero-card"><div class="metric">3<small>秒内定位</small></div><b>世界书 → 条目 → 正文</b><p>左中右三栏保持熟悉结构，但强化当前条目与当前编辑页的连续性。</p></div>
+        <div class="hero-card"><div class="metric">1<small>个主操作</small></div><b>其余动作进入次层</b><p>保存、应用、生成只保留一个高优先级按钮；危险操作不抢视线。</p></div>
+      </div>
+    </section>
+
+    <section id="principles">
+      <div class="section-head"><span class="index">01</span><h2>设计原则</h2><p>不是“换一套颜色”。这次调整的是信息层级、动作优先级和编辑时的注意力分配。</p></div>
+      <div class="principle-grid">
+        <article class="principle"><span class="num">01 / CONTENT FIRST</span><h3>内容优先</h3><p>编辑区像一张纸：正文、关键词和字段有清楚的阅读顺序；控件退到次要层级，不再与内容争抢对比度。</p><span class="motif">¶</span></article>
+        <article class="principle"><span class="num">02 / CALM DENSITY</span><h3>密度有秩序</h3><p>保留三栏与列表批量能力，用横向分割、局部底色和弱化标签建立层级，避免到处是同等权重的卡片。</p><span class="motif">≡</span></article>
+        <article class="principle"><span class="num">03 / STATE AS LANGUAGE</span><h3>状态即语言</h3><p>蓝色=常驻，绿色=关键词，灰色=停用，琥珀=未保存，红色=危险。颜色只服务于判断，不做装饰。</p><span class="motif">◐</span></article>
+        <article class="principle"><span class="num">04 / ONE CLEAR ACTION</span><h3>一眼找到动作</h3><p>每个视图只有一个主按钮；低频动作收进图标或更多菜单。危险动作永远不和保存并排。</p><span class="motif">→</span></article>
+        <article class="principle"><span class="num">05 / SOFT MOTION</span><h3>轻量动效</h3><p>面板 180ms 进入，贴边收起 160ms；只动透明度和位移，不制造“弹跳”和长时间遮罩。</p><span class="motif">∿</span></article>
+      </div>
+    </section>
+
+    <section id="tokens">
+      <div class="section-head"><span class="index">02</span><h2>视觉令牌</h2><p>颜色、字体与间距都映射到现有 <code>--wb-*</code> 变量，便于逐页迁移，不引入新框架。</p></div>
+      <div class="token-grid">
+        <div class="token-card">
+          <div class="token-title"><b>颜色 / 明暗双主题</b><span>SEMANTIC COLOR</span></div>
+          <div class="swatches">
+            <div class="swatch" style="background:#eef1e9"><span>CANVAS</span></div>
+            <div class="swatch" style="background:#f9faf5"><span>PANEL</span></div>
+            <div class="swatch" style="background:#17201b"><span>INK</span></div>
+            <div class="swatch" style="background:#0e7c66"><span>PINE</span></div>
+            <div class="swatch" style="background:#2f6fb5"><span>CONSTANT</span></div>
+            <div class="swatch" style="background:#b45d09"><span>AMBER</span></div>
+            <div class="swatch" style="background:#b2473f"><span>DANGER</span></div>
+            <div class="swatch" style="background:#dfe4da"><span>LINE</span></div>
+          </div>
+        </div>
+        <div class="token-card">
+          <div class="token-title"><b>字体层级</b><span>TYPE SCALE</span></div>
+          <div class="type-stack">
+            <div class="type-line"><span>28</span><b>条目正文</b><em>Editorial</em></div>
+            <div class="type-line"><span>18</span><b>区块标题</b><em>Section</em></div>
+            <div class="type-line"><span>11</span><b>界面正文</b><em>UI text</em></div>
+            <div class="type-line"><span>08</span><b>元信息与标签</b><em>Mono / 8–9</em></div>
+          </div>
+        </div>
+        <div class="token-card">
+          <div class="token-title"><b>间距与圆角</b><span>SPACE / RADIUS</span></div>
+          <div class="scale-bars"><i style="height:18%"></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="scale-caption"><span>4</span><span>8</span><span>12</span><span>16</span><span>24</span><span>32</span></div>
+          <div class="icon-row" style="margin-top:13px"><span class="icon-tile"><svg class="icon"><use href="#i-book"/></svg></span><span class="icon-tile"><svg class="icon"><use href="#i-search"/></svg></span><span class="icon-tile"><svg class="icon"><use href="#i-tag"/></svg></span><span class="icon-tile"><svg class="icon"><use href="#i-clock"/></svg></span><span class="icon-tile"><svg class="icon"><use href="#i-copy"/></svg></span><span class="icon-tile"><svg class="icon"><use href="#i-sparkle"/></svg></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="desktop">
+      <div class="section-head"><span class="index">03</span><h2>主工作台</h2><p>保留左中右三栏。导航退到左轨，正文成为最大、最安静的区域；保存状态和绑定关系放在顶部，随视线固定。</p></div>
+      <div class="canvas-shell">
+        <div class="canvas-caption"><b>Desktop / 编辑态</b><span>1180 × 744</span><span>1440 适配</span><span>Light / Dark</span></div>
+        <div class="artboard desktop-app">
+          <div class="appbar">
+            <div class="app-brand"><span class="mini-mark">W/</span><span><b>世界书助手</b><small>WORLDBOOK STUDIO</small></span></div>
+            <span class="app-sep"></span>
+            <div class="app-crumb"><span>工作台</span><svg class="icon" style="width:11px;height:11px"><use href="#i-chevron-right"/></svg><b>雾港纪事</b></div>
+            <div class="app-bindings"><span class="m-chip green"><i></i>全局</span><span class="m-chip blue"><i></i>角色 · 伊芙琳</span><span class="m-chip amber"><i></i>聊天</span></div>
+            <div class="app-search"><svg class="icon"><use href="#i-search"/></svg><span>搜索条目、关键词或标签</span><span class="m-kbd">⌘ K</span></div>
+            <div class="app-actions"><span class="save-state"><i></i>已保存</span><button class="m-iconbtn ghost" aria-label="刷新"><svg class="icon"><use href="#i-refresh"/></svg></button><button class="m-iconbtn ghost" aria-label="更多"><svg class="icon"><use href="#i-more"/></svg></button><button class="m-btn primary"><svg class="icon" style="width:13px;height:13px"><use href="#i-save"/></svg>保存更改</button></div>
+          </div>
+          <div class="workspace">
+            <aside class="rail">
+              <div class="switch-card">
+                <span class="m-label">当前世界书</span>
+                <div class="switch-title"><span class="book-glyph"><svg class="icon"><use href="#i-book"/></svg></span><b>雾港纪事</b><svg class="icon" style="width:12px;height:12px"><use href="#i-chevron"/></svg></div>
+                <div class="switch-meta"><span><b>128</b> 条目</span><span><b>96</b> 启用</span><span><b>3</b> 绑定</span></div>
+                <div class="mode-switch"><span>浏览</span><span class="on">编辑</span></div>
+              </div>
+              <nav class="rail-nav">
+                <a class="active" href="#"><svg class="icon"><use href="#i-list"/></svg>全部条目<span class="count">128</span></a>
+                <a href="#"><svg class="icon"><use href="#i-eye"/></svg>已启用<span class="count">96</span></a>
+                <a href="#"><svg class="icon"><use href="#i-clock"/></svg>最近编辑<span class="count">12</span></a>
+                <a href="#"><svg class="icon"><use href="#i-layers"/></svg>全局绑定<span class="count">06</span></a>
+              </nav>
+              <div class="rail-section">
+                <div class="rail-section-head"><b>标签 / TAGS</b><button class="m-iconbtn ghost" style="width:19px;height:19px"><svg class="icon" style="width:11px;height:11px"><use href="#i-plus"/></svg></button></div>
+                <div class="tag-row"><span style="--tag-color:#0e7c66"></span>世界观<b>34</b></div>
+                <div class="tag-row"><span style="--tag-color:#2f6fb5"></span>势力<b>22</b></div>
+                <div class="tag-row"><span style="--tag-color:#b45d09"></span>地点<b>18</b></div>
+                <div class="tag-row"><span style="--tag-color:#7c5cbf"></span>事件<b>14</b></div>
+                <div class="tag-row"><span style="--tag-color:#b2473f"></span>角色<b>08</b></div>
+              </div>
+              <div class="rail-bottom"><div class="row"><span class="m-dot"></span>云端同步 · 正常</div><div class="bar"><i></i></div><div class="m-label" style="margin-top:7px">快照 12 / 20 · 8.2 MB</div></div>
+            </aside>
+            <section class="entry-pane">
+              <div class="pane-head"><h3>条目</h3><span class="sub">128</span><div class="actions"><button class="m-iconbtn"><svg class="icon"><use href="#i-filter"/></svg></button><button class="m-iconbtn primary" style="border-color:var(--m-primary);background:var(--m-primary);color:var(--m-bg)"><svg class="icon"><use href="#i-plus"/></svg></button></div></div>
+              <div class="pane-filters"><span class="m-chip on">全部 128</span><span class="m-chip">启用 96</span><span class="m-chip">常驻 18</span><span class="m-chip">未整理 07</span></div>
+              <div class="entry-scroll">
+                <div class="entry-row selected"><span class="entry-status constant"></span><div><div class="entry-title"><b>潮汐历法与雾季</b><span class="lock"><svg class="icon" style="width:9px;height:9px"><use href="#i-lock"/></svg></span></div><p>雾港的潮汐并不只由月相决定。每逢雾季，旧堤的刻度会...</p><div class="entry-meta"><span>常驻</span><span>·</span><span>角色定义前</span><span>·</span><span>4</span></div></div><span class="entry-check"></span></div>
+                <div class="entry-row"><span class="entry-status"></span><div><div class="entry-title"><b>灰塔议会</b></div><p>灰塔议会由七名守塔人组成，席位不以血统继承...</p><div class="entry-meta"><span>关键词</span><span>·</span><span>角色定义后</span><span>·</span><span>2</span></div></div><span class="entry-check"></span></div>
+                <div class="entry-row"><span class="entry-status"></span><div><div class="entry-title"><b>雾民的低语</b></div><p>雾民不通过语言传递信息。靠近旧港的人会听见...</p><div class="entry-meta"><span>关键词</span><span>·</span><span>作者注前</span><span>·</span><span>7</span></div></div><span class="entry-check"></span></div>
+                <div class="entry-row"><span class="entry-status off"></span><div><div class="entry-title"><b>旧港地图（草稿）</b></div><p>尚未定稿。标记了第三码头、沉钟巷和北堤的暗门...</p><div class="entry-meta"><span>停用</span><span>·</span><span>未设置</span><span>·</span><span>—</span></div></div><span class="entry-check"></span></div>
+                <div class="entry-row"><span class="entry-status"></span><div><div class="entry-title"><b>守夜人的誓词</b></div><p>“灯不灭，人不眠。”守夜人会在换岗前重复这句...</p><div class="entry-meta"><span>关键词</span><span>·</span><span>示例消息前</span><span>·</span><span>3</span></div></div><span class="entry-check"></span></div>
+                <div class="entry-row"><span class="entry-status constant"></span><div><div class="entry-title"><b>核心规则</b></div><p>世界运行遵循三条不可违背的规则，优先级高于...</p><div class="entry-meta"><span>常驻</span><span>·</span><span>角色定义前</span><span>·</span><span>1</span></div></div><span class="entry-check"></span></div>
+              </div>
+              <div class="entry-footer"><span>已加载 6 / 128</span><span class="progress"><i></i></span><span>⌘A 全选</span></div>
+            </section>
+            <section class="editor-pane">
+              <div class="doc-head">
+                <div class="doc-eyebrow"><span>条目 04</span><span>/</span><span>世界设定</span><span>·</span><span>已锁定 · 非草稿</span></div>
+                <div class="doc-head-row"><div><h2>潮汐历法与雾季</h2><p>雾港的时间、潮汐与航行秩序</p></div><div class="doc-actions"><button class="m-iconbtn"><svg class="icon"><use href="#i-clock"/></svg></button><button class="m-iconbtn"><svg class="icon"><use href="#i-copy"/></svg></button><button class="m-iconbtn"><svg class="icon"><use href="#i-more"/></svg></button></div></div>
+              </div>
+              <div class="meta-strip">
+                <div class="meta-cell"><span>策略</span><b><em>●</em> 常驻</b></div>
+                <div class="meta-cell"><span>位置</span><b>角色定义前</b></div>
+                <div class="meta-cell"><span>顺序</span><b>04</b></div>
+                <div class="meta-cell"><span>扫描深度</span><b>4 · 同全局</b></div>
+              </div>
+              <div class="editor-scroll">
+                <div class="editor-section"><div class="editor-section-head"><b>关键词</b><span>01 / KEYWORDS</span><span class="m-chip" style="margin-left:auto">+ 添加</span></div><div class="tag-editor"><span class="m-chip">潮汐 <button>×</button></span><span class="m-chip">雾季 <button>×</button></span><span class="m-chip">月相 <button>×</button></span><span class="m-chip">历法 <button>×</button></span></div></div>
+                <div class="editor-section"><div class="editor-section-head"><b>正文</b><span>02 / CONTENT</span><span style="margin-left:auto">3,842 字符</span></div>
+                  <div class="paper">
+                    <p>雾港的潮汐并不只由月相决定。每逢<strong>雾季</strong>，旧堤的刻度会比海面提前两刻钟上涨；港口的老人们把这称为“山在呼吸”。</p>
+                    <p>外来的船只在雾季只被允许停靠第三码头。引航员会依据<strong>潮汐历法</strong>判断何时可以穿过沉钟巷的暗礁——这份历法从不写在纸上，只由守塔人口耳相传。</p>
+                    <p>如果在雾季听见<span class="highlight">三次连续的钟声</span>，不要去数它。那意味着潮水已经越过了旧堤，而港口正在把不属于这里的东西推回来。<span class="cursor"></span></p>
+                  </div>
+                </div>
+              </div>
+              <div class="editor-foot"><span>最后保存 2 分钟前</span><span>·</span><span class="dirty">有未保存修改</span><span class="grow"></span><span class="m-kbd">⌘S</span><span>保存</span><span class="m-kbd">⌘K</span><span>命令</span></div>
+            </section>
+          </div>
+          <div class="appstatus"><span>128 条目</span><span>·</span><span>96 启用</span><span>·</span><span>31.2k 字符</span><span class="grow"></span><span>本地快照 12 / 20</span><span>·</span><span>v3.8.2</span></div>
+        </div>
+        <div class="mock-note"><span>顶栏只保留「保存更改」一个主按钮</span><span>绑定关系用状态色而不是三张卡片</span><span>列表行保持 72px 的稳定扫读节奏</span><span>编辑正文使用纸面底色与衬线正文</span></div>
+      </div>
+    </section>
+
+    <section id="focus">
+      <div class="section-head"><span class="index">04</span><h2>聚焦编辑</h2><p>把编辑区从三栏里“拿出来”：保留上下文，但让正文成为画面中心。设置收进右侧检查器，底部工具条只放当前动作。</p></div>
+      <div class="canvas-shell">
+        <div class="canvas-caption"><b>Desktop / 聚焦模式</b><span>1180 × 700</span><span>Focus mode</span></div>
+        <div class="artboard focus-app">
+          <div class="focus-topbar"><span class="back"><svg class="icon"><use href="#i-undo"/></svg>退出聚焦</span><span class="divider"></span><span class="crumb">雾港纪事 <b>/ 潮汐历法与雾季</b></span><span class="seg"><span class="on">内容</span><span>配置</span><span>历史</span></span><span class="m-chip green"><i></i>自动保存开</span><button class="m-iconbtn" aria-label="更多"><svg class="icon"><use href="#i-more"/></svg></button><button class="m-btn primary"><svg class="icon" style="width:13px;height:13px"><use href="#i-save"/></svg>保存</button></div>
+          <div class="focus-main">
+            <div class="focus-stage"><article class="focus-paper"><div class="kicker"><span>条目 04 / 世界设定</span><span>·</span><span>常驻</span></div><h2>潮汐历法与雾季</h2><p class="dek">雾港的时间、潮汐与航行秩序。所有与海有关的叙事，都从这里开始。</p><div class="meta"><span class="m-chip blue"><i></i>常驻</span><span class="m-chip">角色定义前</span><span class="m-chip">顺序 04</span><span class="m-chip">3,842 字符</span></div><div class="body"><p>雾港的潮汐并不只由月相决定。每逢<em>雾季</em>，旧堤的刻度会比海面提前两刻钟上涨；港口的老人们把这称为“山在呼吸”。</p><p>外来的船只在雾季只被允许停靠第三码头。引航员会依据<em>潮汐历法</em>判断何时可以穿过沉钟巷的暗礁——这份历法从不写在纸上，只由守塔人口耳相传。</p><div class="inline-note"><svg class="icon" style="width:14px;height:14px;margin-top:1px"><use href="#i-sparkle"/></svg><span>AI 提示：这段与「灰塔议会」的港口禁令存在轻微冲突。建议把“第三码头”改为“旧码头”，保持世界规则一致。</span><button class="m-btn sm" style="margin-left:auto">查看</button></div><p>如果在雾季听见三次连续的钟声，不要去数它。那意味着潮水已经越过了旧堤，而港口正在把不属于这里的东西推回来。</p></div></article></div>
+            <aside class="focus-inspector"><div class="inspector-head"><b>条目配置</b><span class="m-chip">已同步</span><button class="m-iconbtn ghost" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="inspector-body"><div class="inspector-group"><span class="m-label">插入策略</span><div class="inspector-line">类型 <b>常驻</b></div><div class="inspector-line">位置 <b>角色定义前</b></div><div class="inspector-line">顺序 <b>04</b></div></div><div class="inspector-group"><span class="m-label">递归控制</span><div class="inspector-line">允许被触发 <span class="toggle"></span></div><div class="inspector-line">允许继续递归 <span class="toggle"></span></div></div><div class="inspector-group"><span class="m-label">标签</span><div class="tag-editor"><span class="m-chip">世界观</span><span class="m-chip">地点</span><span class="m-chip">规则</span></div></div></div></aside>
+            <div class="focus-tools"><button class="tool on"><svg class="icon"><use href="#i-pen"/></svg>正文</button><button class="tool"><svg class="icon"><use href="#i-sliders"/></svg>配置</button><button class="tool"><svg class="icon"><use href="#i-clock"/></svg>时光机</button><span class="sep"></span><button class="tool"><svg class="icon"><use href="#i-sparkle"/></svg>AI 检查</button><button class="tool"><svg class="icon"><use href="#i-download"/></svg>导出</button><span class="sep"></span><span class="tool" style="color:var(--m-faint)">Esc 退出</span></div>
+          </div>
+        </div>
+        <div class="mock-note"><span>正文最大宽度 620px，避免长行阅读疲劳</span><span>右侧检查器不抢占正文焦点</span><span>AI 提示以“旁注”出现，不打断编辑</span></div>
+      </div>
+    </section>
+
+    <section id="cross-copy">
+      <div class="section-head"><span class="index">05</span><h2>跨书复制</h2><p>把“选择来源 / 比较 / 应用”做成清晰的三步。来源和目标并排，冲突与新增用同一套状态色，底部只保留一个应用动作。</p></div>
+      <div class="canvas-shell">
+        <div class="canvas-caption"><b>Desktop / 跨书复制</b><span>1180 × 700</span><span>3-step flow</span></div>
+        <div class="artboard cross-app">
+          <div class="cross-top"><span class="title"><svg class="icon"><use href="#i-copy"/></svg>跨书复制</span><span class="route"><b>雾港纪事</b><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-right"/></svg><b>星港档案</b></span><div class="actions"><span class="m-chip green"><i></i>已比较 · 2 分钟前</span><button class="m-iconbtn" aria-label="刷新"><svg class="icon"><use href="#i-refresh"/></svg></button><button class="m-btn"><svg class="icon" style="width:13px;height:13px"><use href="#i-close"/></svg>退出</button></div></div>
+          <div class="cross-progress"><div class="cross-step done"><span class="n"><svg class="icon" style="width:10px;height:10px"><use href="#i-check"/></svg></span>选择来源</div><span class="cross-line"></span><div class="cross-step done"><span class="n"><svg class="icon" style="width:10px;height:10px"><use href="#i-check"/></svg></span>对比条目</div><span class="cross-line"></span><div class="cross-step on"><span class="n">3</span>应用变更</div><div class="cross-summary"><div class="summary-stat"><span>新增</span><b class="green">03</b></div><div class="summary-stat"><span>冲突</span><b class="amber">02</b></div><div class="summary-stat"><span>完全重复</span><b>07</b></div><div class="summary-stat"><span>总计</span><b>12</b></div></div></div>
+          <div class="cross-body">
+            <div class="copy-column"><div class="copy-column-head"><span class="role">S</span><b>来源 · 雾港纪事</b><span class="m-chip">128 条目</span></div><div class="copy-toolbar"><span>仅显示选中 / 有差异</span><span class="grow"></span><span>全选</span><span>·</span><span>全不选</span></div>
+              <div class="diff-row changed"><span class="diff-box"></span><div><b>潮汐历法与雾季</b><p>雾港的潮汐并不只由月相决定。每逢雾季，旧堤的刻度...</p></div><span class="tag">改名冲突</span></div>
+              <div class="diff-row new"><span class="diff-box"></span><div><b>灰塔议会</b><p>灰塔议会由七名守塔人组成，席位不以血统继承...</p></div><span class="tag">新增</span></div>
+              <div class="diff-row new"><span class="diff-box"></span><div><b>雾民的低语</b><p>雾民不通过语言传递信息。靠近旧港的人会听见...</p></div><span class="tag">新增</span></div>
+              <div class="diff-row"><span class="diff-box"></span><div><b>守夜人的誓词</b><p>“灯不灭，人不眠。”守夜人会在换岗前重复这句...</p></div><span class="tag">重复</span></div>
+              <div class="diff-row"><span class="diff-box"></span><div><b>旧港地图（草稿）</b><p>尚未定稿。标记了第三码头、沉钟巷和北堤的暗门...</p></div><span class="tag">跳过停用</span></div>
+            </div>
+            <div class="copy-column target"><div class="copy-column-head"><span class="role">T</span><b>目标 · 星港档案</b><span class="m-chip">074 条目</span></div><div class="copy-toolbar"><span>同名条目按名称匹配</span><span class="grow"></span><span>保留目标备注</span></div>
+              <div class="diff-row changed"><span class="diff-box"></span><div><b>潮汐历法与雾季</b><p>已有同名条目，将覆盖正文并保留目标顺序 04...</p></div><span class="tag">覆盖</span></div>
+              <div class="diff-row new"><span class="diff-box"></span><div><b>灰塔议会</b><p>将作为新条目写入，自动追加到世界设定分组...</p></div><span class="tag">新增</span></div>
+              <div class="diff-row new"><span class="diff-box"></span><div><b>雾民的低语</b><p>将作为新条目写入，默认停用，等待人工检查...</p></div><span class="tag">新增 · 停用</span></div>
+              <div class="diff-row"><span class="diff-box"></span><div><b>守夜人的誓词</b><p>目标已有完全同内容条目，跳过以避免重复...</p></div><span class="tag">跳过</span></div>
+              <div class="diff-row"><span class="diff-box"></span><div><b>旧港地图（草稿）</b><p>来源条目为停用状态，按设置不参与复制...</p></div><span class="tag">跳过</span></div>
+            </div>
+          </div>
+          <div class="cross-bottom"><span class="selection">已选择 <b>7</b> 项 · 覆盖 1 / 新增 2 / 跳过 4</span><span class="grow"></span><span class="note">应用前自动保存目标快照 · 可回滚</span><button class="m-btn">预览差异</button><button class="m-btn primary"><svg class="icon" style="width:13px;height:13px"><use href="#i-arrow-right"/></svg>应用选中变更</button></div>
+        </div>
+        <div class="mock-note"><span>差异用底色和勾选框双编码，不只靠颜色</span><span>目标侧备注作为“保护项”提示</span><span>应用动作固定在底部，滚动时不丢</span></div>
+      </div>
+    </section>
+
+    <section id="settings">
+      <div class="section-head"><span class="index">06</span><h2>设置中心</h2><p>把“体验、外观、数据”变成可扫读的区块。设置项不再是一串同权重开关，而是按任务分组，并给出影响说明。</p></div>
+      <div class="canvas-shell">
+        <div class="canvas-caption"><b>Utility / 设置中心</b><span>1180 × 700</span><span>Grouped settings</span></div>
+        <div class="artboard utility-app">
+          <div class="utility-topbar"><span class="back"><svg class="icon"><use href="#i-undo"/></svg>返回工作台</span><span class="sep"></span><span class="title">设置中心</span><span class="status">更改即时保存 · v3.8.2</span><button class="m-iconbtn" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button></div>
+          <div class="utility-layout">
+            <aside class="utility-nav"><span class="m-label">SETTINGS</span><a class="on" href="#"><svg class="icon"><use href="#i-sliders"/></svg>体验</a><a href="#"><svg class="icon"><use href="#i-eye"/></svg>外观</a><a href="#"><svg class="icon"><use href="#i-download"/></svg>数据与备份</a><a href="#"><svg class="icon"><use href="#i-command"/></svg>API 与模型</a><div class="divider"></div><a href="#"><svg class="icon"><use href="#i-book"/></svg>使用说明</a><a href="#"><svg class="icon"><use href="#i-alert"/></svg>关于</a><div class="trust"><b>本地优先</b>密钥只保存在酒馆脚本存储；不发起遥测，不写入 URL。</div></aside>
+            <div class="settings-content">
+              <div class="settings-title"><h2>体验与外观</h2><span>让工具适应你的阅读与操作习惯</span></div>
+              <div class="settings-grid">
+                <div class="settings-card"><div class="settings-card-head"><svg class="icon"><use href="#i-sliders"/></svg><b>工作台体验</b><span>5 项</span></div>
+                  <div class="setting-line"><div class="copy"><b>显示悬浮书签</b><span>关闭后仍可从魔法棒菜单打开</span></div><span class="switch"></span></div>
+                  <div class="setting-line"><div class="copy"><b>楼层提取按钮</b><span>在聊天楼层左侧显示快捷提取</span></div><span class="switch"></span></div>
+                  <div class="setting-line"><div class="copy"><b>AI 对话模块</b><span>在移动端底部导航增加 AI 入口</span></div><span class="switch off"></span></div>
+                  <div class="setting-line"><div class="copy"><b>多选配置联动</b><span>批量修改时同步策略与位置字段</span></div><span class="switch"></span></div>
+                  <div class="setting-line"><div class="copy"><b>同步高级字段 / extra JSON</b><span>仅多选联动开启时可用</span></div><span class="switch off"></span></div>
+                </div>
+                <div class="settings-card"><div class="settings-card-head"><svg class="icon"><use href="#i-eye"/></svg><b>外观</b><span>即时预览</span></div>
+                  <div class="m-label" style="margin-bottom:6px">主题</div>
+                  <div class="theme-cards"><div class="theme-card on"><div class="theme-preview"><i style="background:#eef1e9"></i><i style="background:#f9faf5"></i><i style="background:#0e7c66"></i></div><b>雾松纸</b></div><div class="theme-card"><div class="theme-preview"><i style="background:#0d120f"></i><i style="background:#18211c"></i><i style="background:#5ad9b4"></i></div><b>深海</b></div><div class="theme-card"><div class="theme-preview"><i style="background:#fbf9f5"></i><i style="background:#f0eadd"></i><i style="background:#d97706"></i></div><b>纸莎草</b></div></div>
+                  <div class="setting-line" style="margin-top:7px"><div class="copy"><b>毛玻璃背景</b><span>在支持 backdrop-filter 的环境启用</span></div><span class="switch"></span></div>
+                  <div class="setting-line"><div class="copy"><b>紧凑列表</b><span>每行减少 6px 垂直间距</span></div><span class="switch off"></span></div>
+                </div>
+                <div class="settings-card"><div class="settings-card-head"><svg class="icon"><use href="#i-refresh"/></svg><b>版本与更新</b><span>稳定通道</span></div><div class="version-box"><div>当前版本 <b>v3.8.2</b> · 已是最新</div><div>构建 <b>a7f21c9</b> / ST-Manager-STscript</div><div>构建时间 2026-10-24 21:08</div></div><div class="section-foot"><span class="m-chip green"><i></i>检查通过</span><span class="grow"></span><button class="m-btn sm">检查更新</button><button class="m-btn sm">复制固定版本链接</button></div></div>
+                <div class="settings-card"><div class="settings-card-head"><svg class="icon"><use href="#i-download"/></svg><b>数据与快照</b><span>本地占用 8.2 MB</span></div><div class="setting-line" style="padding-top:0;border-top:0"><div class="copy"><b>世界书快照</b><span>保留最近 12 / 20 个版本</span></div><span class="m-chip">管理</span></div><div class="setting-line"><div class="copy"><b>条目时光机</b><span>每个条目保留最近 7 次修改</span></div><span class="m-chip">清理</span></div><div class="setting-line"><div class="copy"><b>导出当前世界书</b><span>支持 JSON / 兼容酒馆格式</span></div><button class="m-btn sm">导出</button></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mock-note"><span>“说明文字”解释影响，而不是重复开关名称</span><span>主题用缩略预览而不是下拉框</span><span>安全与隐私说明固定放在导航底部</span></div>
+      </div>
+    </section>
+
+    <section id="ai-config">
+      <div class="section-head"><span class="index">07</span><h2>AI 配置</h2><p>把自然语言指令和变更预览放在同一屏：左侧写意图，中间看分析，右侧核对每一条改动。生成前就能预见结果。</p></div>
+      <div class="canvas-shell">
+        <div class="canvas-caption"><b>Utility / AI 配置世界书</b><span>1180 × 700</span><span>Input → Review</span></div>
+        <div class="artboard utility-app">
+          <div class="utility-topbar"><span class="back"><svg class="icon"><use href="#i-undo"/></svg>返回工作台</span><span class="sep"></span><span class="title">AI 配置世界书</span><span class="status">目标 · 雾港纪事 · 128 条目</span><span class="m-chip green"><i></i>使用酒馆 API</span><button class="m-iconbtn" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button></div>
+          <div class="ai-content">
+            <aside class="ai-steps"><div class="ai-step done"><span class="n"><svg class="icon" style="width:9px;height:9px"><use href="#i-check"/></svg></span><div><b>选择目标</b><span>雾港纪事</span></div></div><div class="ai-step done"><span class="n"><svg class="icon" style="width:9px;height:9px"><use href="#i-check"/></svg></span><div><b>描述配置</b><span>自然语言</span></div></div><div class="ai-step on"><span class="n">3</span><div><b>核对变更</b><span>6 项待应用</span></div></div><div class="ai-step"><span class="n">4</span><div><b>应用</b><span>可回滚</span></div></div></aside>
+            <section class="ai-form"><div class="ai-form-head"><svg class="icon"><use href="#i-sparkle"/></svg><b>配置指令</b><span class="m-chip">示例已加载</span></div><div class="ai-form-body"><div class="field-box"><span>目标世界书</span><div class="field-input"><svg class="icon" style="margin-left:0;width:13px;height:13px"><use href="#i-book"/></svg>雾港纪事<span style="margin-left:auto;color:var(--m-faint)">128 条目</span><svg class="icon"><use href="#i-chevron"/></svg></div></div><div class="field-box"><span>用自然语言描述你想要的修改</span><div class="field-textarea"><b>把所有「世界观」分类下的条目设为蓝灯常驻</b>，位置放在角色定义前，顺序按当前列表递增。<br><br>同时为「灰塔议会」「雾民的低语」添加标签「势力」，并启用不可递归命中。<br><br><span style="color:var(--m-accent)">不要修改任何条目正文。</span></div></div><div class="ai-actions"><span class="m-chip"><svg class="icon" style="width:10px;height:10px"><use href="#i-lock"/></svg>不会写入 URL</span><span class="m-chip">预估 4.2k tokens</span><span class="grow"></span><button class="m-btn">查看系统提示词</button><button class="m-btn primary"><svg class="icon" style="width:13px;height:13px"><use href="#i-sparkle"/></svg>发送给 AI 分析</button></div></div></section>
+            <aside class="ai-preview"><div class="preview-head"><b>变更预览</b><span>6 项 · 已全选</span><button class="m-iconbtn ghost" aria-label="全选"><svg class="icon"><use href="#i-check"/></svg></button></div><div class="preview-table"><div class="preview-row head"><span></span><span>条目</span><span>设置项</span><span>变更</span></div><div class="preview-row"><span class="box"></span><span class="entry">灰塔议会</span><span>策略</span><span class="change">关键词 → 常驻</span></div><div class="preview-row"><span class="box"></span><span class="entry">灰塔议会</span><span>位置</span><span class="change">定义后 → 定义前</span></div><div class="preview-row"><span class="box"></span><span class="entry">雾民的低语</span><span>策略</span><span class="change">关键词 → 常驻</span></div><div class="preview-row"><span class="box"></span><span class="entry">雾民的低语</span><span>标签</span><span class="change">+ 势力</span></div><div class="preview-row"><span class="box"></span><span class="entry">守夜人的誓词</span><span>递归</span><span class="change">允许 → 禁止命中</span></div><div class="preview-row"><span class="box"></span><span class="entry">核心规则</span><span>顺序</span><span class="change">01 → 02</span></div></div><div class="preview-foot"><span class="m-chip green"><i></i>无正文改动</span><span class="m-chip amber"><i></i>2 项位置冲突</span><span class="grow"></span><button class="m-btn">全不选</button><button class="m-btn primary">应用 6 项变更</button></div></aside>
+          </div>
+        </div>
+        <div class="mock-note"><span>输入区与预览并排，避免生成后“跳页”</span><span>结果按字段拆行，支持逐项勾选</span><span>明确提示“不会改正文”，降低误操作焦虑</span></div>
+      </div>
+    </section>
+
+    <section id="mobile">
+      <div class="section-head"><span class="index">08</span><h2>移动端</h2><p>移动端不缩桌面，而是收敛为单列：列表卡片承担浏览，编辑页把字段折叠到正文下方；悬浮书签贴边后只留一条细窄握把。</p></div>
+      <div class="canvas-shell">
+        <div class="canvas-caption"><b>Mobile / 浏览 + 编辑</b><span>374 × 720</span><span>Single column</span><span>Edge FAB</span></div>
+        <div class="phones">
+          <div class="phone"><div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span class="right"><span>5G</span><i></i></span></div>
+            <div class="mobile-head"><div class="mobile-title"><svg class="icon" style="width:16px;height:16px"><use href="#i-book"/></svg><span>雾港纪事</span><svg class="icon" style="width:11px;height:11px"><use href="#i-chevron"/></svg></div><div class="mobile-actions"><button class="m-iconbtn" aria-label="新增"><svg class="icon"><use href="#i-plus"/></svg></button><button class="m-iconbtn" aria-label="更多"><svg class="icon"><use href="#i-more"/></svg></button></div></div>
+            <div class="mobile-search"><svg class="icon"><use href="#i-search"/></svg><span>搜索条目或关键词</span><span class="m-kbd">⌘K</span></div>
+            <div class="mobile-bindings"><span class="m-chip green"><i></i>全局</span><span class="m-chip blue"><i></i>角色 · 伊芙琳</span><span class="m-chip">128 条目</span><span class="m-chip">96 启用</span></div>
+            <div class="mobile-cards">
+              <div class="mobile-card selected"><div class="mobile-card-head"><span class="dot"></span><b>潮汐历法与雾季</b><span class="check"></span></div><p>雾港的潮汐并不只由月相决定。每逢雾季...</p><div class="keys"><span class="m-chip blue" style="padding:3px 5px">常驻</span><span class="m-chip" style="padding:3px 5px">世界观</span><span class="m-chip" style="padding:3px 5px">地点</span></div><div class="meta"><span>角色定义前 · 04</span><span>3,842 字符</span></div></div>
+              <div class="mobile-card"><div class="mobile-card-head"><span class="dot" style="background:var(--m-primary)"></span><b>灰塔议会</b><span class="check"></span></div><p>灰塔议会由七名守塔人组成，席位不以血统...</p><div class="keys"><span class="m-chip" style="padding:3px 5px">关键词</span><span class="m-chip" style="padding:3px 5px">势力</span></div><div class="meta"><span>角色定义后 · 02</span><span>1,206 字符</span></div></div>
+              <div class="mobile-card"><div class="mobile-card-head"><span class="dot" style="background:var(--m-primary)"></span><b>雾民的低语</b><span class="check"></span></div><p>雾民不通过语言传递信息。靠近旧港的人会听见...</p><div class="keys"><span class="m-chip" style="padding:3px 5px">关键词</span><span class="m-chip" style="padding:3px 5px">事件</span></div><div class="meta"><span>作者注前 · 07</span><span>2,017 字符</span></div></div>
+              <div class="mobile-card"><div class="mobile-card-head"><span class="dot" style="background:var(--m-faint)"></span><b>旧港地图（草稿）</b><span class="check"></span></div><p>尚未定稿。标记了第三码头、沉钟巷...</p><div class="keys"><span class="m-chip" style="padding:3px 5px">停用</span><span class="m-chip" style="padding:3px 5px">地点</span></div><div class="meta"><span>未设置</span><span>—</span></div></div>
+            </div>
+            <div class="mobile-tabbar"><span class="mobile-tab on"><svg class="icon"><use href="#i-list"/></svg>浏览</span><span class="mobile-tab"><svg class="icon"><use href="#i-pen"/></svg>编辑</span><span class="mobile-tab"><svg class="icon"><use href="#i-tag"/></svg>标签</span><span class="mobile-tab"><svg class="icon"><use href="#i-settings"/></svg>设置</span></div>
+            <div class="mobile-fab half" aria-label="贴边收起的世界书助手"><svg class="icon" style="width:18px;height:18px"><use href="#i-book"/></svg></div>
+          </div></div>
+          <div class="phone"><div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span class="right"><span>5G</span><i></i></span></div>
+            <div class="mobile-editor-head"><div class="mobile-editor-title"><button class="m-iconbtn ghost" aria-label="返回"><svg class="icon"><use href="#i-undo"/></svg></button><h2>潮汐历法与雾季</h2><div class="mobile-title-actions"><button class="m-iconbtn" aria-label="历史"><svg class="icon"><use href="#i-clock"/></svg></button><button class="m-btn primary sm">保存</button></div></div></div>
+            <div class="mobile-editor-sub">条目 04 · 世界设定 · 最后保存 2 分钟前</div>
+            <div class="mobile-seg"><span class="on">内容</span><span>配置</span><span>历史</span></div>
+            <div class="mobile-editor-scroll">
+              <div class="mobile-meta"><div class="field-box"><span>策略</span><div class="field-input">常驻<svg class="icon"><use href="#i-chevron"/></svg></div></div><div class="field-box"><span>位置</span><div class="field-input">角色定义前<svg class="icon"><use href="#i-chevron"/></svg></div></div><div class="field-box"><span>顺序</span><div class="field-input">04</div></div><div class="field-box"><span>标签</span><div class="field-input">世界观 +2<svg class="icon"><use href="#i-chevron"/></svg></div></div></div>
+              <div class="field-box"><span>关键词</span><div class="tag-editor"><span class="m-chip">潮汐 ×</span><span class="m-chip">雾季 ×</span><span class="m-chip">月相 ×</span><span class="m-chip">+</span></div></div>
+              <div class="mobile-paper"><p>雾港的潮汐并不只由月相决定。每逢雾季，旧堤的刻度会比海面提前两刻钟上涨；港口的老人们把这称为“山在呼吸”。</p><p>外来的船只在雾季只被允许停靠第三码头。引航员会依据潮汐历法判断何时可以穿过沉钟巷的暗礁——这份历法从不写在纸上，只由守塔人口耳相传。</p><p>如果在雾季听见三次连续的钟声，不要去数它。</p></div>
+            </div>
+            <div class="mobile-editor-foot"><span class="m-chip amber"><i></i>有未保存修改</span><span class="grow"></span><button class="m-btn">AI 检查</button><button class="m-btn">配置</button></div>
+          </div></div>
+        </div>
+        <div class="mock-note"><span>列表卡片用 3 层信息：标题 / 摘要 / 状态与标签</span><span>编辑页把配置折叠成 2×2 小字段，正文仍占主位</span><span>贴边浮球只露出 18px，可点击展开</span></div>
+      </div>
+    </section>
+
+    <section id="states">
+      <div class="section-head"><span class="index">09</span><h2>状态与浮球</h2><p>悬浮书签、时光机、提示与确认框使用同一套圆角、阴影与状态色。贴边收起后不再是一个半截按钮，而是一枚安静的书签握把。</p></div>
+      <div class="state-grid">
+        <div class="state-card"><span class="m-label">OVERLAY / 条目时光机</span><div class="modal-stage"><div class="modal-overlay"><div class="modal"><div class="modal-head"><span class="modal-icon"><svg class="icon"><use href="#i-clock"/></svg></span><div><b>条目时光机</b><span>潮汐历法与雾季 · 保留最近 7 次修改</span></div><button class="m-iconbtn ghost" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="modal-tabs"><span class="modal-tab on">版本记录</span><span class="modal-tab">字段差异</span><span class="modal-tab">正文差异</span></div><div class="modal-body"><div class="history-row"><span class="node"></span><div><b>调整雾季潮汐描述</b><span>2 分钟前 · 手动编辑 · 3,842 字符</span></div><span class="m-chip amber">当前</span></div><div class="history-row"><span class="node"></span><div><b>补充第三次钟声的规则</b><span>今天 09:12 · 保存前快照 · +182 字符</span></div><button class="m-btn sm">预览</button></div><div class="history-row"><span class="node dim"></span><div><b>初始导入</b><span>10 月 21 日 · 导入基线 · 3,660 字符</span></div><button class="m-btn sm">恢复</button></div></div><div class="modal-foot"><span class="m-chip"><svg class="icon" style="width:10px;height:10px"><use href="#i-lock"/></svg>恢复前自动快照</span><span class="grow"></span><button class="m-btn">取消</button><button class="m-btn primary">恢复选中版本</button></div></div></div></div><div class="toast-stack"><div class="toast"><span class="toast-icon"><svg class="icon" style="width:12px;height:12px"><use href="#i-check"/></svg></span><div><b>已保存到「雾港纪事」</b><span>128 条目 · 已生成快照 #13</span></div></div><div class="toast warn"><span class="toast-icon"><svg class="icon" style="width:12px;height:12px"><use href="#i-alert"/></svg></span><div><b>当前有未保存修改</b><span>切换世界书前需要确认，避免覆盖草稿。</span></div></div></div></div>
+        <div class="state-card"><span class="m-label">FAB / 悬浮书签状态</span><div class="fab-states"><div class="fab-preview"><span class="scene"></span><span class="fab"><svg class="icon" style="width:18px;height:18px"><use href="#i-book"/></svg></span><span class="caption">默认 / 展开</span></div><div class="fab-preview"><span class="scene"></span><span class="fab edge left"><svg class="icon" style="width:18px;height:18px"><use href="#i-book"/></svg></span><span class="caption">左贴边 / 收起</span></div><div class="fab-preview"><span class="scene"></span><span class="fab edge right"><svg class="icon" style="width:18px;height:18px"><use href="#i-book"/></svg></span><span class="caption">右贴边 / 收起</span></div><div class="fab-preview"><span class="scene"></span><span class="fab open"><svg class="icon" style="width:18px;height:18px"><use href="#i-close"/></svg></span><span class="caption">面板打开 / 关闭</span></div></div></div>
+      </div>
+      <div class="mock-note"><span>贴边状态保留 18px 可见区域，不阻断点击</span><span>第一次点击只展开；第二次才打开面板</span><span>浮球位置与贴边方向持久化到 localStorage</span></div>
+    </section>
+
+    <section id="coverage">
+      <div class="section-head"><span class="index">10</span><h2>页面覆盖</h2><p>以下页面都将按同一套令牌迁移；不改数据结构、不删功能、不改变任何保存与回滚语义。</p></div>
+      <div class="family-grid">
+        <div class="family-card"><div class="family-card-head"><b>全局世界书</b><span>GLOBAL</span></div><p>预设切换、绑定清单和角色绑定合并成“当前组合”视图。</p><div class="mini-window"><div class="mini-top"><b>全局绑定</b><span class="m-chip green">03</span><span class="right">预设 · 夜航</span></div><div class="mini-body"><div class="mini-row"><span class="mini-dot"></span><b>雾港纪事</b><span class="grow"></span><span class="tiny">角色 · 伊芙琳</span></div><div class="mini-row"><span class="mini-dot blue"></span><b>星港档案</b><span class="grow"></span><span class="tiny">全局</span></div><div class="mini-row"><span class="mini-dot amber"></span><b>旧港补遗</b><span class="grow"></span><span class="tiny">聊天</span></div><div class="mini-row"><span class="mini-seg"><span class="on">默认</span><span>夜航</span></span><span class="grow"></span><span class="tiny">+ 保存组合</span></div></div></div></div>
+        <div class="family-card"><div class="family-card-head"><b>标签管理</b><span>TAG TREE</span></div><p>树形层级保留；颜色只做锚点，计数右对齐，拖拽手柄更轻。</p><div class="mini-window"><div class="mini-top"><b>标签树</b><span class="m-chip">05 组 · 32 个</span><span class="right">+ 新建</span></div><div class="mini-body"><div class="mini-row"><span class="mini-dot"></span><b>世界观</b><span class="grow"></span><span class="tiny">34</span></div><div class="mini-row mini-tree"><span class="mini-dot grey"></span><b>潮汐</b><span class="grow"></span><span class="tiny">12</span></div><div class="mini-row mini-tree"><span class="mini-dot grey"></span><b>雾季</b><span class="grow"></span><span class="tiny">09</span></div><div class="mini-row"><span class="mini-dot blue"></span><b>势力</b><span class="grow"></span><span class="tiny">22</span></div></div></div></div>
+        <div class="family-card"><div class="family-card-head"><b>激活记录</b><span>ACTIVATION</span></div><p>按时间分组，世界书 / 条目双层信息；实时状态用呼吸点。</p><div class="mini-window"><div class="mini-top"><b>刚刚激活</b><span class="m-chip green">实时</span><span class="right">128 条</span></div><div class="mini-body"><div class="mini-row"><span class="mini-dot"></span><b>潮汐历法与雾季</b><span class="grow"></span><span class="tiny">1.2k tok</span></div><div class="mini-row"><span class="mini-dot"></span><b>灰塔议会</b><span class="grow"></span><span class="tiny">842 tok</span></div><div class="mini-row"><span class="mini-dot grey"></span><b>守夜人的誓词</b><span class="grow"></span><span class="tiny">未命中</span></div><div class="mini-row"><span class="mini-dot blue"></span><b>核心规则</b><span class="grow"></span><span class="tiny">常驻 · 372 tok</span></div></div></div></div>
+        <div class="family-card"><div class="family-card-head"><b>整本时光机</b><span>SNAPSHOT</span></div><p>版本时间线与全量摘要；恢复前强制生成快照，默认选中当前。</p><div class="mini-window"><div class="mini-top"><b>版本记录</b><span class="m-chip">12 / 20</span><span class="right">对比</span></div><div class="mini-body"><div class="mini-row"><span class="mini-dot"></span><b>保存后快照</b><span class="grow"></span><span class="tiny">2 分钟前</span></div><div class="mini-row"><span class="mini-dot"></span><b>手动快照 · 调整雾季</b><span class="grow"></span><span class="tiny">今天 09:12</span></div><div class="mini-row"><span class="mini-dot grey"></span><b>导入基线</b><span class="grow"></span><span class="tiny">10 月 21 日</span></div></div></div></div>
+        <div class="family-card"><div class="family-card-head"><b>导入 / 楼层提取</b><span>IMPORT</span></div><p>导入策略用分段控件；解析失败时给“按酒馆原生方式导入”的出口。</p><div class="mini-window"><div class="mini-top"><b>导入世界书</b><span class="m-chip">JSON / 酒馆格式</span></div><div class="mini-body"><div class="mini-seg" style="margin-bottom:3px"><span class="on">覆盖草稿</span><span>追加</span><span>新建</span></div><div class="mini-drop"><b>拖入文件或点击选择</b><span>支持 .json / .txt；只在本机解析</span></div></div></div></div>
+        <div class="family-card"><div class="family-card-head"><b>空状态 / 加载</b><span>EMPTY</span></div><p>空状态给“下一步”而不是空白；加载只保留一行状态，不用整页遮罩。</p><div class="mini-window"><div class="mini-top"><b>世界书</b><span class="m-chip">0 条目</span></div><div class="mini-body"><div class="mini-empty"><span class="glyph"><svg class="icon" style="width:12px;height:12px"><use href="#i-book"/></svg></span><b>还没有条目</b><span>从导入开始，或新建一个空条目。</span><button class="m-btn primary">新建条目</button></div></div></div></div>
+      </div>
+      <div class="coverage">
+        <div class="coverage-row head"><span>VIEW / 页面</span><span>NEW TREATMENT / 新做法</span><span>STATUS</span></div>
+        <div class="coverage-row"><b>主工作台 · 浏览</b><p>三栏保留；顶部绑定状态、左侧世界书切换、中部卡片式条目、右侧只读预览。</p><span class="status">已出稿</span></div>
+        <div class="coverage-row"><b>主工作台 · 编辑</b><p>纸面正文、字段分组、固定底部保存栏；主操作只剩保存。</p><span class="status">已出稿</span></div>
+        <div class="coverage-row"><b>聚焦编辑</b><p>正文居中，右检查器按需出现，底部浮动工具栏。</p><span class="status">已出稿</span></div>
+        <div class="coverage-row"><b>全局世界书</b><p>沿用设置卡与绑定清单，新增预设切换与角色绑定的“当前状态”条。</p><span class="status">方案已定</span></div>
+        <div class="coverage-row"><b>跨书复制</b><p>三步进度条、来源/目标双栏、差异双编码、底部应用托盘。</p><span class="status">已出稿</span></div>
+        <div class="coverage-row"><b>AI 生成 / AI 对话</b><p>输入、预览、应用同屏；对话以侧栏形式出现，不覆盖正文。</p><span class="status">方案已定</span></div>
+        <div class="coverage-row"><b>标签管理 / 标签筛选</b><p>树形结构沿用，标签与计数分离；颜色只做小圆点，不做整行底色。</p><span class="status">方案已定</span></div>
+        <div class="coverage-row"><b>激活记录</b><p>按时间分组，世界书/条目双层信息；实时状态用绿色呼吸点。</p><span class="status">方案已定</span></div>
+        <div class="coverage-row"><b>条目时光机</b><p>版本列表 + 差异预览 + 恢复确认；与整本时光机共用弹窗骨架。</p><span class="status">已出稿</span></div>
+        <div class="coverage-row"><b>整本时光机</b><p>版本时间线、全量差异摘要、恢复前强制快照。</p><span class="status">方案已定</span></div>
+        <div class="coverage-row"><b>设置中心</b><p>左侧分组导航，右侧任务分组卡片；安全说明固定底部。</p><span class="status">已出稿</span></div>
+        <div class="coverage-row"><b>AI 配置世界书</b><p>左侧步骤、中部指令、右侧变更预览；正文不动的提示前置。</p><span class="status">已出稿</span></div>
+        <div class="coverage-row"><b>导入 / 楼层提取</b><p>导入策略选择用分段控件；解析失败时给“原生导入”出口。</p><span class="status">方案已定</span></div>
+        <div class="coverage-row"><b>移动端浏览 / 编辑</b><p>单列卡片、底部导航、贴边浮球；配置折叠成 2×2 小字段。</p><span class="status">已出稿</span></div>
+        <div class="coverage-row"><b>空状态 / 加载 / 错误</b><p>统一使用插画式图标 + 一句解释 + 一个行动，不使用大段空白。</p><span class="status">方案已定</span></div>
+      </div>
+    </section>
+
+    <section id="feature-map">
+      <div class="section-head"><span class="index">11</span><h2>功能地图</h2><p>原功能没有被删除，只是按使用频率重新分层。高频动作留在表面，低频动作进入“更多 / 配置 / 高级”层。</p></div>
+      <div class="coverage">
+        <div class="coverage-row head"><span>原功能 / FUNCTION</span><span>新位置 / WHERE IT LIVES</span><span>画板</span></div>
+        <div class="coverage-row"><div><b>世界书选择与管理</b><small>选择、新建、另存为、删除、导入、导出、排序</small></div><p>顶部当前世界书卡片负责选择；新建与导入在主稿的“更多”菜单；另存为、删除、导出放在同一个世界书菜单，危险项用红色二次确认。</p><span class="status">结构已定</span></div>
+        <div class="coverage-row"><div><b>刷新与数据同步</b><small>刷新世界书、刷新绑定、保存状态</small></div><p>顶栏刷新图标；面板打开时自动刷新；保存状态固定在右上，草稿未保存时变为琥珀色。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>浏览 / 编辑 / 专注</b><small>三种工作模式切换</small></div><p>左轨的模式切换保留“浏览 / 编辑”；专注模式进入独立画板，底部工具条和右侧检查器承接原专注模式操作。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>搜索与筛选</b><small>名称 / 内容 / 关键词搜索、仅启用、标签 OR/AND、子树/精确</small></div><p>顶栏命令式搜索；条目列表上方保留启用筛选；标签筛选进入左轨“标签”与筛选面板，逻辑和匹配模式保持原样。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>条目基础操作</b><small>新增、复制、删除、上移、下移、拖拽排序</small></div><p>“新增”保留在列表头；复制 / 删除 / 上移 / 下移进入列表底部的上下文操作条；拖拽排序继续作用在条目行上。</p><span class="status">结构已定</span></div>
+        <div class="coverage-row"><div><b>批量处理</b><small>多选联动、批量启停、查找替换、标准化、批量字段修改</small></div><p>列表进入多选后出现批量工具条；“查找替换 / 标准化”进入右侧“更多工具”浮层。多选锁定时正文编辑禁用的规则不变。</p><span class="status">结构已定</span></div>
+        <div class="coverage-row"><div><b>条目字段编辑</b><small>备注、主/次关键词、正文、策略、位置、顺序、扫描深度、概率、递归、效果、extra JSON</small></div><p>备注、关键词、正文留在主编辑区；策略、位置、顺序、递归、效果、extra JSON 收进右栏“条目配置”，其中低频字段再折叠到“高级”。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>历史与快照</b><small>条目时光机、整本时光机、手动快照、差异预览、恢复</small></div><p>时钟图标/更多菜单进入；条目和整本共用同一套弹窗骨架，恢复前自动快照的提示保留。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>标签系统</b><small>标签树、颜色、绑定标签、标签筛选、父标签删除策略</small></div><p>左轨显示标签与计数；完整树进入“标签管理”页面；删除策略和颜色选择在设置中，筛选逻辑仍在筛选面板。</p><span class="status">结构已定</span></div>
+        <div class="coverage-row"><div><b>全局世界书</b><small>全局绑定、预设应用/保存/覆盖/删除、角色绑定、搜索添加/移除</small></div><p>左轨“全局绑定”进入全局页；预设切换、保存组合、角色绑定和手动增删均保留，具体布局见页面族谱中的缩略图。</p><span class="status">结构已定</span></div>
+        <div class="coverage-row"><div><b>跨书复制</b><small>来源/目标、对比、状态筛选、批量动作、应用选中</small></div><p>独立跨书复制工作台；三步进度、双栏差异、底部应用托盘承接原有全部操作。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>AI 配置</b><small>目标世界书、自然语言指令、系统提示词、生成、变更预览、应用</small></div><p>独立 AI 配置页；左侧步骤、中部指令、右侧变更表，保留逐项勾选和应用。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>AI 生成 / AI 对话</b><small>新建会话、上下文开关、流式生成、停止、标签提取、从聊天提取</small></div><p>以右侧 AI 抽屉 / 移动端 AI Tab 出现，不覆盖正文；输入栏保留“附带上下文 / 纯净模式”和停止生成。</p><span class="status">结构已定</span></div>
+        <div class="coverage-row"><div><b>激活监控与查找替换</b><small>实时激活记录、清空、条目命中详情、查找替换浮窗</small></div><p>作为可拖动浮层从“更多工具”打开，保持原来的浮动窗口行为，不与主编辑区抢空间。</p><span class="status">结构已定</span></div>
+        <div class="coverage-row"><div><b>设置中心</b><small>悬浮按钮、楼层按钮、AI 对话、多选联动、主题、毛玻璃、版本、API、快照</small></div><p>独立设置页，左侧分组导航，右侧体验 / 外观 / 版本 / 数据与 API 分区；所有开关保留。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>悬浮球与菜单</b><small>显示/隐藏、拖动、贴边收起、点击打开面板</small></div><p>默认、左贴边、右贴边、打开态四种状态均在“状态与浮球”画板；普通点击和拖拽已分开处理。</p><span class="status">已落到画板</span></div>
+        <div class="coverage-row"><div><b>移动端</b><small>列表、编辑、设置、AI、长按多选、底部导航</small></div><p>单列卡片 + 底部 Tab；编辑页用“内容 / 配置 / 历史”分段承接桌面端全部字段，长按多选规则不变。</p><span class="status">已落到画板</span></div>
+      </div>
+      <div class="mock-note" style="margin-left:2px"><span>“结构已定”表示位置和交互规则已确定，尚未逐像素展开</span><span>“已落到画板”表示设计稿里有对应画面</span><span>实施时不删任何现有按钮</span></div>
+    </section>
+
+    <section id="handoff">
+      <div class="section-head"><span class="index">12</span><h2>落地说明</h2><p>下一步不是重写，而是以现有组件为迁移单位，先统一令牌和控件，再逐页替换布局。功能路径与数据层保持不变。</p></div>
+      <div class="handoff">
+        <div class="handoff-card">
+          <h3>迁移顺序</h3>
+          <ul>
+            <li>先改 <code>uiConstants.ts</code> 的主题令牌与 <code>App.vue</code> 的根背景 / 字体 / 圆角。</li>
+            <li>再改 <code>BaseButton / BaseInput / BaseSelect / BaseSwitch</code>，让所有页面同步换装。</li>
+            <li>随后按「主工作台 → 聚焦 → 跨书 → 设置 / AI → 移动端」逐页迁移。</li>
+            <li>最后替换 emoji 图标与浮球样式，补齐键盘焦点和 reduced-motion。</li>
+          </ul>
+        </div>
+        <div class="handoff-card dark">
+          <h3>不改什么</h3>
+          <p>世界书读取 / 保存、快照回滚、条目 UID、导入策略、AI 输出结构、快捷键和所有现有测试断言都保持不变。样式改造不触碰数据层。</p>
+          <div class="decision-row"><span class="decision"><b>状态</b> 已出稿</span><span class="decision"><b>下一步</b> 等你确认方向</span></div>
+        </div>
+      </div>
+      <div class="handoff-card" style="margin-top:10px">
+        <h3>需要你拍板的 3 件事</h3>
+        <div class="decision-row"><span class="decision"><b>主色</b> 雾松绿 / 保留深海蓝 / 其他</span><span class="decision"><b>默认主题</b> 浅色雾松纸 / 深色</span><span class="decision"><b>图标</b> 线性 SVG / 保留部分 emoji</span></div>
+        <p style="margin-top:12px">确认后我再动 <code>App.vue</code> 与各页面样式；如果方向要调整，也可以先改这一份 HTML 设计稿，不会污染现有界面。</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer><span>WORLDBOOK STUDIO · VISUAL DRAFT 01 · 2026.10.26</span><span>设计与现有功能一一对应 · 未修改应用样式源码</span></footer>
+
+<script>
+  const themeButtons = document.querySelectorAll('[data-set-theme]');
+  themeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const theme = button.dataset.setTheme;
+      document.documentElement.dataset.theme = theme;
+      themeButtons.forEach(item => item.classList.toggle('on', item === button));
+    });
+  });
+
+  const tocLinks = Array.from(document.querySelectorAll('.toc a'));
+  const sections = tocLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+  const observer = new IntersectionObserver(entries => {
+    const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (!visible) return;
+    tocLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + visible.target.id));
+  }, { rootMargin: '-20% 0px -65% 0px', threshold: [0.05, 0.3, 0.6] });
+  sections.forEach(section => observer.observe(section));
+</script>
+</body>
+</html>

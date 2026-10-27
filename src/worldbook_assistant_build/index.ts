@@ -30,6 +30,7 @@ const NO_KEYBOARD_INPUT_TYPES = new Set([
 
 let app: VueApp<Element> | null = null;
 let panelRoot: JQuery<HTMLDivElement> | null = null;
+let panelPrewarmTimer: number | null = null;
 let destroyTeleport: (() => void) | null = null;
 let menuObserver: MutationObserver | null = null;
 let menuRetryTimer: number | null = null;
@@ -213,9 +214,9 @@ function ensurePanelStyle(): void {
   visibility: hidden;
   pointer-events: none;
   border: 1px solid var(--wb-host-border, #334155);
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--wb-host-bg, #0b1220);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
   overflow: hidden;
   resize: both;
   transition: opacity 0.25s cubic-bezier(0.19, 1, 0.22, 1), transform 0.25s cubic-bezier(0.19, 1, 0.22, 1), visibility 0.25s;
@@ -230,13 +231,13 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-assistant-header {
-  height: 44px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px 0 12px;
-  background: var(--wb-host-header-bg, #111827);
-  border-bottom: 1px solid var(--wb-host-border, #334155);
+  padding: 0 12px 0 14px;
+  background: linear-gradient(180deg, #17221b, #111a14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: move;
   user-select: none;
   position: relative;
@@ -244,9 +245,48 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-assistant-header-title {
-  color: var(--wb-host-text, #e2e8f0);
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #eef4ef;
+  font-size: 12px;
   font-weight: 600;
+}
+
+#${PANEL_ID} .wb-assistant-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #e8f4ec;
+  color: #142019;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: -0.06em;
+}
+
+#${PANEL_ID} .wb-assistant-title-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+}
+
+#${PANEL_ID} .wb-assistant-title-copy strong {
+  color: #eef4ef;
+  font-size: 12px;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}
+
+#${PANEL_ID} .wb-assistant-title-copy small {
+  color: #8fa499;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 7px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
 }
 
 #${PANEL_ID} .wb-assistant-header-actions {
@@ -256,24 +296,35 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-assistant-tool {
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--wb-host-tool-border, #475569);
-  border-radius: 6px;
-  background: var(--wb-host-tool-bg, #1f2937);
-  color: var(--wb-host-text, #e2e8f0);
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #dce8df;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+#${PANEL_ID} .wb-assistant-tool svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 #${PANEL_ID} .wb-assistant-tool:hover {
-  border-color: #60a5fa;
+  border-color: rgba(103, 216, 178, 0.28);
+  background: rgba(103, 216, 178, 0.10);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  box-shadow: none;
 }
 
 #${PANEL_ID} .wb-assistant-tool:active {
@@ -302,20 +353,24 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-assistant-close {
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--wb-host-tool-border, #475569);
-  border-radius: 6px;
-  background: var(--wb-host-tool-bg, #1f2937);
-  color: var(--wb-host-text, #e2e8f0);
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #dce8df;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-size: 18px;
+  line-height: 1;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 #${PANEL_ID} .wb-assistant-close:hover {
-  border-color: #f43f5e;
+  border-color: transparent;
+  background: rgba(244, 63, 94, 0.12);
+  color: #fb7185;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(244,63,94,0.25);
+  box-shadow: none;
 }
 
 #${PANEL_ID} .wb-assistant-close:active {
@@ -347,17 +402,17 @@ function ensurePanelStyle(): void {
   top: 100%;
   right: 0;
   z-index: 10300;
-  margin-top: 4px;
+  margin-top: 5px;
   border: 1px solid var(--wb-host-border, #334155);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--wb-host-dropdown-bg, var(--wb-host-header-bg, #111827));
-  box-shadow: var(--wb-host-shadow, 0 8px 24px rgba(0,0,0,0.45));
-  padding: 4px;
-  min-width: 140px;
+  box-shadow: var(--wb-host-shadow, 0 8px 24px rgba(0,0,0,0.35));
+  padding: 5px;
+  min-width: 128px;
   opacity: 0;
-  transform: translateY(-8px) scale(0.95);
+  transform: translateY(-8px) scale(0.96);
   transform-origin: top right;
-  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
   pointer-events: none;
 }
 
@@ -365,30 +420,31 @@ function ensurePanelStyle(): void {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
-  transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 #${PANEL_ID} .wb-theme-dropdown button {
   display: block;
   width: 100%;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   color: var(--wb-host-text, #e2e8f0);
-  padding: 6px 12px;
+  padding: 7px 10px;
   text-align: left;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 10px;
+  line-height: 1.3;
   white-space: nowrap;
 }
 
 #${PANEL_ID} .wb-theme-dropdown button:hover {
-  background: rgba(124, 58, 237, 0.15);
+  background: rgba(90, 217, 180, 0.12);
 }
 
 #${PANEL_ID} .wb-theme-dropdown button.active {
-  background: rgba(124, 58, 237, 0.25);
-  color: #c4b5fd;
+  background: rgba(90, 217, 180, 0.18);
+  color: #5ad9b4;
 }
 
 @media (orientation: portrait) {
@@ -444,16 +500,16 @@ function ensurePanelStyle(): void {
   height: 48px;
   border-radius: 50%;
   border: none;
-  background: rgba(15, 23, 42, 0.88);
+  background: #0e7c66;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #e2e8f0;
-  font-size: 22px;
+  color: #ffffff;
+  font-size: 19px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 0 0 1.5px rgba(96, 165, 250, 0.3), 0 4px 16px rgba(0,0,0,0.35);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16), 0 8px 24px rgba(14, 124, 102, 0.28);
   touch-action: none;
   user-select: none;
   -webkit-font-smoothing: antialiased;
@@ -462,30 +518,65 @@ function ensurePanelStyle(): void {
 
 #${FAB_ID}:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5), 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 0 0 2px rgba(90, 217, 180, 0.45), 0 12px 28px rgba(14, 124, 102, 0.35);
 }
 
 #${FAB_ID}:active {
   transform: translateY(1px) scale(0.92);
-  box-shadow: 0 0 0 1.5px rgba(96, 165, 250, 0.4), 0 2px 8px rgba(0,0,0,0.4);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 3px 10px rgba(14, 124, 102, 0.3);
 }
 
 #${FAB_ID}.dragging {
   transition: none !important;
   transform: scale(1.05);
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.6), 0 12px 32px rgba(0,0,0,0.6);
-  opacity: 0.9;
+  box-shadow: 0 0 0 2px rgba(90, 217, 180, 0.55), 0 14px 34px rgba(0, 0, 0, 0.36);
+  opacity: 0.92;
 }
 
 #${FAB_ID}.panel-open {
   visibility: hidden;
   pointer-events: none;
-  box-shadow: 0 0 0 1.5px rgba(244, 63, 94, 0.5), 0 4px 16px rgba(0,0,0,0.35);
+  box-shadow: 0 0 0 1.5px rgba(244, 63, 94, 0.5), 0 4px 16px rgba(0, 0, 0, 0.35);
   font-size: 18px;
 }
 
 #${FAB_ID}.panel-open:hover {
   box-shadow: 0 0 0 1.5px #fb7185, 0 4px 20px rgba(244,63,94,0.3);
+}
+
+#${FAB_ID}.edge-collapsed-left,
+#${FAB_ID}.edge-collapsed-right {
+  box-shadow: 0 0 0 1.5px rgba(90, 217, 180, 0.35), 0 5px 16px rgba(0, 0, 0, 0.28);
+}
+
+#${FAB_ID}.edge-collapsed-left {
+  transform: translateX(-30px);
+  border-radius: 24px 14px 14px 24px;
+}
+
+#${FAB_ID}.edge-collapsed-right {
+  transform: translateX(30px);
+  border-radius: 14px 24px 24px 14px;
+}
+
+#${FAB_ID}.edge-collapsed-left:hover,
+#${FAB_ID}.edge-collapsed-right:hover {
+  transform: translateX(-24px) translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(90, 217, 180, 0.45), 0 8px 22px rgba(0, 0, 0, 0.32);
+}
+
+#${FAB_ID}.edge-collapsed-right:hover {
+  transform: translateX(24px) translateY(-1px);
+}
+
+#${FAB_ID}.edge-collapsed-left:active,
+#${FAB_ID}.edge-collapsed-right:active {
+  transform: translateX(-28px) scale(0.94);
+  box-shadow: 0 0 0 1.5px rgba(90, 217, 180, 0.35), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+#${FAB_ID}.edge-collapsed-right:active {
+  transform: translateX(28px) scale(0.94);
 }
 
 #${PANEL_ID} .wb-assistant-fab-toggle.fab-on {
@@ -522,6 +613,38 @@ function mountAppIntoPanel(): void {
   }
 }
 
+function cancelPanelPrewarm(): void {
+  if (panelPrewarmTimer === null) {
+    return;
+  }
+  if (typeof window.cancelIdleCallback === 'function') {
+    window.cancelIdleCallback(panelPrewarmTimer);
+  } else {
+    window.clearTimeout(panelPrewarmTimer);
+  }
+  panelPrewarmTimer = null;
+}
+
+function scheduleAppPrewarm(): void {
+  if (panelPrewarmTimer !== null || app || panelRoot?.length) {
+    return;
+  }
+
+  const prewarm = (): void => {
+    panelPrewarmTimer = null;
+    if (isPanelVisible) {
+      return;
+    }
+    mountAppIntoPanel();
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    panelPrewarmTimer = window.requestIdleCallback(() => prewarm(), { timeout: 1500 });
+  } else {
+    panelPrewarmTimer = window.setTimeout(prewarm, 300);
+  }
+}
+
 function ensurePanelElement(): JQuery {
   const doc = getHostDocument();
   let $panel = $(`#${PANEL_ID}`, doc);
@@ -534,13 +657,16 @@ function ensurePanelElement(): JQuery {
   const panelHtml = `
 <div id="${PANEL_ID}">
   <div class="wb-assistant-header">
-    <div class="wb-assistant-header-title">世界书助手</div>
+    <div class="wb-assistant-header-title">
+      <span class="wb-assistant-brand-mark">W/</span>
+      <span class="wb-assistant-title-copy"><strong>世界书助手</strong><small>WORLDBOOK STUDIO</small></span>
+    </div>
     <div class="wb-assistant-header-actions">
-      <button type="button" class="wb-assistant-tool wb-assistant-refresh" title="刷新">↻</button>
-      <button type="button" class="wb-assistant-tool wb-assistant-fab-toggle" title="悬浮按钮">📌</button>
-      <button type="button" class="wb-assistant-tool wb-assistant-theme" title="切换主题">🎨</button>
-      <button type="button" class="wb-assistant-tool wb-assistant-save" title="保存">💾</button>
-      <button type="button" class="wb-assistant-close" title="关闭">×</button>
+      <button type="button" class="wb-assistant-tool wb-assistant-refresh" title="刷新" aria-label="刷新"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-4L3 10M3 4v6h6M4 13a8 8 0 0 0 14 4l3-3M21 20v-6h-6"/></svg></button>
+      <button type="button" class="wb-assistant-tool wb-assistant-fab-toggle" title="悬浮按钮" aria-label="悬浮按钮"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg></button>
+      <button type="button" class="wb-assistant-tool wb-assistant-theme" title="切换主题" aria-label="切换主题"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none"/></svg></button>
+      <button type="button" class="wb-assistant-tool wb-assistant-save" title="保存" aria-label="保存"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
+      <button type="button" class="wb-assistant-close" title="关闭" aria-label="关闭">×</button>
     </div>
   </div>
   <div id="${PANEL_BODY_ID}"></div>
@@ -578,6 +704,8 @@ function ensurePanelElement(): JQuery {
 }
 
 const THEME_ITEMS: { key: string; label: string }[] = [
+  { key: 'pine', label: '雾松纸' },
+  { key: 'pine_dark', label: '雾松夜' },
   { key: 'ocean', label: '深海' },
   { key: 'nebula', label: '星云' },
   { key: 'forest', label: '森林' },
@@ -734,6 +862,7 @@ function setMenuActive(active: boolean): void {
 function showPanel(): void {
   const doc = getHostDocument();
   const $panel = ensurePanelElement();
+  cancelPanelPrewarm();
   mountAppIntoPanel();
   const panelElement = $panel[0] as HTMLDivElement;
 
@@ -930,6 +1059,9 @@ function createFab(): void {
   if (!isFabVisible()) return;
   detachFabViewportSync();
 
+  const FAB_SIZE = 48;
+  const EDGE_SNAP_DISTANCE = 24;
+  const EDGE_EXPANDED_GAP = 16;
   const isMobile = window.matchMedia('(max-width: 1000px)').matches;
 
   const fab = doc.createElement('div');
@@ -946,66 +1078,96 @@ function createFab(): void {
     fab.style.position = 'absolute';
   }
 
-  // Restore saved position or default to bottom-right
   const hostWin = getHostWindow();
-
-  // "Desired" viewport-relative position (like fixed would use)
-  let vpX: number | null = null;
-  let vpY: number | null = null;
+  let vpX = hostWin.innerWidth - EDGE_EXPANDED_GAP - FAB_SIZE;
+  let vpY = hostWin.innerHeight - 80 - FAB_SIZE;
+  let fabEdge: 'left' | 'right' | null = null;
 
   try {
     const raw = localStorage.getItem(FAB_POS_KEY);
     if (raw) {
       const savedPos = JSON.parse(raw);
-      vpX = Math.min(savedPos.x, hostWin.innerWidth - 56);
-      vpY = Math.min(savedPos.y, hostWin.innerHeight - 56);
+      if (typeof savedPos?.x === 'number' && typeof savedPos?.y === 'number') {
+        vpX = savedPos.x;
+        vpY = savedPos.y;
+        if (savedPos.edge === 'left' || savedPos.edge === 'right') {
+          fabEdge = savedPos.edge;
+        }
+      }
     }
   } catch { /* ignore */ }
 
-  if (vpX !== null && vpY !== null) {
+  const applyFabViewportPosition = (x: number, y: number): void => {
     if (isMobile) {
-      fab.style.left = (vpX + hostWin.scrollX) + 'px';
-      fab.style.top = (vpY + hostWin.scrollY) + 'px';
+      fab.style.left = `${x + hostWin.scrollX}px`;
+      fab.style.top = `${y + hostWin.scrollY}px`;
     } else {
-      fab.style.left = vpX + 'px';
-      fab.style.top = vpY + 'px';
+      fab.style.left = `${x}px`;
+      fab.style.top = `${y}px`;
     }
-  } else {
-    // Default: bottom-right
-    vpX = hostWin.innerWidth - 16 - 48;
-    vpY = hostWin.innerHeight - 80 - 48;
-    if (isMobile) {
-      fab.style.left = (vpX + hostWin.scrollX) + 'px';
-      fab.style.top = (vpY + hostWin.scrollY) + 'px';
-    } else {
-      fab.style.right = '16px';
-      fab.style.bottom = '80px';
-    }
-  }
+    fab.style.right = 'auto';
+    fab.style.bottom = 'auto';
+  };
 
-  // Mobile: keep FAB in viewport-relative position on scroll
+  const setFabEdge = (edge: 'left' | 'right' | null): void => {
+    fabEdge = edge;
+    fab.classList.toggle('edge-collapsed-left', edge === 'left');
+    fab.classList.toggle('edge-collapsed-right', edge === 'right');
+    fab.title = edge ? '世界书助手（已贴边收起，点击展开）' : '世界书助手';
+  };
+
+  const getEdgeForX = (x: number): 'left' | 'right' | null => {
+    if (x <= EDGE_SNAP_DISTANCE) {
+      return 'left';
+    }
+    if (x >= hostWin.innerWidth - FAB_SIZE - EDGE_SNAP_DISTANCE) {
+      return 'right';
+    }
+    return null;
+  };
+
+  const saveFabPosition = (): void => {
+    try {
+      localStorage.setItem(FAB_POS_KEY, JSON.stringify({ x: vpX, y: vpY, edge: fabEdge }));
+    } catch { /* ignore */ }
+  };
+
+  const clampFabViewport = (): void => {
+    const maxX = Math.max(0, hostWin.innerWidth - FAB_SIZE);
+    const maxY = Math.max(0, hostWin.innerHeight - FAB_SIZE);
+    vpY = Math.min(Math.max(vpY, 0), maxY);
+    if (fabEdge === 'left') {
+      vpX = 0;
+    } else if (fabEdge === 'right') {
+      vpX = maxX;
+    } else {
+      vpX = Math.min(Math.max(vpX, 0), maxX);
+    }
+    applyFabViewportPosition(vpX, vpY);
+  };
+
+  clampFabViewport();
+  setFabEdge(fabEdge);
+
+  const syncPosition = () => {
+    fabViewportSyncRaf = null;
+    if (!doc.getElementById(FAB_ID)) return; // FAB removed
+    clampFabViewport();
+  };
+  fabViewportSyncScrollHandler = () => {
+    if (!fabViewportSyncRaf) {
+      fabViewportSyncRaf = requestAnimationFrame(syncPosition);
+    }
+  };
+  fabViewportSyncResizeHandler = () => {
+    if (!fabViewportSyncRaf) {
+      fabViewportSyncRaf = requestAnimationFrame(syncPosition);
+    }
+  };
   if (isMobile) {
-    const syncPosition = () => {
-      fabViewportSyncRaf = null;
-      if (!doc.getElementById(FAB_ID)) return; // FAB removed
-      const curVpX = vpX ?? (hostWin.innerWidth - 64);
-      const curVpY = vpY ?? (hostWin.innerHeight - 128);
-      fab.style.left = (curVpX + hostWin.scrollX) + 'px';
-      fab.style.top = (curVpY + hostWin.scrollY) + 'px';
-    };
-    fabViewportSyncScrollHandler = () => {
-      if (!fabViewportSyncRaf) {
-        fabViewportSyncRaf = requestAnimationFrame(syncPosition);
-      }
-    };
-    fabViewportSyncResizeHandler = () => {
-      if (!fabViewportSyncRaf) {
-        fabViewportSyncRaf = requestAnimationFrame(syncPosition);
-      }
-    };
     hostWin.addEventListener('scroll', fabViewportSyncScrollHandler, { passive: true });
-    hostWin.addEventListener('resize', fabViewportSyncResizeHandler, { passive: true });
   }
+  hostWin.addEventListener('resize', fabViewportSyncResizeHandler, { passive: true });
 
   // Drag support
   let dragging = false;
@@ -1014,6 +1176,7 @@ function createFab(): void {
   let startY = 0;
   let fabStartX = 0;
   let fabStartY = 0;
+  let edgeBeforeDrag: 'left' | 'right' | null = null;
 
   fab.addEventListener('pointerdown', (e: PointerEvent) => {
     if (e.button !== 0) return;
@@ -1021,10 +1184,12 @@ function createFab(): void {
     dragMoved = false;
     startX = e.clientX;
     startY = e.clientY;
-    const rect = fab.getBoundingClientRect();
-    fabStartX = rect.left;
-    fabStartY = rect.top;
+    // Expand immediately while dragging so the full icon follows the pointer.
+    edgeBeforeDrag = fabEdge;
+    setFabEdge(null);
     fab.classList.add('dragging');
+    fabStartX = vpX;
+    fabStartY = vpY;
     fab.setPointerCapture(e.pointerId);
     e.stopPropagation();
     e.preventDefault();
@@ -1035,40 +1200,58 @@ function createFab(): void {
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved = true;
-    const maxX = hostWin.innerWidth - 56;
-    const maxY = hostWin.innerHeight - 56;
+    const maxX = Math.max(0, hostWin.innerWidth - FAB_SIZE);
+    const maxY = Math.max(0, hostWin.innerHeight - FAB_SIZE);
     const nx = Math.max(0, Math.min(maxX, fabStartX + dx));
     const ny = Math.max(0, Math.min(maxY, fabStartY + dy));
-    // Update viewport-relative position
     vpX = nx;
     vpY = ny;
-    if (isMobile) {
-      fab.style.left = (nx + hostWin.scrollX) + 'px';
-      fab.style.top = (ny + hostWin.scrollY) + 'px';
-    } else {
-      fab.style.left = nx + 'px';
-      fab.style.top = ny + 'px';
-    }
-    fab.style.right = 'auto';
-    fab.style.bottom = 'auto';
+    applyFabViewportPosition(nx, ny);
   });
 
-  fab.addEventListener('pointerup', () => {
+  const finishFabDrag = () => {
     if (!dragging) return;
     dragging = false;
     fab.classList.remove('dragging');
-    // Save viewport-relative position
-    try {
-      if (vpX !== null && vpY !== null) {
-        localStorage.setItem(FAB_POS_KEY, JSON.stringify({ x: vpX, y: vpY }));
+    if (!dragMoved) {
+      // A plain click must never snap the FAB to an edge.
+      setFabEdge(edgeBeforeDrag);
+      if (edgeBeforeDrag === 'left') {
+        vpX = 0;
+      } else if (edgeBeforeDrag === 'right') {
+        vpX = Math.max(0, hostWin.innerWidth - FAB_SIZE);
       }
-    } catch { /* ignore */ }
-  });
+      applyFabViewportPosition(vpX, vpY);
+      return;
+    }
+    const nextEdge = getEdgeForX(vpX);
+    setFabEdge(nextEdge);
+    if (nextEdge === 'left') {
+      vpX = 0;
+    } else if (nextEdge === 'right') {
+      vpX = Math.max(0, hostWin.innerWidth - FAB_SIZE);
+    }
+    applyFabViewportPosition(vpX, vpY);
+    saveFabPosition();
+  };
+
+  fab.addEventListener('pointerup', finishFabDrag);
+  fab.addEventListener('pointercancel', finishFabDrag);
 
   fab.addEventListener('click', (event: MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
     if (dragMoved) { dragMoved = false; return; }
+    if (fabEdge) {
+      // First click after edge-collapsed only expands the icon.
+      vpX = fabEdge === 'left'
+        ? EDGE_EXPANDED_GAP
+        : Math.max(EDGE_EXPANDED_GAP, hostWin.innerWidth - FAB_SIZE - EDGE_EXPANDED_GAP);
+      setFabEdge(null);
+      applyFabViewportPosition(vpX, vpY);
+      saveFabPosition();
+      return;
+    }
     blurHostActiveInput();
     togglePanel();
   });
@@ -2042,6 +2225,7 @@ function init(): void {
   });
 
   ensurePanelElement();
+  scheduleAppPrewarm();
   if (!ensureMenuItem()) {
     ensureMenuRetry();
   }
@@ -2065,6 +2249,7 @@ function init(): void {
 function cleanup(): void {
   const doc = getHostDocument();
   removeDebugDiagnostics();
+  cancelPanelPrewarm();
   stopMenuRetry();
   stopMenuObserver();
   stopFloorButtonListeners();

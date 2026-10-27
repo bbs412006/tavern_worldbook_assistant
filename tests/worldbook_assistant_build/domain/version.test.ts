@@ -11,8 +11,8 @@ import {
 } from '../../../src/worldbook_assistant_build/domain/version';
 
 describe('version domain', () => {
-  it('reports the worldbook opening-path optimization patch version', () => {
-    expect(APP_VERSION).toBe('2.4.1');
+  it('reports the SHELF 02 studio redesign version', () => {
+    expect(APP_VERSION).toBe('2.5.0');
   });
 
   it('normalizes whitespace and a leading v prefix', () => {

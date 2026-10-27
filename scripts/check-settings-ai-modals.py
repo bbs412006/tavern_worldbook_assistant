@@ -35,8 +35,8 @@ checks = {
         'openAiConfigPage',
         'closeUtilityPage',
     )),
-    'all three settings entry points use openSettingsPage': click_count('openSettingsPage') == 3,
-    'all three ai config entry points use openAiConfigPage': click_count('openAiConfigPage') == 3,
+    'all settings entry points use openSettingsPage': click_count('openSettingsPage') >= 3,
+    'all ai config entry points use openAiConfigPage': click_count('openAiConfigPage') >= 3,
     'settings page retains business event contracts': contains_all(settings, (
         'set-fab-visible',
         'toggle-floor-btns',

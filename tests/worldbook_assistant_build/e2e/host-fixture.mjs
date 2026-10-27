@@ -27,7 +27,7 @@ const clone = value => structuredClone(value);
 const scriptVariables = {
   worldbook_assistant_state_v1: {
     last_worldbook: '大型世界书 A',
-    theme: 'ocean',
+    theme: 'pine',
     glass_mode: false,
     show_ai_chat: false,
     panel_mode: 'editor',

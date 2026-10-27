@@ -121,6 +121,69 @@ test('keeps the production workspace and owned resources bounded across 20 utili
   expect(snapshot.errors).toEqual([]);
 });
 
+test('premounts the workspace before the first FAB click', async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto('/tests/worldbook_assistant_build/e2e/host.html');
+  await page.waitForFunction(() => (globalThis as Record<string, unknown>).__WB_E2E_READY__ === true);
+
+  await expect(page.locator('#wb-assistant-panel .wb-assistant-root')).toHaveCount(1, { timeout: 5000 });
+
+  const fab = page.locator('#wb-assistant-fab');
+  await fab.click();
+  await expect(page.locator('#wb-assistant-panel')).toHaveClass(/active/);
+});
+
+test('collapses the FAB at a screen edge and expands it before opening the panel', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 700 });
+  await page.goto('/tests/worldbook_assistant_build/e2e/host.html');
+  await page.waitForFunction(() => (globalThis as Record<string, unknown>).__WB_E2E_READY__ === true);
+
+  const fab = page.locator('#wb-assistant-fab');
+  const box = await fab.boundingBox();
+  expect(box).not.toBeNull();
+  const pointerY = (box?.y ?? 0) + (box?.height ?? 0) / 2;
+
+  await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) / 2, pointerY);
+  await page.mouse.down();
+  await page.mouse.move(10, pointerY, { steps: 12 });
+  await page.mouse.up();
+
+  await expect(fab).toHaveClass(/edge-collapsed-left/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('__WB_FAB_POS__'))).toContain('"edge":"left"');
+  await expect(page.locator('#wb-assistant-panel')).not.toHaveClass(/active/);
+
+  // The first click on a collapsed FAB only expands it.
+  await page.mouse.click(8, pointerY);
+  await expect(fab).not.toHaveClass(/edge-collapsed-left|edge-collapsed-right/);
+  await expect(page.locator('#wb-assistant-panel')).not.toHaveClass(/active/);
+
+  await fab.click();
+  await expect(page.locator('#wb-assistant-panel')).toHaveClass(/active/);
+});
+
+test('switches between the pine light and night themes', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/tests/worldbook_assistant_build/e2e/host.html');
+  await page.waitForFunction(() => (globalThis as Record<string, unknown>).__WB_E2E_READY__ === true);
+  await page.locator('#wb-assistant-fab').click();
+  await expect(page.locator('#wb-assistant-panel')).toHaveClass(/active/);
+
+  const root = page.locator('.wb-assistant-root');
+  await expect(root).toHaveCSS('--wb-bg-root', '#f2efe6');
+
+  await page.locator('#wb-assistant-panel .wb-assistant-theme').click();
+  await page.getByRole('button', { name: '雾松夜', exact: true }).click();
+  await expect(root).toHaveCSS('--wb-bg-root', '#0d1310');
+  await expect.poll(() => page.evaluate(() => {
+    const state = (globalThis as Record<string, any>).getVariables()['worldbook_assistant_state_v1'];
+    return state?.theme;
+  })).toBe('pine_dark');
+
+  await page.locator('#wb-assistant-panel .wb-assistant-theme').click();
+  await page.getByRole('button', { name: '雾松纸', exact: true }).click();
+  await expect(root).toHaveCSS('--wb-bg-root', '#f2efe6');
+});
+
 test('keeps the desktop large-list initial DOM bounded', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openAssistant(page);

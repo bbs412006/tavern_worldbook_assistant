@@ -45,6 +45,14 @@
       v-show="isMainWorkspaceActive"
       class="main-workspace"
       data-main-workspace
+      :class="{
+        'module-global': globalWorldbookMode,
+        'module-tags': tagEditorMode,
+        'module-copy': crossCopyMode,
+        'module-ai': aiGeneratorMode,
+        'module-history': historyHubMode,
+        'studio-batch-mode': studioBatchMode,
+      }"
       :aria-hidden="!isMainWorkspaceActive"
       :inert="!isMainWorkspaceActive || undefined"
     >
@@ -647,6 +655,92 @@
           </div>
           </Transition>
 
+          <!-- Tab: 工具 Sheet -->
+          <Transition name="mobile-tab">
+          <div v-show="mobileTab === 'tools'" class="mobile-pane studio-mobile-tools">
+            <header class="studio-mobile-tools-head">
+              <div class="studio-mobile-tools-title">
+                <span class="studio-eyebrow">TOOLS</span>
+                <b>工具</b>
+              </div>
+              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+              <button type="button" class="studio-mobile-tools-close" aria-label="关闭工具面板" @click="closeMobileToolsSheet">
+                <StudioIcon name="close" :size="16" />
+              </button>
+            </header>
+
+            <section class="studio-mobile-sheet">
+              <div class="studio-mobile-sheet-head">
+                <b>全部工具</b>
+                <span class="studio-mobile-chip">长按条目可多选</span>
+              </div>
+              <div class="studio-tool-grid">
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="studio-mtool" @click="openMobileTool('global')"><StudioIcon name="globe" :size="18" /><span>全局</span></button>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="studio-mtool" @click="openMobileTool('copy')"><StudioIcon name="copy" :size="18" /><span>跨书</span></button>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="studio-mtool" @click="openMobileTool('ai')"><StudioIcon name="sparkle" :size="18" /><span>AI</span></button>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="studio-mtool" @click="openMobileTool('history')"><StudioIcon name="history" :size="18" /><span>时光机</span></button>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="studio-mtool" @click="openMobileTool('tags')"><StudioIcon name="tags" :size="18" /><span>标签</span></button>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="studio-mtool" @click="toggleFloatingPanel('activation')"><StudioIcon name="activity" :size="18" /><span>激活</span></button>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="studio-mtool" @click="triggerImport()"><StudioIcon name="upload" :size="18" /><span>导入</span></button>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="studio-mtool" @click="exportCurrentWorldbook()"><StudioIcon name="download" :size="18" /><span>导出</span></button>
+              </div>
+
+              <div v-if="selectedEntryCount" class="studio-mobile-batch">
+                <div class="studio-mobile-batch-head">
+                  <b>已选择 {{ selectedEntryCount }} 项</b>
+                  <span>批量操作</span>
+                </div>
+                <div class="studio-mobile-batch-actions">
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" @click="setStudioSelectedEntriesEnabled(true)">启用</button>
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" @click="setStudioSelectedEntriesEnabled(false)">停用</button>
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" @click="duplicateStudioSelectedEntries()">复制</button>
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" class="danger" @click="removeSelectedEntry()">删除</button>
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" @click="openMobileBatchConfig">批量配置</button>
+                </div>
+              </div>
+              <p v-else class="studio-mobile-empty">长按列表中的条目即可进入多选，批量按钮会出现在这里。</p>
+            </section>
+
+            <section class="studio-mobile-sheet">
+              <div class="studio-mobile-sheet-head">
+                <b>更多</b>
+                <span class="studio-mobile-chip">设置</span>
+              </div>
+              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+              <button type="button" class="studio-mobile-row" @click="extractFromChat">
+                <span class="studio-mobile-dot"></span>
+                <span class="studio-mobile-row-copy"><b>从聊天提取世界书</b><small>从当前对话生成草稿条目</small></span>
+                <StudioIcon name="arrow" :size="16" />
+              </button>
+              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+              <button type="button" class="studio-mobile-row" @click="openSettingsPage">
+                <span class="studio-mobile-dot"></span>
+                <span class="studio-mobile-row-copy"><b>助手设置</b><small>主题、悬浮球、密钥与快照</small></span>
+                <StudioIcon name="arrow" :size="16" />
+              </button>
+              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+              <button type="button" class="studio-mobile-row" @click="toggleFloatingPanel('find')">
+                <span class="studio-mobile-dot"></span>
+                <span class="studio-mobile-row-copy"><b>查找替换</b><small>在当前世界书中搜索并替换</small></span>
+                <StudioIcon name="arrow" :size="16" />
+              </button>
+            </section>
+          </div>
+          </Transition>
+
         </div>
       </div>
 
@@ -662,12 +756,15 @@
           <span class="tab-icon">✏️</span><span class="tab-label">编辑</span>
         </BaseButton>
         <BaseButton @click="mobileTab = 'settings'" :class="{ active: mobileTab === 'settings' }">
-          <span class="tab-icon">⚙️</span><span class="tab-label">设置</span>
+          <span class="tab-icon">⚙️</span><span class="tab-label">配置</span>
         </BaseButton>
-        <BaseButton @click="mobileTab = 'copy'" :class="{ active: mobileTab === 'copy' }">
+        <BaseButton @click="mobileTab = 'tools'" :class="{ active: mobileTab === 'tools' }">
+          <span class="tab-icon">🧰</span><span class="tab-label">工具</span>
+        </BaseButton>
+        <BaseButton v-if="mobileTab === 'copy'" class="active" type="button" @click="mobileTab = 'copy'">
           <span class="tab-icon">📚</span><span class="tab-label">复制</span>
         </BaseButton>
-        <BaseButton v-if="persistedState.show_ai_chat" @click="mobileTab = 'ai'" :class="{ active: mobileTab === 'ai' }">
+        <BaseButton v-if="mobileTab === 'ai'" class="active" type="button" @click="mobileTab = 'ai'">
           <span class="tab-icon">🤖</span><span class="tab-label">AI</span>
         </BaseButton>
         <BaseButton @click="mobileTab = 'tags'" :class="{ active: mobileTab === 'tags' }">
@@ -679,6 +776,38 @@
 
     <!-- ═══ Desktop Layout ═══ -->
     <template v-if="!isMobile">
+    <div class="studio-desktop-shell">
+      <aside class="studio-rail" aria-label="世界书助手模块">
+        <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+        <button class="studio-rail-brand" type="button" title="返回工作台" @click="openWorkbenchModule">
+          <span>W/</span>
+          <small>SHELF</small>
+        </button>
+        <nav class="studio-rail-nav">
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" :class="{ on: activeStudioModule === 'workbench' }" title="工作台" @click="activateStudioModule('workbench')"><StudioIcon name="workbench" :size="18" /><span>工作台</span></button>
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" :class="{ on: activeStudioModule === 'tags' }" title="标签管理" @click="activateStudioModule('tags')"><StudioIcon name="tags" :size="18" /><span>标签</span></button>
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" :class="{ on: activeStudioModule === 'global' }" title="全局绑定" @click="activateStudioModule('global')"><StudioIcon name="globe" :size="18" /><span>全局</span></button>
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" :class="{ on: activeStudioModule === 'copy' }" title="跨书复制" @click="activateStudioModule('copy')"><StudioIcon name="copy" :size="18" /><span>复制</span></button>
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" :class="{ on: activeStudioModule === 'ai' }" title="AI 工坊" @click="activateStudioModule('ai')"><StudioIcon name="sparkle" :size="18" /><span>AI</span></button>
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" :class="{ on: activeStudioModule === 'history' }" title="时间线" @click="activateStudioModule('history')"><StudioIcon name="history" :size="18" /><span>时间线</span></button>
+          <div class="studio-rail-sep"></div>
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" title="设置中心" @click="activateStudioModule('settings')"><StudioIcon name="settings" :size="18" /><span>设置</span></button>
+        </nav>
+        <div class="studio-rail-bottom">
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" title="命令面板（⌘K）" @click="openStudioCommandPalette"><StudioIcon name="command" :size="18" /><span>⌘K</span></button>
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" title="切换主题" @click="toggleTheme"><StudioIcon name="eye" :size="18" /><span>主题</span></button>
+        </div>
+      </aside>
+      <div class="studio-desktop-main">
 
     <!-- ═══ Desktop Browse Mode (via BrowsePanel) ═══ -->
     <template v-if="panelMode === 'browse'">
@@ -935,6 +1064,16 @@
                   </div>
               </div>
             </label>
+            <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+            <button class="studio-command-trigger" type="button" aria-label="打开命令面板" @click="openStudioCommandPalette">
+              <StudioIcon name="search" :size="14" />
+              <span>搜索或输入命令</span>
+              <kbd>⌘ K</kbd>
+            </button>
+            <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+            <button class="studio-save-btn" type="button" :disabled="!hasUnsavedChanges || isAnyCineLocked" @click="saveCurrentWorldbook">
+              <StudioIcon name="save" :size="13" />保存
+            </button>
             <BaseButton class="btn" size="sm" data-focus-hero="wb_new" @click="createNewWorldbook">新建</BaseButton>
             <BaseButton class="btn" size="sm" data-focus-hero="wb_duplicate" :disabled="!selectedWorldbookName" @click="duplicateWorldbook">
               另存为
@@ -1237,7 +1376,7 @@
               </BaseButton>
             </div>
             </Transition>
-            <div v-if="globalWorldbookMode" class="global-mode-panel">
+            <div v-if="globalWorldbookMode" class="global-mode-panel studio-module-page studio-global-page">
               <div class="global-mode-head">
                 <span class="global-mode-title">全局世界书（{{ bindings.global.length }}）</span>
                 <BaseButton class="btn mini danger" type="button" :disabled="!bindings.global.length" @click="clearGlobalWorldbooks">
@@ -1416,7 +1555,19 @@
           </section>
 
           <!-- ═══ AI Generator Panel ═══ -->
-          <section v-if="aiGeneratorMode" class="ai-generator-panel">
+          <header v-if="aiGeneratorMode" class="studio-module-head studio-ai-head">
+            <div>
+              <span class="studio-eyebrow">AI WORKSPACE / AI 工坊</span>
+              <h1>AI 工坊</h1>
+              <p>对话、生成和配置共用一个模块；上下文可见，结果先预览再应用。</p>
+            </div>
+            <div class="studio-module-head-actions">
+              <span class="studio-context-pill">{{ selectedWorldbookName || '未选择世界书' }}</span>
+              <BaseButton size="sm" @click="openAiConfigPage">AI 配置世界书</BaseButton>
+              <BaseButton size="sm" variant="ghost" @click="openWorkbenchModule">返回工作台</BaseButton>
+            </div>
+          </header>
+          <section v-if="aiGeneratorMode" class="ai-generator-panel studio-module-page studio-ai-page">
             <div class="ai-sidebar">
               <div class="ai-sidebar-head">
                 <span class="ai-sidebar-title">对话列表</span>
@@ -1465,8 +1616,20 @@
           </section>
 
           <!-- 标签编辑模式 -->
+          <header v-if="tagEditorMode" class="studio-module-head studio-tag-head">
+            <div>
+              <span class="studio-eyebrow">标签系统 / 标签管理</span>
+              <h1>标签管理</h1>
+              <p>树形层级、颜色、父级策略和世界书分配都集中在这里；筛选仍作用于工作台条目。</p>
+            </div>
+            <div class="studio-module-head-actions">
+              <span class="studio-context-pill">{{ tagManagementRows.length }} 个标签</span>
+              <BaseButton size="sm" variant="ghost" @click="openWorkbenchModule">返回工作台</BaseButton>
+            </div>
+          </header>
           <TagEditorPanel
             v-if="tagEditorMode"
+            class="studio-module-page studio-tag-page"
             desktop
             :rows="tagManagementRows"
             :new-name="tagNewName"
@@ -1496,6 +1659,7 @@
 
           <CrossCopyPanel
             v-if="crossCopyMode"
+            class="studio-module-page studio-copy-page"
             variant="desktop"
             :workspace-summary="crossCopyWorkspaceSummary"
             :compared-text="crossCopyWorkspaceComparedText"
@@ -1590,8 +1754,103 @@
             />
           </CrossCopyPanel>
 
-          <section v-show="!aiGeneratorMode && !tagEditorMode && !crossCopyMode" ref="mainLayoutRef" class="wb-main-layout" :class="{ 'focus-mode': isDesktopFocusMode, 'global-mode-visible': globalWorldbookMode }" :style="mainLayoutStyle">
+          <section v-if="historyHubMode" class="studio-module-page studio-history-hub">
+            <header class="studio-module-head">
+              <div>
+                <span class="studio-eyebrow">时间线 / 历史与激活</span>
+                <h1>时间线</h1>
+                <p>条目版本、整本快照和激活记录集中在一个模块；详细差异仍由原来的时光机弹窗处理。</p>
+              </div>
+              <div class="studio-module-head-actions">
+                <BaseButton size="sm" :disabled="!selectedEntry" @click="openEntryHistoryModal">条目时光机</BaseButton>
+                <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal">整本时光机</BaseButton>
+                <BaseButton size="sm" variant="ghost" @click="toggleFloatingPanel('activation')">激活监控</BaseButton>
+                <BaseButton size="sm" variant="ghost" @click="openWorkbenchModule">返回工作台</BaseButton>
+              </div>
+            </header>
+            <div class="studio-module-toolbar">
+              <span class="studio-context-pill"><StudioIcon name="book" :size="12" />{{ selectedWorldbookName || '未选择世界书' }}</span>
+              <span class="studio-context-pill" v-if="selectedEntry"><StudioIcon name="pen" :size="12" />{{ selectedEntry.name || `条目 ${selectedEntry.uid}` }}</span>
+              <span class="studio-module-toolbar-grow"></span>
+              <span class="studio-muted-note">条目历史保留 7 次 · 整本保留 {{ HISTORY_LIMIT }} 次</span>
+            </div>
+            <div class="studio-history-hub-grid">
+              <article class="studio-history-card">
+                <div class="studio-history-card-head"><b>条目版本</b><span>{{ entryVersionViews.length }} 个</span></div>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button v-for="version in entryVersionViews.slice(0, 8)" :key="`hub-entry-${version.id}`" type="button" class="studio-history-row" @click="openEntryHistoryModal">
+                  <span class="studio-history-dot"></span><span><b>{{ version.name || '未命名条目' }}</b><small>{{ version.label }} · {{ formatDateTime(version.ts) }}</small></span><span class="studio-history-link">对比</span>
+                </button>
+                <div v-if="!entryVersionViews.length" class="studio-side-empty">当前条目还没有历史版本</div>
+              </article>
+              <article class="studio-history-card">
+                <div class="studio-history-card-head"><b>整本快照</b><span>{{ snapshotsForCurrent.length }} / {{ HISTORY_LIMIT }}</span></div>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button v-for="snapshot in snapshotsForCurrent.slice(0, 8)" :key="`hub-snapshot-${snapshot.id}`" type="button" class="studio-history-row" @click="openWorldbookHistoryModal">
+                  <span class="studio-history-dot"></span><span><b>{{ snapshot.label }}</b><small>{{ formatDateTime(snapshot.ts) }} · {{ snapshot.entries.length }} 条目</small></span><span class="studio-history-link">查看</span>
+                </button>
+                <div v-if="!snapshotsForCurrent.length" class="studio-side-empty">当前世界书还没有整本快照</div>
+              </article>
+              <article class="studio-history-card studio-history-activity">
+                <div class="studio-history-card-head"><b>激活记录</b><span>{{ activationLogs.length }} / {{ ACTIVATION_LOG_LIMIT }}</span></div>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button v-for="log in activationLogs.slice(0, 10)" :key="`hub-activation-${log.id}`" type="button" class="studio-history-row" @click="toggleFloatingPanel('activation')">
+                  <span class="studio-history-dot"></span><span><b>{{ log.name }}</b><small>{{ log.world }} · {{ formatDateTime(log.time) }}</small></span><span class="studio-history-link">详情</span>
+                </button>
+                <div v-if="!activationLogs.length" class="studio-side-empty">还没有激活记录</div>
+              </article>
+            </div>
+          </section>
+
+          <div v-show="!aiGeneratorMode && !tagEditorMode && !crossCopyMode && !globalWorldbookMode && !historyHubMode" class="studio-workbench-area">
+            <aside v-if="!isDesktopFocusMode" class="studio-sidebar">
+              <div class="studio-worldbook-card">
+                <span class="studio-eyebrow">当前世界书</span>
+                <BaseSelect :model-value="selectedWorldbookName" :options="worldbookSelectOptions" placeholder="请选择世界书" aria-label="当前世界书" size="sm" @update:model-value="handleWorldbookSelectionUpdate" />
+                <div class="studio-worldbook-stats"><span><b>{{ draftEntries.length }}</b> 条目</span><span><b>{{ enabledEntryCount }}</b> 启用</span><span><b>{{ bindings.global.length }}</b> 绑定</span></div>
+              </div>
+              <div class="studio-mode-tabs">
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" @click="switchPanelMode('browse')">浏览</button>
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <button type="button" class="on" @click="switchPanelMode('editor')">编辑</button>
+              </div>
+              <div class="studio-side-section">
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <div class="studio-side-label"><span>条目</span><!-- unified-control-exception: SHELF 02 studio custom-styled control --> <button type="button" title="按位置与权重排序" @click="sortEntries">排序</button></div>
+                <nav class="studio-side-nav">
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" :class="{ on: !onlyEnabled && !studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = false"><StudioIcon name="list" :size="14" />全部条目<span>{{ filteredEntries.length }}</span></button>
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" :class="{ on: onlyEnabled }" @click="onlyEnabled = true; studioConstantOnly = false"><StudioIcon name="eye" :size="14" />已启用<span>{{ enabledEntryCount }}</span></button>
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" :class="{ on: studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = true"><StudioIcon name="activity" :size="14" />常驻条目<span>{{ draftEntries.filter(entry => entry.strategy.type === 'constant').length }}</span></button>
+                </nav>
+              </div>
+              <div class="studio-side-section">
+                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                <div class="studio-side-label"><span>标签</span><!-- unified-control-exception: SHELF 02 studio custom-styled control --> <button type="button" @click="activateStudioModule('tags')">管理</button></div>
+                <div class="studio-side-tags">
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button v-for="tag in studioSidebarTags" :key="`studio-tag-${tag.id}`" type="button" :class="{ on: selectedTagFilterIdSet.has(tag.id) }" @click="toggleTagFilterSelection(tag.id)">
+                    <i :style="{ background: tag.color }"></i><span>{{ tag.name }}</span><b>{{ getStudioSidebarTagCount(tag.id) }}</b>
+                  </button>
+                  <div v-if="!studioSidebarTags.length" class="studio-side-empty">还没有标签</div>
+                </div>
+              </div>
+              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+              <button class="studio-snapshot-card" type="button" @click="openHistoryHub">
+                <span><i></i>快照与历史</span>
+                <strong>{{ snapshotsForCurrent.length }} / {{ HISTORY_LIMIT }}</strong>
+                <small>{{ hasUnsavedChanges ? '有未保存修改' : '已同步' }}</small>
+              </button>
+            </aside>
+            <section ref="mainLayoutRef" class="wb-main-layout" :class="{ 'focus-mode': isDesktopFocusMode, 'global-mode-visible': globalWorldbookMode }" :style="mainLayoutStyle">
             <aside v-show="!showMobileEditor" class="wb-entry-list" :class="{ focus: isDesktopFocusMode }">
+              <div v-if="!isDesktopFocusMode" class="studio-list-switch">
+                <BaseButton class="btn mini" type="button" @click="switchPanelMode('browse')">浏览</BaseButton>
+                <BaseButton class="btn mini active" type="button">编辑</BaseButton>
+              </div>
               <div v-if="!isDesktopFocusMode" class="list-search">
                 <BaseInput v-model="searchText" type="text" class="text-input" placeholder="搜索名称 / 内容 / 关键词" />
                 <label class="checkbox-inline">
@@ -1601,7 +1860,8 @@
               </div>
               <div v-if="!isDesktopFocusMode" class="list-summary">
                 <span>条目 {{ filteredEntries.length }} / {{ draftEntries.length }} | 启用 {{ enabledEntryCount }} | 选中 {{ selectedEntryCount }}</span>
-                <BaseButton class="btn mini" type="button" :disabled="!draftEntries.length" :class="{ active: viewSortActive }" @click="sortEntries" style="margin-left:auto;font-size:11px;">🔢 排序</BaseButton>
+                <BaseButton class="btn mini" type="button" :class="{ active: studioBatchMode }" @click="toggleStudioBatchMode()" style="margin-left:auto;font-size:11px;">批量</BaseButton>
+                <BaseButton class="btn mini" type="button" :disabled="!draftEntries.length" :class="{ active: viewSortActive }" @click="sortEntries" style="font-size:11px;">🔢 排序</BaseButton>
               </div>
               <div v-if="selectedEntryCount > 1 && !isMobile" class="list-multi-edit-hint" :class="{ off: !multiEditEnabled }">
                 {{ multiEditHintText }}
@@ -1628,6 +1888,7 @@
                   @drop="handleEntryDrop(entry.uid, $event)"
                   @dragend="handleEntryDragEnd"
                 >
+                  <span v-if="studioBatchMode" class="studio-batch-check" :class="{ on: selectedEntryUidSet.has(entry.uid) }" @click.stop="toggleStudioEntrySelection(entry.uid)"></span>
                   <div class="entry-item-head">
                     <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
                     <div class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</div>
@@ -1670,8 +1931,19 @@
 
             <main v-show="!isMobile || showMobileEditor" class="wb-editor">
               <template v-if="selectedEntry">
-                <div ref="editorShellRef" class="wb-editor-shell" :style="editorShellStyle">
-                  <section class="editor-center" :class="{ focus: isDesktopFocusMode }">
+                <div v-if="!isMobile" class="studio-editor-tabs" role="tablist" aria-label="编辑器视图">
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" role="tab" :aria-selected="studioEditorTab === 'content'" :class="{ on: studioEditorTab === 'content' }" @click="studioEditorTab = 'content'"><StudioIcon name="pen" :size="14" />内容<small>1</small></button>
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" role="tab" :aria-selected="studioEditorTab === 'config'" :class="{ on: studioEditorTab === 'config' }" @click="studioEditorTab = 'config'"><StudioIcon name="sliders" :size="14" />配置<small>2</small></button>
+                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                  <button type="button" role="tab" :aria-selected="studioEditorTab === 'history'" :class="{ on: studioEditorTab === 'history' }" @click="studioEditorTab = 'history'"><StudioIcon name="history" :size="14" />历史<small>3</small></button>
+                  <span class="studio-editor-tabs-grow"></span>
+                  <span class="studio-editor-tabs-hint" v-if="selectedEntryCount > 1">正在批量编辑 {{ selectedEntryCount }} 个条目</span>
+                  <span class="studio-editor-tabs-hint" v-else>内容、配置与历史不再互相挤压</span>
+                </div>
+                <div ref="editorShellRef" class="wb-editor-shell" :class="isDesktopFocusMode ? 'studio-focus-shell' : `studio-tab-${studioEditorTab}`" :style="editorShellStyle">
+                  <section v-show="studioEditorTab === 'content' || isDesktopFocusMode" class="editor-center" :class="{ focus: isDesktopFocusMode }">
                     <header class="editor-head" :class="{ focus: isDesktopFocusMode }">
                       <div v-if="isMobile" class="editor-back-btn" @click="goBackToList">
                         ← 返回
@@ -1761,7 +2033,7 @@
                     @pointerdown="startPaneResize('editor', $event)"
                   ></div>
 
-                  <aside class="editor-side" :class="{ focus: isDesktopFocusMode }">
+                  <aside v-show="studioEditorTab === 'config' || isDesktopFocusMode" class="editor-side" :class="{ focus: isDesktopFocusMode }">
                     <article class="editor-card focus-side-card" :class="{ open: focusSidePanelState.strategy }">
                       <template v-if="isDesktopFocusMode">
                         <BaseButton type="button" class="focus-side-summary" @click="toggleFocusSidePanel('strategy')">
@@ -1964,6 +2236,20 @@
                     </article>
                   </aside>
                 </div>
+                <section v-if="studioEditorTab === 'history' && !isDesktopFocusMode" class="studio-history-tab">
+                  <div class="studio-history-head">
+                    <div><span class="studio-eyebrow">历史与记录</span><h2>{{ selectedEntry.name || `条目 ${selectedEntry.uid}` }}</h2><p>版本快照和激活记录仍走原来的时光机，不会在这里删改数据。</p></div>
+                    <div class="studio-history-actions"><BaseButton size="sm" :disabled="!selectedEntry" @click="openEntryHistoryModal">条目时光机</BaseButton><BaseButton size="sm" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal">整本时光机</BaseButton><BaseButton size="sm" variant="ghost" @click="toggleFloatingPanel('activation')">激活监控</BaseButton></div>
+                  </div>
+                  <div class="studio-history-grid">
+                    <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                    <article class="studio-history-card"><div class="studio-history-card-head"><b>条目版本</b><span>{{ entryVersionViews.length }} 个快照</span></div><!-- unified-control-exception: SHELF 02 studio custom-styled control --> <button v-for="version in entryVersionViews.slice(0, 5)" :key="`studio-entry-version-${version.id}`" type="button" class="studio-history-row" @click="openEntryHistoryModal"><span class="studio-history-dot"></span><span><b>{{ version.name || selectedEntry.name }}</b><small>{{ version.label }} · {{ formatDateTime(version.ts) }}</small></span><span class="studio-history-link">对比</span></button><div v-if="!entryVersionViews.length" class="studio-side-empty">还没有条目快照</div></article>
+                    <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                    <article class="studio-history-card"><div class="studio-history-card-head"><b>整本快照</b><span>{{ snapshotsForCurrent.length }} / {{ HISTORY_LIMIT }}</span></div><!-- unified-control-exception: SHELF 02 studio custom-styled control --> <button v-for="snapshot in snapshotsForCurrent.slice(0, 5)" :key="`studio-wb-snapshot-${snapshot.id}`" type="button" class="studio-history-row" @click="openWorldbookHistoryModal"><span class="studio-history-dot"></span><span><b>{{ snapshot.label }}</b><small>{{ formatDateTime(snapshot.ts) }} · {{ snapshot.entries.length }} 条目</small></span><span class="studio-history-link">查看</span></button><div v-if="!snapshotsForCurrent.length" class="studio-side-empty">还没有整本快照</div></article>
+                    <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+                    <article class="studio-history-card studio-history-activity"><div class="studio-history-card-head"><b>最近激活</b><span>{{ activationLogs.length }} 条</span></div><!-- unified-control-exception: SHELF 02 studio custom-styled control --> <button v-for="log in activationLogs.slice(0, 5)" :key="`studio-activation-${log.id}`" type="button" class="studio-history-row" @click="toggleFloatingPanel('activation')"><span class="studio-history-dot"></span><span><b>{{ log.name }}</b><small>{{ log.world }} · {{ formatDateTime(log.time) }}</small></span><span class="studio-history-link">详情</span></button><div v-if="!activationLogs.length" class="studio-side-empty">还没有激活记录</div></article>
+                  </div>
+                </section>
               </template>
               <template v-else>
                 <div class="empty-block">请选择或新增一个条目后开始编辑。</div>
@@ -1971,6 +2257,25 @@
             </main>
           </section>
           </div>
+          </div>
+
+          <Transition name="studio-batch">
+            <div v-if="studioBatchMode" class="studio-batch-dock">
+              <div class="studio-batch-count"><b>{{ selectedEntryCount }}</b><span>已选择</span></div>
+              <div class="studio-batch-divider"></div>
+              <BaseButton size="sm" @click="selectAllVisibleStudioEntries">全选可见</BaseButton>
+              <BaseButton size="sm" @click="clearStudioBatchSelection">清空</BaseButton>
+              <BaseButton size="sm" @click="setStudioSelectedEntriesEnabled(true)">启用</BaseButton>
+              <BaseButton size="sm" @click="setStudioSelectedEntriesEnabled(false)">停用</BaseButton>
+              <BaseButton size="sm" @click="duplicateStudioSelectedEntries">复制</BaseButton>
+              <BaseButton size="sm" variant="danger" @click="removeSelectedEntry">删除</BaseButton>
+              <BaseButton size="sm" @click="moveSelectedEntry(-1)">上移</BaseButton>
+              <BaseButton size="sm" @click="moveSelectedEntry(1)">下移</BaseButton>
+              <BaseButton size="sm" @click="studioEditorTab = 'config'">批量配置</BaseButton>
+              <div class="studio-batch-grow"></div>
+              <BaseButton size="sm" variant="ghost" @click="toggleStudioBatchMode(false)">退出批量</BaseButton>
+            </div>
+          </Transition>
 
           <footer class="wb-status" :class="{ 'has-unsaved': hasUnsavedChanges }">
             <span>{{ isBusy ? '加载中...' : statusMessage }}</span>
@@ -2661,8 +2966,52 @@
               </div>
             </div>
           </div>
+      </div>
+    </div>
     </template><!-- end editor mode -->
     </div>
+
+    <Transition name="studio-command-fade">
+      <div v-if="commandPaletteOpen" class="studio-command-overlay" @click.self="closeStudioCommandPalette">
+        <div class="studio-command-palette" role="dialog" aria-modal="true" aria-label="命令面板">
+          <div class="studio-command-search">
+            <StudioIcon name="search" :size="16" />
+            <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+            <input
+              ref="commandSearchInputRef"
+              v-model="commandQuery"
+              type="text"
+              placeholder="搜索世界书、条目、模块或命令…"
+              aria-label="搜索命令"
+              @keydown.esc.prevent="closeStudioCommandPalette"
+            />
+            <kbd>Esc</kbd>
+          </div>
+          <div class="studio-command-body">
+            <div v-for="group in studioCommandGroups" :key="group.label" class="studio-command-group">
+              <div class="studio-command-group-label">{{ group.label }}</div>
+              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+              <button
+                v-for="command in group.items"
+                :key="command.id"
+                type="button"
+                class="studio-command-item"
+                @click="executeStudioCommand(command)"
+              >
+                <StudioIcon :name="command.icon" :size="15" />
+                <span class="studio-command-item-copy"><b>{{ command.label }}</b><small>{{ command.hint }}</small></span>
+                <kbd v-if="command.shortcut">{{ command.shortcut }}</kbd>
+              </button>
+            </div>
+            <div v-if="!studioCommandGroups.length" class="studio-command-empty">没有匹配的命令</div>
+          </div>
+          <div class="studio-command-footer">
+            <span>↑↓ 选择</span><span>↵ 执行</span><span>Esc 关闭</span>
+            <span class="grow"></span><span>所有功能都在这里可达</span>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -2691,6 +3040,7 @@ import SettingPanel from './components/SettingPanel.vue';
 import TagEditorPanel from './components/TagEditorPanel.vue';
 import SettingsPage from './components/SettingsPage.vue';
 import AIConfigPage from './components/AIConfigPage.vue';
+import StudioIcon from './components/StudioIcon.vue';
 import BaseButton from './components/controls/BaseButton.vue';
 import BaseCheckbox from './components/controls/BaseCheckbox.vue';
 import BaseInput from './components/controls/BaseInput.vue';
@@ -2888,8 +3238,15 @@ const focusWorldbookMenuRef = ref<HTMLElement | null>(null);
 const rolePickerOpen = ref(false);
 const rolePickerRef = ref<HTMLElement | null>(null);
 const rolePickerSearchInputRef = ref<HTMLInputElement | null>(null);
-const currentTheme = ref<ThemeKey>('ocean');
+const currentTheme = ref<ThemeKey>('pine');
 const themePickerOpen = ref(false);
+const studioEditorTab = ref<'content' | 'config' | 'history'>('content');
+const studioBatchMode = ref(false);
+const historyHubMode = ref(false);
+const studioConstantOnly = ref(false);
+const commandPaletteOpen = ref(false);
+const commandQuery = ref('');
+const commandSearchInputRef = ref<HTMLInputElement | null>(null);
 const globalWorldbookMode = ref(false);
 const aiGeneratorMode = ref(false);
 const crossCopyMode = ref(false);
@@ -3019,9 +3376,245 @@ const aiUseContext = ref(true);
 type UtilityPage = 'main' | 'settings' | 'ai-config';
 const utilityPage = ref<UtilityPage>('main');
 const isMainWorkspaceActive = computed(() => utilityPage.value === 'main');
+type StudioModuleKey = 'workbench' | 'tags' | 'global' | 'copy' | 'ai' | 'history' | 'settings';
+
+const activeStudioModule = computed<StudioModuleKey>(() => {
+  if (utilityPage.value === 'settings') return 'settings';
+  if (historyHubMode.value) return 'history';
+  if (globalWorldbookMode.value) return 'global';
+  if (tagEditorMode.value) return 'tags';
+  if (crossCopyMode.value) return 'copy';
+  if (aiGeneratorMode.value) return 'ai';
+  return 'workbench';
+});
+
+function openWorkbenchModule(): void {
+  aiGeneratorMode.value = false;
+  tagEditorMode.value = false;
+  crossCopyMode.value = false;
+  globalWorldbookMode.value = false;
+  historyHubMode.value = false;
+  utilityPage.value = 'main';
+  commandPaletteOpen.value = false;
+}
+
+function openHistoryHub(): void {
+  aiGeneratorMode.value = false;
+  tagEditorMode.value = false;
+  crossCopyMode.value = false;
+  globalWorldbookMode.value = false;
+  historyHubMode.value = true;
+  utilityPage.value = 'main';
+  studioBatchMode.value = false;
+  studioEditorTab.value = 'content';
+  commandPaletteOpen.value = false;
+}
+
+function activateStudioModule(module: StudioModuleKey): void {
+  if (module !== 'workbench') {
+    studioBatchMode.value = false;
+    studioEditorTab.value = 'content';
+  }
+  if (module === 'workbench') {
+    openWorkbenchModule();
+    return;
+  }
+  if (module === 'settings') {
+    openSettingsPage();
+    return;
+  }
+  if (module === 'history') {
+    openHistoryHub();
+    return;
+  }
+  if (module === 'tags') {
+    if (!tagEditorMode.value) tagToggleMode();
+    return;
+  }
+  if (module === 'global') {
+    if (!globalWorldbookMode.value) toggleGlobalMode();
+    return;
+  }
+  if (module === 'copy') {
+    if (!crossCopyMode.value) setCrossCopyModeActive(true);
+    return;
+  }
+  if (module === 'ai' && !aiGeneratorMode.value) {
+    aiToggleMode();
+  }
+}
+
+function closeMobileToolsSheet(): void {
+  mobileTab.value = 'list';
+}
+
+function openMobileBatchConfig(): void {
+  mobileTab.value = 'settings';
+}
+
+function openMobileTool(tool: 'global' | 'copy' | 'ai' | 'history' | 'tags'): void {
+  if (tool === 'tags') {
+    mobileTab.value = 'tags';
+    return;
+  }
+  if (tool === 'copy') {
+    mobileTab.value = 'copy';
+    if (!crossCopyMode.value) {
+      setCrossCopyModeActive(true);
+    }
+    return;
+  }
+  if (tool === 'ai') {
+    if (!persistedState.value.show_ai_chat) {
+      setStatus('请先在助手设置中开启 AI 功能');
+      openSettingsPage();
+      return;
+    }
+    mobileTab.value = 'ai';
+    return;
+  }
+  if (tool === 'history') {
+    if (selectedEntryUid.value !== null) {
+      openEntryHistoryModal();
+      return;
+    }
+    openWorldbookHistoryModal();
+    return;
+  }
+  if (!globalWorldbookMode.value) {
+    toggleGlobalMode();
+  }
+  mobileTab.value = 'list';
+}
+
+interface StudioCommand {
+  id: string;
+  label: string;
+  hint: string;
+  icon: string;
+  keywords?: string;
+  shortcut?: string;
+  action: () => unknown;
+}
+
+interface StudioCommandGroup {
+  label: string;
+  items: StudioCommand[];
+}
+
+const STUDIO_COMMAND_GROUPS: StudioCommandGroup[] = [
+  {
+    label: '常用',
+    items: [
+      { id: 'save', label: '保存当前世界书', hint: '写入酒馆并生成快照', icon: 'save', shortcut: '⌘S', action: () => saveCurrentWorldbook() },
+      { id: 'refresh', label: '刷新世界书与绑定', hint: '重新读取当前世界书', icon: 'refresh', action: () => hardRefresh({ source: 'manual', reason: '命令面板刷新' }) },
+      { id: 'batch', label: '批量选择条目', hint: '打开底部批量操作栏', icon: 'check', action: () => toggleStudioBatchMode(true) },
+      { id: 'find', label: '查找替换', hint: '打开查找替换浮层', icon: 'search', shortcut: '⌘F', action: () => toggleFloatingPanel('find') },
+    ],
+  },
+  {
+    label: '世界书',
+    items: [
+      { id: 'wb-new', label: '新建世界书', hint: '创建一个空世界书', icon: 'plus', action: () => createNewWorldbook() },
+      { id: 'wb-import', label: '导入世界书', hint: 'JSON / 兼容酒馆格式', icon: 'upload', action: () => triggerImport() },
+      { id: 'wb-export', label: '导出当前世界书', hint: '导出 JSON', icon: 'download', action: () => exportCurrentWorldbook() },
+      { id: 'wb-duplicate', label: '另存为副本', hint: '复制当前世界书', icon: 'copy', action: () => duplicateWorldbook() },
+      { id: 'wb-delete', label: '删除当前世界书', hint: '需要二次确认', icon: 'trash', action: () => deleteCurrentWorldbook() },
+    ],
+  },
+  {
+    label: '条目与批量',
+    items: [
+      { id: 'entry-new', label: '新增条目', hint: '在当前世界书末尾创建', icon: 'plus', action: () => addEntry() },
+      { id: 'entry-duplicate', label: '复制选中条目', hint: '复制后可继续编辑', icon: 'copy', action: () => duplicateStudioSelectedEntries() },
+      { id: 'entry-delete', label: '删除选中条目', hint: '需要二次确认', icon: 'trash', action: () => removeSelectedEntry() },
+      { id: 'entry-up', label: '上移选中条目', hint: '批量操作同样可用', icon: 'arrow', action: () => moveSelectedEntry(-1) },
+      { id: 'entry-down', label: '下移选中条目', hint: '批量操作同样可用', icon: 'arrow', action: () => moveSelectedEntry(1) },
+      { id: 'entry-sort', label: '按位置与权重排序', hint: '按 position / order 排序', icon: 'activity', action: () => sortEntries() },
+      { id: 'entry-order-desc', label: '按 order 降序排列', hint: '快速倒序当前条目', icon: 'activity', action: () => sortEntriesByOrderDesc() },
+      { id: 'entry-normalize', label: '标准化全部条目', hint: '补齐缺失字段', icon: 'activity', action: () => normalizeAllEntries() },
+      { id: 'entry-enable-all', label: '启用全部条目', hint: '忽略当前筛选', icon: 'check', action: () => setEnabledForAll(true) },
+      { id: 'entry-disable-all', label: '停用全部条目', hint: '忽略当前筛选', icon: 'eye', action: () => setEnabledForAll(false) },
+      { id: 'entry-extract', label: '从聊天提取世界书', hint: '把聊天内容提取成条目', icon: 'upload', action: () => extractFromChat() },
+      { id: 'activation', label: '打开激活监控', hint: '最近 120 条激活记录', icon: 'activity', action: () => toggleFloatingPanel('activation') },
+    ],
+  },
+  {
+    label: '模块',
+    items: [
+      { id: 'module-workbench', label: '工作台', hint: '条目浏览与编辑', icon: 'workbench', action: () => activateStudioModule('workbench') },
+      { id: 'module-tags', label: '标签管理', hint: '标签树、颜色与世界书分配', icon: 'tags', action: () => activateStudioModule('tags') },
+      { id: 'module-global', label: '全局绑定', hint: '预设与角色绑定', icon: 'globe', action: () => activateStudioModule('global') },
+      { id: 'module-copy', label: '跨书复制', hint: '选择来源和目标后对比', icon: 'copy', action: () => activateStudioModule('copy') },
+      { id: 'module-ai', label: 'AI 工坊', hint: '对话、生成和配置', icon: 'sparkle', action: () => activateStudioModule('ai') },
+      { id: 'module-history', label: '时间线', hint: '编辑历史与激活记录', icon: 'history', action: () => activateStudioModule('history') },
+      { id: 'module-settings', label: '设置中心', hint: '体验、外观、API 与版本', icon: 'settings', action: () => activateStudioModule('settings') },
+      { id: 'module-ai-config', label: 'AI 配置世界书', hint: '通过自然语言修改条目', icon: 'sparkle', action: () => openAiConfigPage() },
+    ],
+  },
+  {
+    label: '视图与外观',
+    items: [
+      { id: 'view-browse', label: '切换到浏览模式', hint: '卡片式浏览条目', icon: 'eye', action: () => switchPanelMode('browse') },
+      { id: 'view-edit', label: '切换到编辑模式', hint: '列表 + 编辑器', icon: 'pen', action: () => switchPanelMode('editor') },
+      { id: 'view-focus', label: '切换专注编辑', hint: '只保留正文与检查器', icon: 'eye', action: () => toggleFocusEditing() },
+      { id: 'theme', label: '切换主题', hint: '在全部主题间轮换', icon: 'eye', action: () => toggleTheme() },
+      { id: 'fab', label: fabVisible.value ? '隐藏悬浮书签' : '显示悬浮书签', hint: '切换后仍可从菜单打开', icon: 'eye', action: () => setFabVisible(!fabVisible.value) },
+      { id: 'floor', label: floorBtnVisible.value ? '隐藏楼层提取按钮' : '显示楼层提取按钮', hint: '聊天楼层左侧快捷入口', icon: 'eye', action: () => toggleFloorBtns(!floorBtnVisible.value) },
+      { id: 'history-entry', label: '打开条目时光机', hint: '查看当前条目的版本差异', icon: 'history', action: () => openEntryHistoryModal() },
+      { id: 'history-worldbook', label: '打开整本时光机', hint: '查看世界书快照', icon: 'history', action: () => openWorldbookHistoryModal() },
+    ],
+  },
+];
+
+const studioCommandGroups = computed<StudioCommandGroup[]>(() => {
+  const query = commandQuery.value.trim().toLowerCase();
+  if (!query) {
+    return STUDIO_COMMAND_GROUPS;
+  }
+  return STUDIO_COMMAND_GROUPS
+    .map(group => ({
+      label: group.label,
+      items: group.items.filter(item => `${item.label} ${item.hint} ${item.keywords ?? ''}`.toLowerCase().includes(query)),
+    }))
+    .filter(group => group.items.length > 0);
+});
+
+function openStudioCommandPalette(): void {
+  commandQuery.value = '';
+  commandPaletteOpen.value = true;
+  void nextTick(() => commandSearchInputRef.value?.focus());
+}
+
+function closeStudioCommandPalette(): void {
+  commandPaletteOpen.value = false;
+}
+
+function executeStudioCommand(command: StudioCommand): void {
+  closeStudioCommandPalette();
+  try {
+    void command.action();
+  } catch (error) {
+    console.error('[WB-Studio] command failed', error);
+  }
+}
+
+function onStudioCommandKeydown(event: KeyboardEvent): void {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault();
+    openStudioCommandPalette();
+    return;
+  }
+  if (event.key === 'Escape' && commandPaletteOpen.value) {
+    event.preventDefault();
+    closeStudioCommandPalette();
+  }
+}
 
 function openSettingsPage(): void {
   measureNavigation('open-settings', '[data-settings-page], .utility-page', 'settings');
+  studioBatchMode.value = false;
+  historyHubMode.value = false;
   utilityPage.value = 'settings';
 }
 
@@ -3055,6 +3648,8 @@ function openAiConfigPage(): void {
   aiConfigPreview.value = false;
   aiConfigChanges.value = [];
   aiConfigTargetWorldbook.value = selectedWorldbookName.value || '';
+  studioBatchMode.value = false;
+  historyHubMode.value = false;
   utilityPage.value = 'ai-config';
 }
 
@@ -3199,7 +3794,7 @@ if (typeof window !== 'undefined') {
   };
 }
 const showMobileEditor = computed(() => isMobile.value && selectedEntryUid.value !== null);
-const mobileTab = ref<'list' | 'edit' | 'settings' | 'copy' | 'ai' | 'tags'>('list');
+const mobileTab = ref<'list' | 'edit' | 'tools' | 'settings' | 'copy' | 'ai' | 'tags'>('list');
 const tagEditorMode = ref(false);
 const tagFilterPanelOpen = ref(false);
 const tagFilterSearchText = ref('');
@@ -3302,7 +3897,10 @@ const { searchedEntries } = useEntrySearch({
 });
 
 const filteredEntries = computed(() => {
-  const result = searchedEntries.value;
+  let result = searchedEntries.value;
+  if (studioConstantOnly.value) {
+    result = result.filter(entry => entry.strategy.type === 'constant');
+  }
   if (viewSortActive.value) {
     return [...result].sort(compareEntriesByPositionThenOrder);
   }
@@ -3511,6 +4109,11 @@ const roleBindingCandidates = computed<RoleBindingCandidate[]>(() => {
 
 const tagDefinitions = computed(() => persistedState.value.worldbook_tags.definitions);
 const tagAssignments = computed(() => persistedState.value.worldbook_tags.assignments);
+const studioSidebarTags = computed(() => tagDefinitions.value.slice(0, 6));
+
+function getStudioSidebarTagCount(tagId: string): number {
+  return Object.values(tagAssignments.value).filter(tags => tags.includes(tagId)).length;
+}
 
 const tagFilterState = computed(() => normalizeTagFilterState(persistedState.value.tag_filter));
 const selectedTagFilterIds = computed<string[]>({
@@ -4591,6 +5194,8 @@ function switchWorldbookSelection(nextName: string, options: WorldbookSwitchOpti
     return false;
   }
   selectedWorldbookName.value = next;
+  studioBatchMode.value = false;
+  studioEditorTab.value = 'content';
   return true;
 }
 
@@ -4640,6 +5245,12 @@ function establishEntriesBaseline(): void {
   clearEntriesDigestTimer();
   originalEntriesDigest.value = JSON.stringify(originalEntries.value);
   draftEntriesDigest.value = JSON.stringify(draftEntries.value);
+}
+
+function establishEntriesBaselineFromDigest(digest: string): void {
+  clearEntriesDigestTimer();
+  originalEntriesDigest.value = digest;
+  draftEntriesDigest.value = digest;
 }
 
 function scheduleEntriesDigestSync(delay = ENTRIES_DIGEST_DEBOUNCE_MS): void {
@@ -6182,6 +6793,7 @@ function aiToggleMode(): void {
     globalWorldbookMode.value = false;
     tagEditorMode.value = false;
     crossCopyMode.value = false;
+    historyHubMode.value = false;
   }
 }
 
@@ -6194,6 +6806,7 @@ function tagToggleMode(): void {
     aiGeneratorMode.value = false;
     globalWorldbookMode.value = false;
     crossCopyMode.value = false;
+    historyHubMode.value = false;
   }
 }
 
@@ -6474,6 +7087,7 @@ function setCrossCopyModeActive(next: boolean): void {
     aiGeneratorMode.value = false;
     tagEditorMode.value = false;
     globalWorldbookMode.value = false;
+    historyHubMode.value = false;
     resetCrossCopyMobileStep();
     closeFocusWorldbookMenu();
     closeFocusToolsBand();
@@ -7432,6 +8046,105 @@ function clearMobileLongPressState(): void {
   mobileLongPressState.value = null;
 }
 
+function toggleStudioBatchMode(force?: boolean): void {
+  const next = typeof force === 'boolean' ? force : !studioBatchMode.value;
+  studioBatchMode.value = next;
+  commandPaletteOpen.value = false;
+  if (next) {
+    const initialUid = selectedEntryUid.value ?? desktopEditorVisibleEntries.value[0]?.uid ?? null;
+    if (initialUid !== null) {
+      selectedEntryUids.value = [initialUid];
+      selectedEntryUid.value = initialUid;
+      selectedEntryAnchorUid.value = initialUid;
+    }
+    studioEditorTab.value = 'config';
+    return;
+  }
+  studioEditorTab.value = 'content';
+  if (selectedEntryUid.value !== null) {
+    selectedEntryUids.value = [selectedEntryUid.value];
+  }
+}
+
+function toggleStudioEntrySelection(uid: number): void {
+  if (!draftEntries.value.some(entry => entry.uid === uid)) {
+    return;
+  }
+  const next = [...selectedEntryUids.value];
+  const index = next.indexOf(uid);
+  if (index >= 0) {
+    next.splice(index, 1);
+  } else {
+    next.push(uid);
+  }
+  selectedEntryUids.value = next;
+  if (!next.length) {
+    selectedEntryUid.value = null;
+    selectedEntryAnchorUid.value = null;
+    return;
+  }
+  if (!selectedEntryUid.value || !next.includes(selectedEntryUid.value)) {
+    selectedEntryUid.value = next[0] ?? null;
+    selectedEntryAnchorUid.value = next[0] ?? null;
+  }
+}
+
+function selectAllVisibleStudioEntries(): void {
+  const uids = desktopEditorVisibleEntries.value.map(entry => entry.uid);
+  selectedEntryUids.value = uids;
+  if (uids.length) {
+    selectedEntryUid.value = selectedEntryUids.value[0] ?? null;
+    selectedEntryAnchorUid.value = selectedEntryUid.value;
+  }
+}
+
+function clearStudioBatchSelection(): void {
+  selectedEntryUids.value = [];
+  selectedEntryUid.value = null;
+  selectedEntryAnchorUid.value = null;
+}
+
+function setStudioSelectedEntriesEnabled(enabled: boolean): void {
+  const selected = new Set(getOrderedSelectedEntryUids());
+  if (!selected.size) {
+    return;
+  }
+  draftEntries.value.forEach(entry => {
+    if (selected.has(entry.uid)) {
+      entry.enabled = enabled;
+    }
+  });
+  setStatus(`已${enabled ? '启用' : '停用'} ${selected.size} 个条目`);
+}
+
+function duplicateStudioSelectedEntries(): void {
+  const selected = getOrderedSelectedEntryUids();
+  if (!selected.length) {
+    return;
+  }
+  const selectedSet = new Set(selected);
+  let nextUid = getNextUid(draftEntries.value);
+  const cloneUids: number[] = [];
+  const nextEntries: WorldbookEntry[] = [];
+  for (const entry of draftEntries.value) {
+    nextEntries.push(entry);
+    if (!selectedSet.has(entry.uid)) {
+      continue;
+    }
+    const clone = normalizeEntry(klona(entry), nextUid);
+    clone.name = `${clone.name || `条目 ${entry.uid}`} (副本)`;
+    nextEntries.push(clone);
+    cloneUids.push(nextUid);
+    nextUid += 1;
+  }
+  draftEntries.value = nextEntries;
+  selectedEntryUids.value = cloneUids;
+  selectedEntryUid.value = cloneUids[0] ?? null;
+  selectedEntryAnchorUid.value = selectedEntryUid.value;
+  studioEditorTab.value = 'content';
+  setStatus(`已复制 ${selected.length} 个条目`);
+}
+
 function startMobileEntryLongPress(uid: number, event: PointerEvent): void {
   if (!isMobile.value || mobileTab.value !== 'list' || mobileMultiSelectMode.value) {
     return;
@@ -7503,6 +8216,11 @@ function selectEntry(uid: number, event?: MouseEvent): void {
 
   const entryExists = draftEntries.value.some(entry => entry.uid === uid);
   if (!entryExists) {
+    return;
+  }
+
+  if (!isMobile.value && studioBatchMode.value) {
+    toggleStudioEntrySelection(uid);
     return;
   }
 
@@ -8418,6 +9136,7 @@ function toggleGlobalMode(): void {
     aiGeneratorMode.value = false;
     tagEditorMode.value = false;
     crossCopyMode.value = false;
+    historyHubMode.value = false;
     const synced = ensureSelectionForGlobalMode({
       source: 'manual',
       reason: '切换到全局模式',
@@ -9577,14 +10296,23 @@ function toggleTheme(): void {
   const keys = Object.keys(THEMES) as ThemeKey[];
   const index = keys.indexOf(currentTheme.value);
   const nextIndex = (index + 1) % keys.length;
-  currentTheme.value = keys[nextIndex];
-  setStatus(`已切换主题: ${THEMES[currentTheme.value].name}`);
+  setTheme(keys[nextIndex]);
+}
+
+function applyThemeFromPersistedState(): void {
+  const theme = persistedState.value.theme;
+  if (theme in THEMES && currentTheme.value !== theme) {
+    currentTheme.value = theme;
+  }
 }
 
 function setTheme(key: ThemeKey | string): void {
   if (!(key in THEMES)) return;
   const themeKey = key as ThemeKey;
   currentTheme.value = themeKey;
+  updatePersistedState(state => {
+    state.theme = themeKey;
+  });
   themePickerOpen.value = false;
   setStatus(`已切换主题: ${THEMES[themeKey].label}`);
 }
@@ -9680,9 +10408,10 @@ async function loadWorldbookUncoalesced(name: string): Promise<void> {
       return;
     }
     const normalized = normalizeEntryList(rawEntries);
-    draftEntries.value = klona(normalized);
+    const normalizedDigest = JSON.stringify(normalized);
+    draftEntries.value = normalized;
     originalEntries.value = klona(normalized);
-    establishEntriesBaseline();
+    establishEntriesBaselineFromDigest(normalizedDigest);
     ensureSelectedEntryExists();
     setStatus(`已加载 "${name}"，条目 ${normalized.length}`);
   } catch (error) {
@@ -9750,12 +10479,32 @@ async function reloadWorldbookNames(preferred?: string, switchOptions: Worldbook
   return true;
 }
 
+let activeHardRefresh: Promise<void> | null = null;
+
 async function hardRefresh(options: HardRefreshOptions = {}): Promise<void> {
+  // Panel opening can dispatch a refresh while the initialization refresh is still running.
+  // Coalesce them into one host read instead of doubling the first-open workload.
+  if (activeHardRefresh) {
+    return activeHardRefresh;
+  }
+  const refresh = hardRefreshUncoalesced(options);
+  activeHardRefresh = refresh;
+  try {
+    await refresh;
+  } finally {
+    if (activeHardRefresh === refresh) {
+      activeHardRefresh = null;
+    }
+  }
+}
+
+async function hardRefreshUncoalesced(options: HardRefreshOptions = {}): Promise<void> {
   if (!ensureRefreshAllowed(options)) {
     return;
   }
   const allowDirty = hasUnsavedChanges.value;
   persistedState.value = readPersistedState();
+  applyThemeFromPersistedState();
   syncSelectedGlobalPresetFromState();
   applyCrossCopyStateFromPersisted();
   const reloaded = await reloadWorldbookNames(selectedWorldbookName.value || undefined, {
@@ -10412,6 +11161,7 @@ onMounted(() => {
     hostWin.addEventListener('orientationchange', _mobileResizeHandler);
   }
   persistedState.value = readPersistedState();
+  applyThemeFromPersistedState();
   syncSelectedGlobalPresetFromState();
   applyLayoutStateFromPersisted();
   applyCrossCopyStateFromPersisted();
@@ -10451,6 +11201,7 @@ onMounted(() => {
   );
 
   window.addEventListener('wb-helper:refresh', onPanelRefresh);
+  window.addEventListener('keydown', onStudioCommandKeydown, true);
   window.addEventListener('wb-helper:save', onPanelSave);
   window.addEventListener('wb-helper:discard', onPanelDiscard);
   window.addEventListener('wb-helper:toggle-theme', toggleTheme);
@@ -10527,6 +11278,7 @@ onUnmounted(() => {
   stopContentResize();
   stopContentTopDrag();
   window.removeEventListener('wb-helper:refresh', onPanelRefresh);
+  window.removeEventListener('keydown', onStudioCommandKeydown, true);
   window.removeEventListener('wb-helper:save', onPanelSave);
   window.removeEventListener('wb-helper:discard', onPanelDiscard);
   window.removeEventListener('wb-helper:toggle-theme', toggleTheme);
@@ -10562,6 +11314,12 @@ function updateHostPanelTheme() {
 
 watch(currentTheme, () => {
   updateHostPanelTheme();
+});
+
+watch(() => persistedState.value.theme, theme => {
+  if (theme in THEMES && currentTheme.value !== theme) {
+    currentTheme.value = theme;
+  }
 });
 
 watch(hasUnsavedChanges, (val) => {
@@ -16459,5 +17217,2886 @@ watch(hasUnsavedChanges, (val) => {
     max-height: 38vh;
   }
 
+}
+</style>
+
+<style scoped>
+/* ═══════════════════════════════════════════════════════════════════
+   PINE STUDIO — visual layer
+   Matches design/worldbook-assistant-redesign.html.
+   This layer intentionally changes presentation only: every existing
+   control, event and keyboard path stays mounted.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wb-assistant-root {
+  --studio-line: color-mix(in srgb, var(--wb-border-main) 68%, transparent);
+  --studio-line-soft: var(--wb-border-subtle);
+  --studio-surface: var(--wb-bg-card, var(--wb-bg-panel));
+  --studio-soft: var(--wb-bg-soft, color-mix(in srgb, var(--wb-bg-panel) 70%, var(--wb-bg-root)));
+  --studio-shadow: var(--wb-shadow-soft, 0 8px 24px rgba(30, 42, 34, 0.07));
+  --studio-mono: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace;
+  --wb-control-height-sm: 27px;
+  --wb-control-height-md: 34px;
+  --wb-control-height-lg: 40px;
+  --wb-control-radius: 8px;
+  padding: 10px 12px 12px;
+  gap: 10px;
+  border-radius: 0;
+  background:
+    radial-gradient(760px 460px at 0% -12%, color-mix(in srgb, var(--wb-primary) 7%, transparent), transparent 62%),
+    var(--wb-bg-root);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  letter-spacing: -0.004em;
+}
+
+.wb-assistant-root * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--wb-scrollbar-thumb) transparent;
+}
+
+.wb-assistant-root ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.wb-assistant-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wb-assistant-root ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--wb-scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+/* ── Base controls ─────────────────────────────────────────────── */
+.wb-assistant-root :deep(.wb-control) {
+  border-color: var(--studio-line);
+  background: var(--studio-surface);
+  box-shadow: none;
+  font-size: 11px;
+}
+
+.wb-assistant-root :deep(.wb-control:hover:not(:disabled)) {
+  border-color: color-mix(in srgb, var(--wb-primary) 34%, var(--wb-border-main));
+  background: var(--studio-surface);
+}
+
+.wb-assistant-root :deep(.wb-control-button) {
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 540;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.wb-assistant-root :deep(.wb-control-button--primary) {
+  border-color: var(--wb-primary);
+  background: var(--wb-primary);
+  color: var(--wb-on-primary, #fff);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--wb-primary) 20%, transparent);
+}
+
+.wb-assistant-root :deep(.wb-control-button--primary:hover:not(:disabled)) {
+  border-color: var(--wb-primary);
+  background: color-mix(in srgb, var(--wb-primary) 88%, var(--wb-text-main));
+}
+
+.wb-assistant-root :deep(.wb-control-button--danger) {
+  border-color: color-mix(in srgb, var(--wb-danger, #b2473f) 20%, var(--studio-line));
+  background: color-mix(in srgb, var(--wb-danger, #b2473f) 8%, var(--studio-surface));
+  color: var(--wb-danger, #b2473f);
+}
+
+.wb-assistant-root :deep(.wb-control-button--ghost),
+.wb-assistant-root :deep(.btn.mini) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--wb-text-muted);
+  box-shadow: none;
+}
+
+.wb-assistant-root :deep(.wb-control-button--ghost:hover:not(:disabled)),
+.wb-assistant-root :deep(.btn.mini:hover:not(:disabled)) {
+  border-color: transparent;
+  background: var(--wb-primary-hover);
+  color: var(--wb-text-main);
+}
+
+.wb-assistant-root :deep(.wb-control-input),
+.wb-assistant-root :deep(.wb-control-textarea),
+.wb-assistant-root :deep(.wb-control-trigger) {
+  background: var(--studio-surface);
+  border-color: var(--studio-line);
+  box-shadow: none;
+}
+
+.wb-assistant-root :deep(.wb-control-input::placeholder),
+.wb-assistant-root :deep(.wb-control-textarea::placeholder) {
+  color: var(--wb-text-dim, var(--wb-text-muted));
+}
+
+.wb-assistant-root :deep(.wb-control-input:focus),
+.wb-assistant-root :deep(.wb-control-textarea:focus),
+.wb-assistant-root :deep(.wb-control-trigger:focus-visible) {
+  border-color: var(--wb-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-primary) 16%, transparent);
+}
+
+.wb-assistant-root :deep(.wb-control-switch-track) {
+  border-color: var(--studio-line);
+}
+
+.wb-assistant-root :deep(.wb-control-native:checked + .wb-control-switch-track),
+.wb-assistant-root :deep(.wb-control-native:checked + .wb-control-checkbox-indicator) {
+  border-color: var(--wb-primary);
+  background: var(--wb-primary);
+}
+
+.wb-assistant-root :deep(.wb-control-menu),
+.wb-assistant-root :deep(.worldbook-picker-dropdown),
+.wb-assistant-root :deep(.role-picker-dropdown) {
+  border-color: var(--studio-line);
+  background: var(--wb-dropdown-bg);
+  box-shadow: var(--studio-shadow);
+}
+
+/* ── Studio command bar ────────────────────────────────────────── */
+.main-workspace > .browse-toolbar {
+  display: none;
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) {
+  min-height: 54px;
+  padding: 10px 12px;
+  gap: 8px;
+  border: 1px solid var(--studio-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--studio-surface) 92%, transparent);
+  box-shadow: var(--studio-shadow);
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar)::before {
+  content: "W/";
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 29px;
+  height: 29px;
+  border-radius: 8px;
+  background: var(--wb-primary);
+  color: var(--wb-on-primary, #fff);
+  font-family: var(--studio-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .toolbar-label {
+  min-width: 250px;
+  max-width: 370px;
+  flex: 0 1 370px;
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .toolbar-label > span {
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-family: var(--studio-mono);
+  font-size: 8px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) > :deep(.wb-control-button) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--wb-text-muted);
+  box-shadow: none;
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) > :deep(.wb-control-button:hover:not(:disabled)) {
+  border-color: transparent;
+  background: var(--wb-primary-hover);
+  color: var(--wb-text-main);
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) > :deep(.wb-control-button--danger) {
+  color: var(--wb-danger, #b2473f);
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .worldbook-picker {
+  min-width: 210px;
+}
+
+.main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .worldbook-picker :deep(.wb-control) {
+  min-height: 35px;
+  border-radius: 9px;
+  background: var(--studio-surface);
+  font-size: 12px;
+  font-weight: 560;
+}
+
+.browse-toolbar {
+  min-height: 0 !important;
+  padding: 0 2px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.browse-mode-switch {
+  padding: 2px;
+  border: 1px solid var(--studio-line);
+  border-radius: 8px;
+  background: var(--studio-soft);
+}
+
+.browse-mode-btn {
+  min-height: 25px !important;
+  padding: 2px 9px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--wb-text-muted) !important;
+  font-size: 9px !important;
+}
+
+.browse-mode-btn.active {
+  background: var(--studio-surface) !important;
+  color: var(--wb-text-main) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.studio-list-switch {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--studio-line);
+  border-radius: 7px;
+  background: var(--studio-soft);
+}
+
+.studio-list-switch :deep(.btn) {
+  flex: 1;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.studio-list-switch :deep(.btn.active) {
+  background: var(--studio-surface);
+  color: var(--wb-text-main);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.wb-history-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 0 2px;
+}
+
+.wb-history-shortcuts :deep(.btn) {
+  min-height: 27px;
+  padding: 3px 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.wb-history-shortcuts :deep(.btn:hover:not(:disabled)) {
+  border-color: transparent;
+  background: var(--wb-primary-hover);
+  color: var(--wb-text-main);
+}
+
+/* ── Bindings and status ──────────────────────────────────────── */
+.wb-bindings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 2px;
+}
+
+.binding-chip,
+.wb-bindings .binding-chip {
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid var(--studio-line);
+  border-radius: 999px;
+  background: var(--studio-surface);
+  color: var(--wb-text-muted);
+  font-size: 9px;
+  font-weight: 520;
+}
+
+.wb-bindings .binding-chip.global,
+.binding-chip.global {
+  border-color: color-mix(in srgb, var(--wb-primary) 20%, var(--studio-line));
+  background: var(--wb-primary-soft);
+  color: var(--wb-primary-light);
+}
+
+.wb-bindings .binding-chip.char,
+.binding-chip.char {
+  border-color: color-mix(in srgb, #2f6fb5 20%, var(--studio-line));
+  background: color-mix(in srgb, #2f6fb5 9%, var(--studio-surface));
+  color: #2f6fb5;
+}
+
+.wb-bindings .binding-chip.chat,
+.binding-chip.chat {
+  border-color: color-mix(in srgb, var(--wb-warning, #b45d09) 22%, var(--studio-line));
+  background: color-mix(in srgb, var(--wb-warning, #b45d09) 9%, var(--studio-surface));
+  color: var(--wb-warning, #b45d09);
+}
+
+/* ── Main split / entry list ──────────────────────────────────── */
+.wb-main-layout {
+  padding: 0 1px;
+}
+
+.wb-entry-list {
+  padding: 9px 8px 8px;
+  gap: 7px;
+  border: 1px solid var(--studio-line);
+  border-radius: 14px;
+  background: var(--studio-surface);
+  box-shadow: var(--studio-shadow);
+}
+
+.list-search {
+  padding: 0 2px;
+  gap: 5px;
+}
+
+.list-search :deep(.wb-control-input) {
+  min-height: 31px;
+  border-color: transparent;
+  border-radius: 8px;
+  background: var(--studio-soft);
+  font-size: 10px;
+}
+
+.list-search .checkbox-inline {
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.list-summary {
+  padding: 0 4px 7px;
+  border-bottom: 1px solid var(--studio-line-soft);
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-family: var(--studio-mono);
+  font-size: 9px;
+  letter-spacing: 0.01em;
+}
+
+.list-summary :deep(.btn) {
+  font-family: inherit;
+  font-size: 8px;
+}
+
+.list-scroll {
+  gap: 2px;
+  padding: 1px 0;
+}
+
+.wb-assistant-root .entry-item {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  width: 100%;
+  min-height: 62px;
+  padding: 9px 8px 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.wb-assistant-root .entry-item:hover {
+  border-color: var(--studio-line-soft);
+  background: var(--studio-soft);
+  transform: none;
+}
+
+.wb-assistant-root .entry-item.selected,
+.wb-assistant-root .entry-item.selected.primary {
+  border-color: color-mix(in srgb, var(--wb-primary) 18%, var(--studio-line));
+  background: var(--studio-surface);
+  box-shadow: 0 2px 8px rgba(31, 42, 35, 0.04);
+  transform: none;
+}
+
+.wb-assistant-root .entry-item.selected::before,
+.wb-assistant-root .entry-item.selected.primary::before {
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--wb-primary);
+}
+
+.entry-item-title {
+  color: var(--wb-text-main);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+
+.entry-item-head {
+  gap: 7px;
+}
+
+.entry-status-dot {
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 9%, transparent);
+}
+
+.entry-item-tags {
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.entry-item-head .entry-chip.uid,
+.entry-item-tags .entry-chip:nth-child(2),
+.entry-item-tags .entry-chip:nth-child(3) {
+  display: none;
+}
+
+.entry-chip {
+  min-height: 18px;
+  padding: 1px 5px;
+  border-color: transparent;
+  border-radius: 5px;
+  background: var(--studio-soft);
+  color: var(--wb-text-muted);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.entry-chip.uid,
+.entry-chip.mono {
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-size: 8px;
+}
+
+.entry-chip.status[data-status='constant'] {
+  background: color-mix(in srgb, #2f6fb5 10%, var(--studio-surface));
+  color: #2f6fb5;
+}
+
+.entry-chip.status[data-status='normal'] {
+  background: color-mix(in srgb, var(--wb-primary) 10%, var(--studio-surface));
+  color: var(--wb-primary-light);
+}
+
+.entry-chip.status[data-status='vector'] {
+  background: color-mix(in srgb, #7c5cbf 10%, var(--studio-surface));
+  color: #7c5cbf;
+}
+
+.entry-item-preview {
+  color: var(--wb-text-muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.entry-item-preview::before {
+  content: "";
+  margin: 0;
+}
+
+.list-actions {
+  gap: 5px;
+  padding: 6px 2px 0;
+  border-top: 1px solid var(--studio-line-soft);
+}
+
+.list-actions :deep(.btn) {
+  flex: 1;
+  min-height: 27px;
+  padding-inline: 6px;
+  border-color: transparent;
+  background: var(--studio-soft);
+  color: var(--wb-text-muted);
+  font-size: 8px;
+}
+
+.list-actions :deep(.btn:hover:not(:disabled)) {
+  border-color: var(--studio-line);
+  background: var(--studio-surface);
+  color: var(--wb-text-main);
+}
+
+.desktop-entry-load-more {
+  padding: 7px 4px;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-size: 8px;
+}
+
+/* ── Editor canvas ────────────────────────────────────────────── */
+.wb-editor {
+  border: 0;
+  background: transparent;
+}
+
+.editor-center {
+  padding: 20px 22px 18px;
+  gap: 15px;
+  border: 1px solid var(--studio-line);
+  border-radius: 14px;
+  background: var(--studio-surface);
+  box-shadow: var(--studio-shadow);
+}
+
+.editor-head {
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--studio-line-soft);
+}
+
+.editor-head .editor-comment > span:first-child {
+  display: none;
+}
+
+.editor-head .editor-comment :deep(.wb-control-input) {
+  min-height: 33px;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--wb-text-main);
+  font-size: 20px;
+  font-weight: 620;
+  letter-spacing: -0.04em;
+  box-shadow: none;
+}
+
+.editor-head .editor-comment :deep(.wb-control-input:focus) {
+  border: 0;
+  box-shadow: none;
+}
+
+.editor-badges {
+  gap: 4px;
+}
+
+.editor-badge {
+  padding: 2px 7px;
+  border-color: var(--studio-line-soft);
+  border-radius: 6px;
+  background: var(--studio-soft);
+  color: var(--wb-text-muted);
+  font-size: 8px;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.editor-badge.on {
+  background: color-mix(in srgb, var(--wb-primary) 10%, var(--studio-surface));
+  border-color: color-mix(in srgb, var(--wb-primary) 20%, var(--studio-line));
+  color: var(--wb-primary-light);
+}
+
+.editor-badge.strategy[data-status='constant'] {
+  background: color-mix(in srgb, #2f6fb5 10%, var(--studio-surface));
+  border-color: color-mix(in srgb, #2f6fb5 18%, var(--studio-line));
+  color: #2f6fb5;
+}
+
+.editor-badge.strategy[data-status='normal'] {
+  background: color-mix(in srgb, var(--wb-primary) 10%, var(--studio-surface));
+  border-color: color-mix(in srgb, var(--wb-primary) 18%, var(--studio-line));
+  color: var(--wb-primary-light);
+}
+
+.editor-badge.strategy[data-status='vector'] {
+  background: color-mix(in srgb, #7c5cbf 10%, var(--studio-surface));
+  border-color: color-mix(in srgb, #7c5cbf 18%, var(--studio-line));
+  color: #7c5cbf;
+}
+
+.field {
+  gap: 4px;
+}
+
+.field > span {
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-family: var(--studio-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.editor-grid {
+  gap: 8px;
+}
+
+.editor-keyword-grid .text-area.compact {
+  min-height: 34px;
+  height: 34px;
+  padding: 7px 9px;
+  border-color: transparent;
+  background: var(--studio-soft);
+  font-size: 10px;
+}
+
+.editor-content-block {
+  gap: 7px;
+}
+
+.editor-content-title {
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-family: var(--studio-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wb-assistant-root .editor-content-area {
+  min-height: 330px;
+  padding: 18px 20px;
+  border: 1px solid var(--studio-line);
+  border-radius: 10px;
+  background:
+    linear-gradient(to bottom, transparent 31px, color-mix(in srgb, var(--studio-line) 34%, transparent) 32px) 0 0 / 100% 32px,
+    var(--studio-surface);
+  color: var(--wb-text-main);
+  font-family: "Songti SC", "SimSun", "Noto Serif CJK SC", serif;
+  font-size: 14px;
+  line-height: 2;
+  letter-spacing: 0.01em;
+  box-shadow: none;
+}
+
+.wb-assistant-root .editor-content-area:focus {
+  border-color: color-mix(in srgb, var(--wb-primary) 45%, var(--studio-line));
+  background:
+    linear-gradient(to bottom, transparent 31px, color-mix(in srgb, var(--studio-line) 34%, transparent) 32px) 0 0 / 100% 32px,
+    var(--studio-surface);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-primary) 12%, transparent);
+}
+
+.editor-side {
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.editor-side .editor-card,
+.editor-side .focus-side-card {
+  padding: 13px 13px 12px;
+  border: 1px solid var(--studio-line);
+  border-radius: 12px;
+  background: var(--studio-surface);
+  box-shadow: none;
+}
+
+.editor-side .editor-card h4,
+.editor-side .editor-card > h4 {
+  margin: 0 0 10px;
+  color: var(--wb-text-main);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.editor-side .editor-card > h4::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--wb-primary);
+  vertical-align: 1px;
+}
+
+.editor-side .editor-card + .editor-card {
+  margin-top: 0;
+}
+
+.editor-advanced,
+.editor-mini-collapse {
+  border-color: var(--studio-line-soft);
+  border-radius: 8px;
+  background: var(--studio-soft);
+}
+
+.editor-advanced {
+  padding: 9px 10px;
+}
+
+.editor-advanced > summary,
+.editor-mini-collapse > summary {
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.strategy-switch {
+  gap: 5px;
+}
+
+.strategy-pill {
+  min-height: 28px;
+  padding: 5px 8px;
+  border: 1px solid var(--studio-line-soft);
+  border-radius: 7px;
+  background: var(--studio-soft);
+  color: var(--wb-text-muted);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.strategy-pill.active {
+  border-color: color-mix(in srgb, var(--wb-primary) 30%, var(--studio-line));
+  background: var(--wb-primary-soft);
+  color: var(--wb-primary-light);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-primary) 12%, transparent);
+}
+
+.strategy-pill.constant.active {
+  border-color: color-mix(in srgb, #2f6fb5 30%, var(--studio-line));
+  background: color-mix(in srgb, #2f6fb5 10%, var(--studio-surface));
+  color: #2f6fb5;
+}
+
+.strategy-pill.vector.active {
+  border-color: color-mix(in srgb, #7c5cbf 30%, var(--studio-line));
+  background: color-mix(in srgb, #7c5cbf 10%, var(--studio-surface));
+  color: #7c5cbf;
+}
+
+.editor-side .checkbox-inline {
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.editor-side .text-input,
+.editor-side .text-area,
+.editor-side :deep(.wb-control) {
+  background: var(--studio-soft);
+  border-color: transparent;
+  font-size: 10px;
+}
+
+/* ── Focus mode ────────────────────────────────────────────────── */
+.wb-focus-toolbar {
+  padding: 9px 11px;
+  border: 1px solid var(--studio-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--studio-surface) 92%, transparent);
+  box-shadow: var(--studio-shadow);
+}
+
+.wb-focus-toolbar-row {
+  gap: 8px;
+}
+
+.wb-focus-toolbar :deep(.btn) {
+  min-height: 28px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.wb-focus-toolbar :deep(.btn:hover:not(:disabled)) {
+  background: var(--studio-soft);
+  color: var(--wb-text-main);
+}
+
+.wb-focus-toolbar :deep(.btn.wb-control-button--primary) {
+  background: var(--wb-primary);
+  color: var(--wb-on-primary, #fff);
+}
+
+.focus-menu-panel {
+  border-color: var(--studio-line);
+  border-radius: 10px;
+  background: var(--wb-dropdown-bg);
+  box-shadow: var(--studio-shadow);
+}
+
+.wb-main-layout.focus-mode {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.wb-main-layout.focus-mode > .wb-entry-list,
+.wb-main-layout.focus-mode > .wb-resize-handle.main {
+  display: none !important;
+}
+
+.wb-main-layout.focus-mode .editor-center {
+  width: 100%;
+  max-width: 880px;
+  margin: 8px auto;
+  padding: 26px 30px;
+  box-shadow: var(--studio-shadow);
+}
+
+.wb-main-layout.focus-mode .wb-editor-shell {
+  grid-template-columns: minmax(0, 1fr) 10px 320px !important;
+}
+
+.wb-focus-tools-band {
+  gap: 5px;
+  padding-top: 8px;
+  border-top: 1px solid var(--studio-line-soft);
+}
+
+.focus-tools-band :deep(.btn),
+.wb-focus-tools-band :deep(.btn) {
+  border-color: var(--studio-line-soft);
+  background: var(--studio-soft);
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+/* ── Utility pages: settings / AI config ──────────────────────── */
+.wb-assistant-root :deep(.utility-page) {
+  border-radius: 14px;
+  background: var(--wb-bg-root);
+}
+
+.wb-assistant-root :deep(.utility-page-header) {
+  min-height: 54px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--studio-line);
+  background: color-mix(in srgb, var(--studio-surface) 92%, transparent);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.01);
+}
+
+.wb-assistant-root :deep(.utility-page-title) {
+  font-size: 15px;
+  font-weight: 620;
+  letter-spacing: -0.025em;
+}
+
+.wb-assistant-root :deep(.utility-page-back) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 10px;
+}
+
+.wb-assistant-root :deep(.utility-page-body) {
+  padding: 18px;
+}
+
+.wb-assistant-root :deep(.utility-page-content) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.wb-assistant-root :deep(.utility-page-content > .settings-card) {
+  min-width: 0;
+}
+
+.wb-assistant-root :deep(.utility-page-content > .api-section-heading),
+.wb-assistant-root :deep(.utility-page-content > .api-mode-choices),
+.wb-assistant-root :deep(.utility-page-content > .api-warning),
+.wb-assistant-root :deep(.utility-page-content > .api-number-fields),
+.wb-assistant-root :deep(.utility-page-content > .settings-tavern-note),
+.wb-assistant-root :deep(.utility-page-content > .utility-actions),
+.wb-assistant-root :deep(.utility-page-content > .field) {
+  grid-column: 1 / -1;
+}
+
+.wb-assistant-root :deep(.settings-card) {
+  padding: 15px;
+  border: 1px solid var(--studio-line);
+  border-radius: 12px;
+  background: var(--studio-surface);
+  box-shadow: none;
+}
+
+.wb-assistant-root :deep(.settings-section-title) {
+  color: var(--wb-text-main);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.wb-assistant-root :deep(.settings-section-title)::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--wb-primary);
+  vertical-align: 1px;
+}
+
+.wb-assistant-root :deep(.settings-choice-list) {
+  gap: 0;
+}
+
+.wb-assistant-root :deep(.settings-choice-list .wb-control-choice),
+.wb-assistant-root :deep(.settings-card > .wb-control-choice) {
+  min-height: 34px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--studio-line-soft);
+  color: var(--wb-text-muted);
+  font-size: 10px;
+}
+
+.wb-assistant-root :deep(.settings-hint),
+.wb-assistant-root :deep(.settings-error) {
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.wb-assistant-root :deep(.version-details) {
+  color: var(--wb-text-muted);
+  font-family: var(--studio-mono);
+  font-size: 9px;
+  line-height: 1.8;
+}
+
+.wb-assistant-root :deep(.api-section-heading) {
+  margin-top: 18px;
+}
+
+.wb-assistant-root :deep(.api-mode-choices) {
+  gap: 6px;
+}
+
+.wb-assistant-root :deep(.api-mode-choice) {
+  min-height: 34px;
+  border-radius: 8px;
+  font-size: 10px;
+}
+
+.wb-assistant-root :deep(.ai-config-input-stage),
+.wb-assistant-root :deep(.preview-stage),
+.wb-assistant-root :deep(.generating-stage) {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 18px 22px;
+}
+
+.wb-assistant-root :deep(.custom-prompt-section) {
+  border: 1px solid var(--studio-line);
+  border-radius: 10px;
+  background: var(--studio-surface);
+  padding: 10px 12px;
+}
+
+.wb-assistant-root :deep(.custom-prompt-section > summary) {
+  color: var(--wb-text-muted);
+  font-size: 10px;
+}
+
+.wb-assistant-root :deep(.preview-table-wrap) {
+  border: 1px solid var(--studio-line);
+  border-radius: 12px;
+  background: var(--studio-surface);
+  overflow: hidden;
+}
+
+.wb-assistant-root :deep(.preview-table) {
+  font-size: 10px;
+}
+
+.wb-assistant-root :deep(.preview-table th) {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--studio-line);
+  background: var(--studio-soft);
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-family: var(--studio-mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.wb-assistant-root :deep(.preview-table td) {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--studio-line-soft);
+}
+
+.wb-assistant-root :deep(.preview-table tr.unselected) {
+  opacity: 0.5;
+}
+
+/* ── Cross copy ───────────────────────────────────────────────── */
+.cross-copy-panel {
+  border-color: var(--studio-line);
+  border-radius: 14px;
+  background: var(--studio-surface);
+  box-shadow: var(--studio-shadow);
+}
+
+.cross-copy-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--studio-line);
+  background: color-mix(in srgb, var(--studio-surface) 92%, transparent);
+}
+
+.cross-copy-head-main strong {
+  color: var(--wb-text-main);
+  font-size: 12px;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+}
+
+.cross-copy-head-main span {
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-size: 8px;
+}
+
+.cross-copy-row {
+  border-bottom: 1px solid var(--studio-line-soft);
+}
+
+.cross-copy-row:hover {
+  background: var(--studio-soft);
+}
+
+.cross-copy-row-title strong {
+  color: var(--wb-text-main);
+  font-size: 10px;
+}
+
+.cross-copy-row-note {
+  color: var(--wb-text-muted);
+  font-size: 8px;
+}
+
+.cross-copy-status-badge {
+  border-radius: 5px;
+  font-size: 8px;
+}
+
+/* ── Modals, floating windows, prompts ────────────────────────── */
+.wb-modal-window,
+.wb-floating-window {
+  border-color: var(--studio-line);
+  border-radius: 12px;
+  background: var(--studio-surface);
+  box-shadow: var(--studio-shadow);
+}
+
+.wb-modal-header,
+.wb-floating-header {
+  border-bottom-color: var(--studio-line);
+  background: color-mix(in srgb, var(--studio-surface) 94%, transparent);
+}
+
+.wb-modal-title,
+.wb-floating-title {
+  color: var(--wb-text-main);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.wb-floating-window {
+  font-size: 10px;
+}
+
+/* ── Mobile ───────────────────────────────────────────────────── */
+.mobile-tab-bar,
+.mobile-tabbar {
+  border-top: 1px solid var(--studio-line);
+  background: color-mix(in srgb, var(--studio-surface) 94%, transparent);
+}
+
+.mobile-tab-bar :deep(.btn),
+.mobile-tabbar :deep(.btn) {
+  border: 0;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.mobile-tab-bar :deep(.btn.active),
+.mobile-tabbar :deep(.btn.active) {
+  color: var(--wb-primary-light);
+}
+
+.mobile-entry-list {
+  gap: 5px;
+}
+
+.mobile-entry-list .entry-item {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--studio-line-soft) !important;
+  border-radius: 10px !important;
+  background: var(--studio-surface);
+}
+
+.mobile-entry-list .entry-item.selected,
+.mobile-entry-list .entry-item.primary {
+  border-color: color-mix(in srgb, var(--wb-primary) 30%, var(--studio-line)) !important;
+  box-shadow: 0 2px 10px rgba(31, 42, 35, 0.06);
+}
+
+.mobile-entry-list .entry-item-title {
+  font-size: 11px;
+}
+
+.mobile-entry-details span {
+  background: var(--studio-soft) !important;
+  color: var(--wb-text-muted);
+  font-size: 8px !important;
+}
+
+.mobile-browse-grid .browse-card {
+  border-color: var(--studio-line);
+  border-radius: 10px;
+  background: var(--studio-surface);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.browse-card-title {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.browse-card-preview,
+.browse-card-keys {
+  font-size: 9px;
+}
+
+.mobile-multi-toolbar {
+  border-color: var(--studio-line);
+  background: var(--studio-surface);
+}
+
+/* ── Small screens: keep controls compact, not decorative ─────── */
+@media (max-width: 1100px) {
+  .main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar)::before {
+    display: none;
+  }
+
+  .main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .toolbar-label {
+    min-width: 100%;
+  }
+
+  .editor-center {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .wb-assistant-root :deep(.utility-page-content) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .wb-assistant-root {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .mobile-pane .wb-toolbar {
+    padding: 7px 8px;
+    border-radius: 11px;
+  }
+
+  .mobile-pane .wb-toolbar .toolbar-label {
+    min-width: 100%;
+    max-width: none;
+  }
+
+  .mobile-pane .wb-toolbar .toolbar-btns {
+    display: flex;
+    flex-wrap: nowrap !important;
+    width: 100%;
+    gap: 4px !important;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .mobile-pane .wb-toolbar .toolbar-btns::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-pane .wb-toolbar .toolbar-btns :deep(.wb-control-button) {
+    flex: 0 0 auto;
+    min-height: 28px;
+    padding: 3px 8px;
+    border-color: transparent;
+    background: var(--studio-soft);
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  .mobile-pane .wb-toolbar .toolbar-btns :deep(.wb-control-button--primary) {
+    border-color: var(--wb-primary);
+    background: var(--wb-primary);
+    color: var(--wb-on-primary, #fff);
+  }
+
+  .wb-entry-list {
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .editor-center {
+    padding: 13px;
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .editor-head .editor-comment :deep(.wb-control-input) {
+    font-size: 18px;
+  }
+
+  .wb-assistant-root .editor-content-area {
+    min-height: 260px;
+    padding: 14px;
+    font-size: 13px;
+  }
+
+  .main-workspace > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) {
+    border-radius: 12px;
+  }
+
+  .mobile-tab-bar :deep(.btn),
+  .mobile-tabbar :deep(.btn) {
+    min-height: 40px;
+    padding-inline: 4px;
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-assistant-root *,
+  .wb-assistant-root *::before,
+  .wb-assistant-root *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+</style>
+
+<style scoped>
+/* ═══════════════════════════════════════════════════════════════════
+   SHELF 02 — implemented studio shell
+   ═══════════════════════════════════════════════════════════════════ */
+
+.studio-icon {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.wb-assistant-root {
+  padding: 0;
+  gap: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(820px 460px at 0% -10%, color-mix(in srgb, var(--wb-primary) 6%, transparent), transparent 64%),
+    var(--wb-bg-root);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.studio-desktop-shell {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.studio-rail {
+  display: flex;
+  flex: 0 0 78px;
+  flex-direction: column;
+  width: 78px;
+  min-height: 0;
+  padding: 12px 8px 10px;
+  background: linear-gradient(180deg, #152019, #0d1510);
+  color: #e9f2ec;
+}
+
+.studio-rail-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0 0 15px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.studio-rail-brand span {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 10px;
+  background: #e8f4ec;
+  color: #142019;
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -.08em;
+}
+
+.studio-rail-brand small {
+  color: #83988b;
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 7px;
+  letter-spacing: .16em;
+}
+
+.studio-rail-nav,
+.studio-rail-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.studio-rail-nav button,
+.studio-rail-bottom button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 50px;
+  padding: 7px 2px 5px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #8da195;
+  font-size: 8px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.studio-rail-nav button:hover,
+.studio-rail-bottom button:hover {
+  background: rgba(255, 255, 255, .06);
+  color: #eef6f0;
+}
+
+.studio-rail-nav button.on {
+  background: rgba(255, 255, 255, .09);
+  color: #f5fbf7;
+}
+
+.studio-rail-nav button.on::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 2px;
+  background: #67d8b2;
+}
+
+.studio-rail-sep {
+  height: 1px;
+  margin: 9px 4px;
+  background: rgba(255, 255, 255, .1);
+}
+
+.studio-rail-bottom {
+  margin-top: auto;
+}
+
+.studio-rail-bottom button {
+  min-height: 43px;
+}
+
+.studio-desktop-main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main-workspace {
+  min-height: 0;
+  background: transparent;
+}
+
+/* top command bar */
+.studio-desktop-main > .browse-toolbar {
+  display: none;
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) {
+  min-height: 52px;
+  margin: 10px 14px 0;
+  padding: 8px 10px;
+  gap: 7px;
+  border: 1px solid var(--studio-line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--wb-bg-panel) 92%, transparent);
+  box-shadow: var(--studio-shadow);
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .toolbar-label {
+  flex: 0 1 290px;
+  min-width: 230px;
+  max-width: 320px;
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .toolbar-label > span {
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 8px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.studio-desktop-main > .wb-toolbar > .wb-control-button:not(.studio-save-btn) {
+  display: none;
+}
+
+.studio-command-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  max-width: 360px;
+  min-width: 190px;
+  height: 33px;
+  padding: 0 9px;
+  border: 1px solid var(--studio-line);
+  border-radius: 8px;
+  background: var(--studio-soft);
+  color: var(--wb-text-dim);
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.studio-command-trigger:hover {
+  border-color: color-mix(in srgb, var(--wb-primary) 35%, var(--wb-border-main));
+  background: var(--studio-surface);
+  color: var(--wb-text-muted);
+}
+
+.studio-command-trigger span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-command-trigger kbd,
+.studio-command-search kbd,
+.studio-command-item kbd,
+.studio-command-footer kbd {
+  padding: 2px 5px;
+  border: 1px solid var(--studio-line);
+  border-radius: 4px;
+  background: var(--studio-surface);
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 7px;
+  font-weight: 400;
+}
+
+.studio-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  height: 33px;
+  padding: 0 11px;
+  border: 1px solid var(--wb-primary);
+  border-radius: 8px;
+  background: var(--wb-primary);
+  color: var(--wb-on-primary, #fff);
+  font-size: 10px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.studio-save-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--wb-primary) 85%, var(--wb-text-main));
+}
+
+.studio-save-btn:disabled {
+  cursor: default;
+  opacity: .45;
+}
+
+.studio-desktop-main .wb-history-shortcuts {
+  display: none;
+}
+
+.studio-desktop-main .wb-bindings {
+  padding: 7px 15px 0;
+  gap: 5px;
+}
+
+/* sidebar + workbench */
+.studio-workbench-area {
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  min-height: 0;
+  padding: 9px 14px 14px;
+}
+
+.studio-sidebar {
+  display: flex;
+  flex: 0 0 208px;
+  flex-direction: column;
+  gap: 9px;
+  width: 208px;
+  min-height: 0;
+  padding: 10px;
+  border: 1px solid var(--studio-line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--wb-bg-panel) 80%, var(--wb-bg-root));
+  overflow-y: auto;
+}
+
+.studio-worldbook-card {
+  padding: 10px;
+  border: 1px solid var(--studio-line);
+  border-radius: 9px;
+  background: var(--studio-surface);
+}
+
+.studio-eyebrow {
+  display: block;
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 7px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.studio-worldbook-card :deep(.wb-control) {
+  height: 31px;
+  margin-top: 8px;
+  padding-inline: 8px;
+  border-color: transparent;
+  border-radius: 7px;
+  background: var(--studio-soft);
+  color: var(--wb-text-main);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.studio-worldbook-stats {
+  display: flex;
+  gap: 9px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--studio-line-soft);
+  color: var(--wb-text-dim);
+  font-size: 8px;
+}
+
+.studio-worldbook-stats b {
+  color: var(--wb-text-main);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.studio-mode-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--studio-line);
+  border-radius: 8px;
+  background: var(--studio-soft);
+}
+
+.studio-mode-tabs button {
+  flex: 1;
+  height: 27px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.studio-mode-tabs button.on {
+  background: var(--studio-surface);
+  color: var(--wb-text-main);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .07);
+}
+
+.studio-side-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.studio-side-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1px 4px;
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 7px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.studio-side-label button {
+  border: 0;
+  background: transparent;
+  color: var(--wb-text-dim);
+  font-family: inherit;
+  font-size: 7px;
+  cursor: pointer;
+}
+
+.studio-side-label button:hover {
+  color: var(--wb-primary-light);
+}
+
+.studio-side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.studio-side-nav button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.studio-side-nav button:hover {
+  background: var(--studio-surface);
+  color: var(--wb-text-main);
+}
+
+.studio-side-nav button.on {
+  background: var(--wb-primary-soft);
+  color: var(--wb-primary-light);
+  font-weight: 550;
+}
+
+.studio-side-nav button span {
+  margin-left: auto;
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 8px;
+  font-weight: 400;
+}
+
+.studio-side-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.studio-side-tags button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 27px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.studio-side-tags button:hover,
+.studio-side-tags button.on {
+  background: var(--studio-surface);
+  color: var(--wb-text-main);
+}
+
+.studio-side-tags i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.studio-side-tags span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-side-tags b {
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 8px;
+  font-weight: 400;
+}
+
+.studio-side-empty {
+  padding: 7px 8px;
+  color: var(--wb-text-dim);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.studio-snapshot-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+  padding: 9px 10px;
+  border: 1px solid var(--studio-line);
+  border-radius: 8px;
+  background: var(--studio-surface);
+  color: var(--wb-text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.studio-snapshot-card > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8px;
+}
+
+.studio-snapshot-card i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--wb-primary);
+}
+
+.studio-snapshot-card strong {
+  color: var(--wb-text-main);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.studio-snapshot-card small {
+  color: var(--wb-text-dim);
+  font-size: 7px;
+}
+
+.studio-workbench-area > .wb-main-layout {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* editor tabs */
+.studio-editor-tabs {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 39px;
+  flex: 0 0 39px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--studio-line);
+  background: var(--studio-surface);
+}
+
+.studio-editor-tabs button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 39px;
+  padding: 0 9px;
+  border: 0;
+  background: transparent;
+  color: var(--wb-text-dim);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.studio-editor-tabs button:hover {
+  color: var(--wb-text-main);
+}
+
+.studio-editor-tabs button.on {
+  color: var(--wb-text-main);
+  font-weight: 600;
+}
+
+.studio-editor-tabs button.on::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--wb-primary);
+}
+
+.studio-editor-tabs button small {
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 7px;
+  font-weight: 400;
+}
+
+.studio-editor-tabs-grow {
+  flex: 1;
+}
+
+.studio-editor-tabs-hint {
+  color: var(--wb-text-dim);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.studio-tab-content .wb-editor-shell,
+.studio-tab-config .wb-editor-shell {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.studio-tab-content .wb-resize-handle.editor,
+.studio-tab-config .wb-resize-handle.editor {
+  display: none;
+}
+
+.studio-tab-config .editor-side {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 10px;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.studio-tab-config .editor-side .editor-card {
+  min-width: 0;
+}
+
+.studio-tab-history .wb-editor-shell {
+  display: none;
+}
+
+.wb-main-layout.focus-mode .studio-editor-tabs {
+  display: none;
+}
+
+.studio-history-tab {
+  flex: 1;
+  min-height: 0;
+  padding: 18px 22px;
+  overflow-y: auto;
+  background: var(--studio-soft);
+}
+
+.studio-history-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.studio-history-head h2 {
+  margin: 4px 0 0;
+  color: var(--wb-text-main);
+  font-family: var(--studio-serif, "Songti SC", serif);
+  font-size: 25px;
+  font-weight: 550;
+  letter-spacing: -.03em;
+}
+
+.studio-history-head p {
+  margin: 5px 0 0;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.studio-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.studio-history-grid,
+.studio-history-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.studio-history-card {
+  display: flex;
+  flex-direction: column;
+  padding: 11px;
+  border: 1px solid var(--studio-line);
+  border-radius: 10px;
+  background: var(--studio-surface);
+}
+
+.studio-history-card-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.studio-history-card-head b {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.studio-history-card-head span {
+  margin-left: auto;
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 7px;
+}
+
+.studio-history-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 3px;
+  border: 0;
+  border-bottom: 1px solid var(--studio-line-soft);
+  background: transparent;
+  color: var(--wb-text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.studio-history-row:last-of-type {
+  border-bottom: 0;
+}
+
+.studio-history-row:hover {
+  color: var(--wb-text-main);
+}
+
+.studio-history-dot {
+  width: 5px;
+  height: 5px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--wb-primary);
+}
+
+.studio-history-row > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.studio-history-row b {
+  display: block;
+  overflow: hidden;
+  color: var(--wb-text-main);
+  font-size: 8px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-history-row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 7px;
+}
+
+.studio-history-link {
+  color: var(--wb-primary-light);
+  font-size: 7px;
+  white-space: nowrap;
+}
+
+/* batch */
+.studio-batch-check {
+  position: absolute;
+  left: 4px;
+  top: 9px;
+  z-index: 2;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--studio-line-strong);
+  border-radius: 3px;
+  background: var(--studio-surface);
+  cursor: pointer;
+}
+
+.studio-batch-check.on {
+  border-color: var(--wb-primary);
+  background: var(--wb-primary);
+}
+
+.studio-batch-check.on::after {
+  content: "✓";
+  display: block;
+  color: var(--wb-on-primary, #fff);
+  font-size: 8px;
+  line-height: 11px;
+  text-align: center;
+}
+
+.studio-batch-mode .entry-item {
+  padding-left: 22px;
+}
+
+.studio-batch-mode .list-actions {
+  display: none;
+}
+
+.studio-batch-dock {
+  position: absolute;
+  left: calc(50% + 39px);
+  bottom: 39px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: min(850px, calc(100% - 130px));
+  padding: 7px 8px 7px 11px;
+  border: 1px solid #2f5d48;
+  border-radius: 10px;
+  background: #173b2d;
+  color: #e8f4ed;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .25);
+  transform: translateX(-50%);
+}
+
+.studio-batch-count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.studio-batch-count b {
+  color: #fff;
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.studio-batch-count span {
+  color: #9ab8a6;
+  font-size: 8px;
+}
+
+.studio-batch-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: rgba(255, 255, 255, .14);
+}
+
+.studio-batch-dock :deep(.wb-control-button) {
+  min-height: 27px;
+  padding-inline: 7px;
+  border-color: rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .07);
+  color: #dcece2;
+  font-size: 8px;
+}
+
+.studio-batch-dock :deep(.wb-control-button:hover:not(:disabled)) {
+  border-color: rgba(255, 255, 255, .22);
+  background: rgba(255, 255, 255, .13);
+  color: #fff;
+}
+
+.studio-batch-dock :deep(.wb-control-button--danger) {
+  border-color: rgba(255, 158, 150, .3);
+  background: rgba(255, 111, 101, .12);
+  color: #ffb4ae;
+}
+
+.studio-batch-grow {
+  flex: 1;
+}
+
+.studio-batch-enter-active,
+.studio-batch-leave-active {
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.studio-batch-enter-from,
+.studio-batch-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 12px);
+}
+
+/* command palette */
+.studio-command-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10450;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 76px 20px 20px;
+  background: color-mix(in srgb, var(--wb-bg-root) 30%, rgba(10, 16, 12, .42));
+  backdrop-filter: blur(4px);
+}
+
+.studio-command-palette {
+  display: flex;
+  flex-direction: column;
+  width: min(620px, 100%);
+  max-height: min(660px, calc(100vh - 150px));
+  overflow: hidden;
+  border: 1px solid var(--studio-line-strong);
+  border-radius: 13px;
+  background: var(--studio-surface);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, .28);
+}
+
+.studio-command-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 50px;
+  flex: 0 0 50px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--studio-line);
+  color: var(--wb-text-dim);
+}
+
+.studio-command-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--wb-text-main);
+  font-size: 12px;
+}
+
+.studio-command-body {
+  flex: 1;
+  min-height: 0;
+  padding: 6px;
+  overflow-y: auto;
+}
+
+.studio-command-group {
+  margin-bottom: 4px;
+}
+
+.studio-command-group-label {
+  padding: 7px 9px 4px;
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 7px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.studio-command-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 36px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--wb-text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.studio-command-item:hover {
+  background: var(--wb-primary-soft);
+  color: var(--wb-text-main);
+}
+
+.studio-command-item > .studio-icon {
+  color: var(--wb-primary-light);
+}
+
+.studio-command-item-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.studio-command-item-copy b {
+  display: block;
+  color: var(--wb-text-main);
+  font-size: 10px;
+  font-weight: 550;
+}
+
+.studio-command-item-copy small {
+  display: block;
+  margin-top: 1px;
+  overflow: hidden;
+  color: var(--wb-text-dim);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-command-empty {
+  padding: 34px 10px;
+  color: var(--wb-text-dim);
+  font-size: 10px;
+  text-align: center;
+}
+
+.studio-command-footer {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 32px;
+  flex: 0 0 32px;
+  padding: 0 12px;
+  border-top: 1px solid var(--studio-line);
+  color: var(--wb-text-dim);
+  font-size: 7px;
+}
+
+.studio-command-footer .grow {
+  flex: 1;
+}
+
+.studio-command-fade-enter-active,
+.studio-command-fade-leave-active {
+  transition: opacity .15s ease;
+}
+
+.studio-command-fade-enter-from,
+.studio-command-fade-leave-to {
+  opacity: 0;
+}
+
+/* module pages */
+.main-workspace.module-global .studio-desktop-main > .wb-toolbar,
+.main-workspace.module-tags .studio-desktop-main > .wb-toolbar,
+.main-workspace.module-copy .studio-desktop-main > .wb-toolbar,
+.main-workspace.module-ai .studio-desktop-main > .wb-toolbar,
+.main-workspace.module-history .studio-desktop-main > .wb-toolbar,
+.main-workspace.module-global .wb-history-shortcuts,
+.main-workspace.module-tags .wb-history-shortcuts,
+.main-workspace.module-copy .wb-history-shortcuts,
+.main-workspace.module-ai .wb-history-shortcuts,
+.main-workspace.module-history .wb-history-shortcuts {
+  display: none;
+}
+
+.main-workspace.module-global .wb-scroll-area,
+.main-workspace.module-tags .wb-scroll-area,
+.main-workspace.module-copy .wb-scroll-area,
+.main-workspace.module-ai .wb-scroll-area,
+.main-workspace.module-history .wb-scroll-area {
+  padding: 14px;
+}
+
+.studio-module-page {
+  width: 100%;
+  min-height: 0;
+}
+
+.studio-global-page,
+.studio-tag-page,
+.studio-ai-page,
+.studio-copy-page,
+.studio-history-hub {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--studio-line);
+  border-radius: 14px;
+  background: var(--studio-surface);
+  box-shadow: var(--studio-shadow);
+}
+
+.studio-global-page {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.studio-tag-page,
+.studio-ai-page,
+.studio-copy-page {
+  padding: 14px;
+  overflow: hidden;
+}
+
+.studio-history-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.studio-module-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+
+.studio-module-head h1 {
+  margin: 5px 0 0;
+  color: var(--wb-text-main);
+  font-family: var(--studio-serif, "Songti SC", serif);
+  font-size: 25px;
+  font-weight: 550;
+  letter-spacing: -.035em;
+}
+
+.studio-module-head p {
+  margin: 5px 0 0;
+  color: var(--wb-text-muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.studio-module-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.studio-module-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border: 1px solid var(--studio-line);
+  border-radius: 9px;
+  background: var(--studio-soft);
+}
+
+.studio-context-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 23px;
+  padding: 0 7px;
+  border: 1px solid var(--studio-line);
+  border-radius: 999px;
+  background: var(--studio-surface);
+  color: var(--wb-text-muted);
+  font-size: 8px;
+}
+
+.studio-module-toolbar-grow {
+  flex: 1;
+}
+
+.studio-muted-note {
+  color: var(--wb-text-dim);
+  font-size: 8px;
+}
+
+.studio-global-page .global-mode-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.studio-global-page .global-mode-title {
+  color: var(--wb-text-main);
+  font-family: var(--studio-serif, "Songti SC", serif);
+  font-size: 25px;
+  font-weight: 550;
+  letter-spacing: -.03em;
+}
+
+.studio-global-page .global-mode-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.studio-global-page .global-mode-section {
+  border: 1px solid var(--studio-line);
+  border-radius: 10px;
+  background: var(--studio-soft);
+  overflow: hidden;
+}
+
+.studio-global-page .global-mode-section-summary {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--studio-line);
+}
+
+.studio-global-page .global-mode-section-body {
+  padding: 12px;
+}
+
+.studio-global-page .global-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.studio-global-page .global-mode-column {
+  padding: 12px;
+  border: 1px solid var(--studio-line);
+  border-radius: 10px;
+  background: var(--studio-surface);
+}
+
+.studio-history-hub-grid {
+  align-items: start;
+}
+
+.studio-history-hub .studio-history-card {
+  min-height: 280px;
+}
+
+/* module specific layouts */
+.studio-tag-head,
+.studio-ai-head {
+  padding: 2px 2px 0;
+}
+
+.studio-tag-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.studio-tag-page .tag-editor-title {
+  display: none;
+}
+
+.studio-tag-page :deep(.tag-create-panel) {
+  padding: 10px;
+  border: 1px solid var(--studio-line);
+  border-radius: 9px;
+  background: var(--studio-soft);
+}
+
+.studio-tag-page :deep(.tag-create-row) {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.studio-tag-page :deep(.tag-create-row .text-input),
+.studio-tag-page :deep(.tag-create-row .wb-control) {
+  flex: 1;
+  min-width: 160px;
+}
+
+.studio-tag-page :deep(.tag-editor-layout) {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.studio-tag-page :deep(.tag-editor-tree-wrap),
+.studio-tag-page :deep(.tag-assign-panel) {
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--studio-line);
+  border-radius: 9px;
+  background: var(--studio-soft);
+}
+
+.studio-tag-page :deep(.tag-editor-subtitle) {
+  margin-bottom: 8px;
+  color: var(--wb-text-dim);
+  font-family: var(--studio-mono, ui-monospace, monospace);
+  font-size: 8px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.studio-tag-page :deep(.tag-editor-tree-list),
+.studio-tag-page :deep(.tag-assign-list) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.studio-tag-page :deep(.tag-editor-row),
+.studio-tag-page :deep(.tag-assign-row) {
+  border: 1px solid var(--studio-line);
+  border-radius: 7px;
+  background: var(--studio-surface);
+}
+
+.studio-tag-page :deep(.tag-assign-panel) {
+  background: var(--studio-surface);
+}
+
+.studio-ai-page {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+}
+
+.studio-ai-page .ai-sidebar {
+  width: 208px;
+  flex: 0 0 208px;
+  padding: 10px;
+  border: 1px solid var(--studio-line);
+  border-radius: 9px;
+  background: var(--studio-soft);
+}
+
+.studio-ai-page > :deep(.ai-generator-panel) {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--studio-line);
+  border-radius: 9px;
+  background: var(--studio-surface);
+}
+
+.studio-ai-page :deep(.ai-chat-empty) {
+  border: 1px dashed var(--studio-line-strong);
+  border-radius: 9px;
+  background: var(--studio-soft);
+}
+
+.studio-copy-page {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.studio-copy-page :deep(.cross-copy-panel) {
+  border-radius: 12px;
+  background: var(--studio-surface);
+  box-shadow: var(--studio-shadow);
+}
+
+.studio-global-page .global-mode-grid {
+  margin-top: 10px;
+}
+
+.studio-global-page .global-mode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.studio-global-page .global-mode-item {
+  min-height: 31px;
+  padding: 6px 8px;
+  border: 1px solid var(--studio-line);
+  border-radius: 7px;
+  background: var(--studio-surface);
+  color: var(--wb-text-muted);
+  font-size: 9px;
+}
+
+.studio-global-page .global-mode-item:hover {
+  border-color: var(--wb-primary);
+  color: var(--wb-text-main);
+}
+
+/* mobile: keep its existing structure, but align surface and spacing */
+@media (max-width: 1280px) {
+  .studio-sidebar {
+    display: none;
+  }
+
+  .studio-workbench-area {
+    padding-inline: 10px;
+  }
+}
+
+@media (max-width: 760px) {
+  .wb-assistant-root {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .studio-workbench-area {
+    padding: 4px;
+  }
+
+  .studio-tab-config .editor-side {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .studio-editor-tabs {
+    padding-inline: 7px;
+  }
+
+  .studio-editor-tabs-hint {
+    display: none;
+  }
+}
+
+/* ── Mobile tool sheet (SHELF 02) ── */
+.studio-mobile-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 10px 10px 16px;
+}
+
+.studio-mobile-tools-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 4px 0;
+}
+
+.studio-mobile-tools-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.studio-mobile-tools-title .studio-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+}
+
+.studio-mobile-tools-title b {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--wb-text-main);
+}
+
+.studio-mobile-tools-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--wb-border-main);
+  border-radius: 10px;
+  background: var(--wb-bg-card);
+  color: var(--wb-text-muted);
+  cursor: pointer;
+}
+
+.studio-mobile-tools-close:hover {
+  color: var(--wb-text-main);
+  border-color: var(--wb-border-strong, var(--wb-border-main));
+}
+
+.studio-mobile-sheet {
+  border: 1px solid var(--wb-border-subtle);
+  border-radius: 14px;
+  background: var(--wb-bg-card);
+  box-shadow: var(--wb-shadow-soft);
+  padding: 10px 10px 12px;
+}
+
+.studio-mobile-sheet + .studio-mobile-sheet {
+  margin-top: 2px;
+}
+
+.studio-mobile-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.studio-mobile-sheet-head b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wb-text-main);
+}
+
+.studio-mobile-chip {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--wb-primary);
+  background: var(--wb-primary-soft);
+}
+
+.studio-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.studio-mtool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 60px;
+  padding: 8px 4px;
+  border: 1px solid var(--wb-border-subtle);
+  border-radius: 12px;
+  background: var(--wb-bg-soft, var(--wb-input-bg));
+  color: var(--wb-text-main);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.studio-mtool:active {
+  background: var(--wb-primary-soft);
+  border-color: var(--wb-primary);
+  color: var(--wb-primary);
+}
+
+.studio-mtool span {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.studio-mobile-batch {
+  margin-top: 10px;
+  border-top: 1px dashed var(--wb-border-main);
+  padding-top: 9px;
+}
+
+.studio-mobile-batch-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.studio-mobile-batch-head b {
+  font-size: 12px;
+  color: var(--wb-text-main);
+}
+
+.studio-mobile-batch-head span {
+  font-size: 10px;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+}
+
+.studio-mobile-batch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.studio-mobile-batch-actions button {
+  padding: 6px 11px;
+  min-height: 32px;
+  border: 1px solid var(--wb-border-main);
+  border-radius: 9px;
+  background: var(--wb-input-bg);
+  color: var(--wb-text-main);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.studio-mobile-batch-actions button.danger {
+  color: var(--wb-danger);
+  border-color: color-mix(in srgb, var(--wb-danger) 40%, transparent);
+}
+
+.studio-mobile-batch-actions button:active {
+  background: var(--wb-primary-soft);
+}
+
+.studio-mobile-empty {
+  margin: 9px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+}
+
+.studio-mobile-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 6px;
+  border: 0;
+  border-top: 1px solid var(--wb-border-subtle);
+  background: transparent;
+  color: var(--wb-text-main);
+  text-align: left;
+  cursor: pointer;
+}
+
+.studio-mobile-row:first-of-type {
+  border-top: 0;
+}
+
+.studio-mobile-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wb-primary);
+  flex: 0 0 auto;
+}
+
+.studio-mobile-row-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.studio-mobile-row-copy b {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.studio-mobile-row-copy small {
+  font-size: 10.5px;
+  color: var(--wb-text-dim, var(--wb-text-muted));
 }
 </style>

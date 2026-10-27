@@ -1,6 +1,84 @@
-export type ThemeKey = 'ocean' | 'nebula' | 'forest' | 'sunset' | 'coffee' | 'paper' | 'snow' | 'midnight';
+export type ThemeKey = 'pine' | 'pine_dark' | 'ocean' | 'nebula' | 'forest' | 'sunset' | 'coffee' | 'paper' | 'snow' | 'midnight';
 
 export const THEMES: Record<ThemeKey, { name: string; label: string; colors: Record<string, string> }> = {
+  pine: {
+    name: 'Pine (Paper)',
+    label: '雾松纸',
+    colors: {
+      '--wb-bg-root': '#f2efe6',
+      '--wb-bg-panel': '#fffdf8',
+      '--wb-text-main': '#17201b',
+      '--wb-text-muted': '#68746c',
+      '--wb-primary': '#22674f',
+      '--wb-primary-light': '#1b5943',
+      '--wb-primary-hover': 'rgba(34, 103, 79, 0.10)',
+      '--wb-primary-soft': '#e5f0e9',
+      '--wb-primary-glow': 'rgba(34, 103, 79, 0.24)',
+      '--wb-on-primary': '#ffffff',
+      '--wb-input-bg': '#fffdf8',
+      '--wb-input-bg-hover': '#f8f5ed',
+      '--wb-input-bg-focus': '#ffffff',
+      '--wb-border-subtle': '#e6e0d3',
+      '--wb-border-main': '#d7d2c5',
+      '--wb-border-strong': '#c9c1b2',
+      '--wb-shadow-main': '0 22px 60px rgba(27, 38, 31, 0.12)',
+      '--wb-shadow-soft': '0 8px 24px rgba(27, 38, 31, 0.07)',
+      '--wb-scrollbar-thumb': 'rgba(104, 116, 108, 0.24)',
+      '--wb-glass-bg': 'rgba(255, 253, 248, 0.88)',
+      '--wb-glass-header': 'rgba(242, 239, 230, 0.70)',
+      '--wb-overlay-bg': 'rgba(18, 27, 22, 0.35)',
+      '--wb-dropdown-bg': 'rgba(255, 253, 248, 0.97)',
+      '--wb-bg-card': '#fffdf8',
+      '--wb-bg-soft': '#f8f5ed',
+      '--wb-text-dim': '#9aa49b',
+      '--wb-accent': '#22674f',
+      '--wb-accent-rgb': '34, 103, 79',
+      '--wb-danger': '#b34c45',
+      '--wb-danger-contrast': '#ffffff',
+      '--wb-warning': '#b4683b',
+      '--wb-radius': '12px',
+      '--wb-radius-sm': '8px',
+    },
+  },
+  pine_dark: {
+    name: 'Pine (Night)',
+    label: '雾松夜',
+    colors: {
+      '--wb-bg-root': '#0d1310',
+      '--wb-bg-panel': '#141c18',
+      '--wb-text-main': '#e9efea',
+      '--wb-text-muted': '#95a49a',
+      '--wb-primary': '#61d6ae',
+      '--wb-primary-light': '#8ce7c8',
+      '--wb-primary-hover': 'rgba(97, 214, 174, 0.12)',
+      '--wb-primary-soft': 'rgba(97, 214, 174, 0.12)',
+      '--wb-primary-glow': 'rgba(97, 214, 174, 0.26)',
+      '--wb-on-primary': '#0d1310',
+      '--wb-input-bg': '#18221d',
+      '--wb-input-bg-hover': '#1d2923',
+      '--wb-input-bg-focus': '#202e27',
+      '--wb-border-subtle': '#29372f',
+      '--wb-border-main': '#3b4d42',
+      '--wb-border-strong': '#4a5e51',
+      '--wb-shadow-main': '0 28px 70px rgba(0, 0, 0, 0.50)',
+      '--wb-shadow-soft': '0 10px 28px rgba(0, 0, 0, 0.32)',
+      '--wb-scrollbar-thumb': 'rgba(150, 164, 155, 0.25)',
+      '--wb-glass-bg': 'rgba(20, 28, 24, 0.88)',
+      '--wb-glass-header': 'rgba(13, 19, 16, 0.62)',
+      '--wb-overlay-bg': 'rgba(0, 0, 0, 0.58)',
+      '--wb-dropdown-bg': 'rgba(20, 28, 24, 0.97)',
+      '--wb-bg-card': '#141c18',
+      '--wb-bg-soft': '#18221d',
+      '--wb-text-dim': '#65746a',
+      '--wb-accent': '#61d6ae',
+      '--wb-accent-rgb': '97, 214, 174',
+      '--wb-danger': '#e98c85',
+      '--wb-danger-contrast': '#0d1310',
+      '--wb-warning': '#e2a16c',
+      '--wb-radius': '12px',
+      '--wb-radius-sm': '8px',
+    },
+  },
   ocean: {
     name: 'Ocean (Deep)',
     label: '深海',
@@ -224,8 +302,8 @@ export const ENTRY_HISTORY_LIMIT = 7;
 export const HISTORY_BYTE_BUDGET = 8 * 1024 * 1024;
 export const ACTIVATION_LOG_LIMIT = 120;
 export const RESIZE_HANDLE_SIZE = 10;
-export const MAIN_PANE_DEFAULT = 280;
-export const MAIN_PANE_MIN = 220;
+export const MAIN_PANE_DEFAULT = 300;
+export const MAIN_PANE_MIN = 240;
 export const FOCUS_MAIN_PANE_DEFAULT = 176;
 export const FOCUS_MAIN_PANE_MIN = 150;
 export const MAIN_EDITOR_MIN = 540;

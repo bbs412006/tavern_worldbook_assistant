@@ -5,8 +5,19 @@
       <h2 class="utility-page-title">⚙️ 设置中心</h2>
     </header>
     <div class="utility-page-body utility-page-scroll">
-      <div class="utility-page-content">
-        <div class="settings-card">
+      <div class="settings-page-shell">
+        <aside class="settings-page-nav" aria-label="设置分区">
+          <span class="settings-page-nav-label">SETTINGS</span>
+          <a href="#settings-experience" class="on"><span>◉</span>体验</a>
+          <a href="#settings-version"><span>◇</span>版本</a>
+          <a href="#settings-api"><span>⌘</span>API 与模型</a>
+          <div class="settings-page-nav-sep"></div>
+          <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
+          <button type="button" @click="$emit('back')">返回工作台</button>
+          <p>主题、密钥与快照都只保存在本地脚本存储。</p>
+        </aside>
+        <div class="utility-page-content">
+        <div id="settings-experience" class="settings-card">
           <div class="settings-section-title">体验设置</div>
           <div class="settings-choice-list">
             <BaseSwitch :model-value="fabVisible" @update:model-value="$emit('set-fab-visible', $event)">
@@ -80,7 +91,7 @@
           </BaseSwitch>
         </div>
 
-        <div class="settings-card">
+        <div id="settings-version" class="settings-card">
           <div class="settings-section-title">版本与更新</div>
           <div class="version-details">
             <div>当前版本：<strong>v{{ versionInfo.version }}</strong></div>
@@ -109,7 +120,7 @@
           <div class="settings-hint">复制链接后可在酒馆导入脚本时指定版本；固定 commit 链接可用于回退或切换版本。</div>
         </div>
 
-        <div class="api-section-heading">
+        <div id="settings-api" class="api-section-heading">
           <div class="settings-section-title">API 设置</div>
         </div>
         <div class="api-mode-choices" role="group" aria-label="API 模式">
@@ -212,6 +223,7 @@
         </template>
         <div v-if="persistedState.ai_api_config.mode === 'tavern'" class="settings-tavern-note">
           将直接使用酒馆当前启用的预设和API配置进行生成。
+        </div>
         </div>
       </div>
     </div>
@@ -395,6 +407,252 @@ function updateNumberApiField(field: string, fallback: number, event: Event): vo
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* SHELF 02 settings shell */
+.settings-page-shell {
+  display: grid;
+  grid-template-columns: 188px minmax(0, 1fr);
+  gap: 16px;
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  align-items: start;
+}
+
+.settings-page-nav {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 9px;
+  border: 1px solid var(--wb-border-subtle);
+  border-radius: 11px;
+  background: var(--wb-bg-panel);
+}
+
+.settings-page-nav-label {
+  padding: 3px 8px 8px;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: .12em;
+}
+
+.settings-page-nav a,
+.settings-page-nav button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 31px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.settings-page-nav a:hover,
+.settings-page-nav button:hover,
+.settings-page-nav a.on {
+  background: var(--wb-primary-soft);
+  color: var(--wb-primary-light);
+}
+
+.settings-page-nav a span {
+  width: 12px;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-size: 9px;
+  text-align: center;
+}
+
+.settings-page-nav-sep {
+  height: 1px;
+  margin: 8px 6px;
+  background: var(--wb-border-subtle);
+}
+
+.settings-page-nav p {
+  margin: 9px 7px 3px;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-size: 8px;
+  line-height: 1.6;
+}
+
+.settings-page-shell .utility-page-content {
+  width: 100%;
+  max-width: none;
+}
+
+.settings-page-shell .settings-card {
+  border-radius: 11px;
+  box-shadow: none;
+}
+
+.settings-page-shell .settings-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-page-shell .settings-choice-list > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.settings-page-shell .settings-choice-list .settings-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+}
+
+.settings-page-shell .settings-choice-list .settings-field > span {
+  font-size: 11px;
+  color: var(--wb-text-muted, var(--wb-text-dim));
+}
+
+.settings-page-shell .settings-card > label.wb-control-choice {
+  display: flex;
+  width: 100%;
+}
+
+.settings-page-shell .settings-card > label.field.settings-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  width: 100%;
+}
+
+.settings-page-shell .settings-card > label.field.settings-field > span {
+  font-size: 11px;
+  color: var(--wb-text-muted, var(--wb-text-dim));
+}
+
+.settings-page-shell .settings-card-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 9px;
+}
+
+.settings-page-shell .settings-card-head b {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.settings-page-shell .settings-card-head span {
+  margin-left: auto;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-size: 8px;
+}
+
+.settings-page-shell .setting-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 5px 0;
+  border-top: 1px solid var(--wb-border-subtle);
+}
+
+.settings-page-shell .settings-card-head + .setting-line {
+  border-top: 0;
+}
+
+.settings-page-shell .setting-line .copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-page-shell .setting-line .copy b {
+  display: block;
+  font-size: 10px;
+  font-weight: 520;
+}
+
+.settings-page-shell .setting-line .copy span {
+  display: block;
+  margin-top: 2px;
+  color: var(--wb-text-dim, var(--wb-text-muted));
+  font-size: 8px;
+}
+
+.settings-page-shell .theme-cards {
+  display: flex;
+  gap: 6px;
+}
+
+.settings-page-shell .theme-card {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid var(--wb-border-subtle);
+  border-radius: 7px;
+  background: var(--wb-input-bg);
+}
+
+.settings-page-shell .theme-card.on {
+  border-color: var(--wb-primary);
+}
+
+.settings-page-shell .theme-swatch {
+  display: flex;
+  gap: 2px;
+  height: 35px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.settings-page-shell .theme-swatch i {
+  flex: 1;
+  display: block;
+}
+
+.settings-page-shell .theme-card b {
+  display: block;
+  margin-top: 5px;
+  font-size: 8px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.settings-page-shell .version-box {
+  padding: 9px;
+  border: 1px dashed var(--wb-border-main);
+  border-radius: 7px;
+  color: var(--wb-text-muted);
+  font-family: monospace;
+  font-size: 8px;
+  line-height: 1.7;
+}
+
+.settings-page-shell .version-box b {
+  color: var(--wb-text-main);
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .settings-page-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-page-nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .settings-page-nav-label,
+  .settings-page-nav-sep,
+  .settings-page-nav p {
+    display: none;
   }
 }
 </style>
