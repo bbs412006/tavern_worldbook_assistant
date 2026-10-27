@@ -1,0 +1,102 @@
+/* Apply user-selected typography without changing the default design. */
+.wb-assistant-root.wb-custom-font-family,
+.wb-assistant-root.wb-custom-font-family :deep(*:not(i):not(svg):not(path):not(.fa):not(.fa-solid)) {
+  font-family: var(--wb-user-font-family) !important;
+}
+
+.wb-assistant-root.wb-custom-font-size :deep(.mobile-reading-content),
+.wb-assistant-root.wb-custom-font-size :deep(.mobile-archive-preview),
+.wb-assistant-root.wb-custom-font-size :deep(.browse-card-preview),
+.wb-assistant-root.wb-custom-font-size :deep(.browse-content-input),
+.wb-assistant-root.wb-custom-font-size :deep(.editor-content-area) {
+  font-size: var(--wb-user-font-size) !important;
+}
+.wb-assistant-root.wb-custom-font-size :deep(.entry-item-title),
+.wb-assistant-root.wb-custom-font-size :deep(.browse-card-title),
+.wb-assistant-root.wb-custom-font-size :deep(.mobile-reading-title),
+.wb-assistant-root.wb-custom-font-size :deep(.editor-comment input) {
+  font-size: calc(var(--wb-user-font-size) * 1.15) !important;
+}
+.wb-assistant-root.wb-custom-font-size :deep(.mobile-archive-keywords span),
+.wb-assistant-root.wb-custom-font-size :deep(.browse-key-chip),
+.wb-assistant-root.wb-custom-font-size :deep(.entry-item-keys) {
+  font-size: calc(var(--wb-user-font-size) * 0.9) !important;
+}
+
+.wb-assistant-root.wb-custom-font-weight :deep(.entry-item-title),
+.wb-assistant-root.wb-custom-font-weight :deep(.browse-card-title),
+.wb-assistant-root.wb-custom-font-weight :deep(.mobile-reading-title),
+.wb-assistant-root.wb-custom-font-weight :deep(.editor-comment input),
+.wb-assistant-root.wb-custom-font-weight :deep(.mobile-reading-content),
+.wb-assistant-root.wb-custom-font-weight :deep(.mobile-archive-preview),
+.wb-assistant-root.wb-custom-font-weight :deep(.browse-card-preview),
+.wb-assistant-root.wb-custom-font-weight :deep(.browse-content-input),
+.wb-assistant-root.wb-custom-font-weight :deep(.editor-content-area) {
+  font-weight: var(--wb-user-font-weight) !important;
+}
+
+.wb-assistant-root.wb-custom-font-color :deep(.entry-item-title),
+.wb-assistant-root.wb-custom-font-color :deep(.browse-card-title),
+.wb-assistant-root.wb-custom-font-color :deep(.mobile-reading-title),
+.wb-assistant-root.wb-custom-font-color :deep(.editor-comment input),
+.wb-assistant-root.wb-custom-font-color :deep(.mobile-reading-content),
+.wb-assistant-root.wb-custom-font-color :deep(.mobile-archive-preview),
+.wb-assistant-root.wb-custom-font-color :deep(.browse-card-preview),
+.wb-assistant-root.wb-custom-font-color :deep(.browse-content-input),
+.wb-assistant-root.wb-custom-font-color :deep(.editor-content-area) {
+  color: var(--wb-user-font-color) !important;
+}
+
+.wb-assistant-root.wb-custom-line-height :deep(.mobile-reading-content),
+.wb-assistant-root.wb-custom-line-height :deep(.mobile-archive-preview),
+.wb-assistant-root.wb-custom-line-height :deep(.browse-card-preview),
+.wb-assistant-root.wb-custom-line-height :deep(.browse-content-input),
+.wb-assistant-root.wb-custom-line-height :deep(.editor-content-area) {
+  line-height: var(--wb-user-line-height) !important;
+}
+
+/* Optional whole-interface scope: retain semantic button/contrast colors while
+   adjusting readable text and control labels. */
+.wb-assistant-root.wb-typography-interface.wb-custom-font-color {
+  --wb-text-main: var(--wb-user-font-color) !important;
+  --wb-text-muted: color-mix(in srgb, var(--wb-user-font-color) 72%, var(--wb-bg-panel)) !important;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(:is(button, input, textarea, p, span, small, strong, b, label, summary, a, dt, dd, div, li)) {
+  font-size: var(--wb-user-font-size) !important;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(:is(h1, h2, h3, h4)) {
+  font-size: calc(var(--wb-user-font-size) * 1.15) !important;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.mobile-tab-bar .tab-label) {
+  font-size: clamp(11px, calc(var(--wb-user-font-size) * 0.75), 18px) !important;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-weight :deep(:is(button, input, textarea, p, span, small, strong, b, label, summary, a, dt, dd, div, li, h1, h2, h3, h4)) {
+  font-weight: var(--wb-user-font-weight) !important;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-line-height :deep(:is(p, input, textarea, label, summary, dt, dd)) {
+  line-height: var(--wb-user-line-height) !important;
+}
+
+/* Keep controls usable when the user chooses large interface text on a phone. */
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.typography-grid) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.typography-heading) {
+  flex-wrap: wrap;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.typography-heading > div) {
+  flex: 1 1 100%;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.wb-control-select-trigger),
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.wb-control-input:not([type='color'])) {
+  height: auto;
+  min-height: calc(var(--wb-user-font-size) * 1.5 + 16px) !important;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.wb-control-button:not(.is-icon-only)) {
+  height: auto;
+  min-height: max(44px, calc(var(--wb-user-font-size) * 1.5 + 10px));
+  white-space: normal;
+}
+.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.mobile-archive-entry-main .entry-item-head) {
+  padding-right: max(90px, calc(var(--wb-user-font-size) * 3.5 + 50px));
+}

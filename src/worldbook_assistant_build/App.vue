@@ -1,11 +1,12 @@
 <template>
-  <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode, 'is-archive-mobile': isMobile && currentTheme === 'pine' }]" :style="themeStyles">
+  <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode, 'is-archive-mobile': isMobile && currentTheme === 'pine', 'wb-typography-interface': persistedState.typography.scope === 'interface', 'wb-custom-font-family': persistedState.typography.family !== 'default', 'wb-custom-font-size': persistedState.typography.size !== null, 'wb-custom-font-weight': persistedState.typography.weight !== null, 'wb-custom-font-color': persistedState.typography.color !== null, 'wb-custom-line-height': persistedState.typography.line_height !== null }]" :style="[themeStyles, userTypographyStyles]">
     <SettingsPage
       v-if="utilityPage === 'settings'"
       :persisted-state="persistedState"
       :fab-visible="fabVisible"
       :floor-btn-visible="floorBtnVisible"
       :current-theme="currentTheme"
+      :is-mobile="isMobile"
       :theme-options="themeOptions"
       :api-model-list="apiModelList"
       :api-model-loading="apiModelLoading"
@@ -3112,6 +3113,7 @@ import BaseInput from './components/controls/BaseInput.vue';
 import BaseTextarea from './components/controls/BaseTextarea.vue';
 import BaseSelect, { type BaseSelectOption } from './components/controls/BaseSelect.vue';
 import { APP_VERSION } from './domain/version';
+import { typographyStyle } from './domain/typography';
 import {
   type ThemeKey,
   THEMES,
@@ -4064,6 +4066,8 @@ const editorShellStyle = computed<Record<string, string> | undefined>(() =>
     resizeHandleSize: RESIZE_HANDLE_SIZE,
   }),
 );
+
+const userTypographyStyles = computed(() => typographyStyle(persistedState.value.typography));
 
 const themeStyles = computed(() => {
   const baseColors = THEMES[currentTheme.value].colors;
@@ -11446,30 +11450,40 @@ onUnmounted(() => {
   _screenSyncCleanup = null;
 });
 
-function updateHostPanelTheme() {
-  // The panel may live in the parent document (host) — try both
-  let panel = document.getElementById('wb-assistant-panel');
-  if (!panel) {
-    try { panel = window.parent?.document?.getElementById('wb-assistant-panel') ?? null; } catch { /* cross-origin */ }
-  }
-  if (!panel) return;
-  const theme = THEMES[currentTheme.value];
-  const colors = theme.colors;
+function updateHostPanelTheme(): void {
+  // The panel can be mounted in the parent document; use the rendered root's
+  // effective variables so mobile overrides and glass mode match the header.
+  const root = rootRef.value;
+  const panel = root?.closest<HTMLElement>('#wb-assistant-panel');
+  if (!root || !panel) return;
+  const colors = THEMES[currentTheme.value].colors;
+  const computedStyles = root.ownerDocument.defaultView?.getComputedStyle(root);
+  const effective = (name: string, fallback: string): string =>
+    computedStyles?.getPropertyValue(name).trim() || colors[name] || fallback;
 
-  panel.style.setProperty('--wb-host-bg', colors['--wb-bg-root']);
-  panel.style.setProperty('--wb-host-header-bg', colors['--wb-bg-panel']);
-  panel.style.setProperty('--wb-host-border', colors['--wb-border-main']);
-  panel.style.setProperty('--wb-host-text', colors['--wb-text-main']);
-  panel.style.setProperty('--wb-host-tool-bg', colors['--wb-input-bg']);
-  panel.style.setProperty('--wb-host-tool-border', colors['--wb-border-subtle']);
-  // Glass/dropdown variables for theme dropdown & host shadows
-  panel.style.setProperty('--wb-host-dropdown-bg', colors['--wb-dropdown-bg'] || 'rgba(15,15,15,0.7)');
-  panel.style.setProperty('--wb-host-shadow', colors['--wb-shadow-main'] || '0 12px 32px rgba(0,0,0,0.5)');
+  panel.style.setProperty('--wb-host-bg', effective('--wb-bg-root', '#0b1220'));
+  panel.style.setProperty('--wb-host-header-bg', effective('--wb-bg-panel', '#141c18'));
+  panel.style.setProperty('--wb-host-border', effective('--wb-border-main', '#334155'));
+  panel.style.setProperty('--wb-host-text', effective('--wb-text-main', '#e2e8f0'));
+  panel.style.setProperty('--wb-host-muted', effective('--wb-text-muted', '#94a3b8'));
+  panel.style.setProperty('--wb-host-tool-bg', effective('--wb-input-bg', '#18221d'));
+  panel.style.setProperty('--wb-host-tool-border', effective('--wb-border-subtle', '#334155'));
+  panel.style.setProperty('--wb-host-accent', effective('--wb-primary', '#61d6ae'));
+  panel.style.setProperty('--wb-host-accent-soft', effective('--wb-primary-soft', 'rgba(97, 214, 174, 0.12)'));
+  panel.style.setProperty('--wb-host-on-accent', effective('--wb-on-primary', '#ffffff'));
+  panel.style.setProperty('--wb-host-dropdown-bg', effective('--wb-dropdown-bg', 'rgba(15, 15, 15, 0.7)'));
+  panel.style.setProperty('--wb-host-shadow', effective('--wb-shadow-main', '0 12px 32px rgba(0, 0, 0, 0.5)'));
+  const family = userTypographyStyles.value['--wb-user-font-family'];
+  if (family) panel.style.setProperty('--wb-host-font-family', family);
+  else panel.style.removeProperty('--wb-host-font-family');
+  const typography = persistedState.value.typography;
+  if (typography.scope === 'interface' && typography.size !== null) panel.style.setProperty('--wb-host-font-size', `${typography.size}px`);
+  else panel.style.removeProperty('--wb-host-font-size');
+  if (typography.scope === 'interface' && typography.weight !== null) panel.style.setProperty('--wb-host-font-weight', String(typography.weight));
+  else panel.style.removeProperty('--wb-host-font-weight');
 }
 
-watch(currentTheme, () => {
-  updateHostPanelTheme();
-});
+watch([currentTheme, isMobile, () => persistedState.value.glass_mode, () => persistedState.value.typography.family, () => persistedState.value.typography.scope, () => persistedState.value.typography.color, () => persistedState.value.typography.size, () => persistedState.value.typography.weight], updateHostPanelTheme, { flush: 'post' });
 
 watch(() => persistedState.value.theme, theme => {
   if (theme in THEMES && currentTheme.value !== theme) {
@@ -20449,3 +20463,5 @@ watch(hasUnsavedChanges, (val) => {
 
 <style scoped src="./mobile-browse-redesign.css"></style>
 <style scoped src="./mobile-editor-redesign.css"></style>
+
+<style scoped src="./typography.css"></style>

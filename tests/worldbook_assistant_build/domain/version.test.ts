@@ -11,8 +11,8 @@ import {
 } from '../../../src/worldbook_assistant_build/domain/version';
 
 describe('version domain', () => {
-  it('reports the mobile archive redesign version', () => {
-    expect(APP_VERSION).toBe('2.6.2');
+  it('reports the font settings release version', () => {
+    expect(APP_VERSION).toBe('2.6.3');
   });
 
   it('normalizes whitespace and a leading v prefix', () => {

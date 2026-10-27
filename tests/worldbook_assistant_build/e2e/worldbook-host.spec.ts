@@ -326,6 +326,119 @@ test('collapses the FAB at a screen edge and expands it before opening the panel
   await expect(page.locator('#wb-assistant-panel')).toHaveClass(/active/);
 });
 
+test('persists typography settings and applies them to reading and editing', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAssistant(page);
+  await openUtilityPage(page, '⚙️ 设置', '⚙️ 设置中心');
+
+  async function choose(labelId: string, option: string): Promise<void> {
+    await page.locator(`[aria-labelledby="${labelId}"]`).click();
+    await page.getByRole('option', { name: option, exact: true }).click();
+  }
+  await choose('typography-scope-label', '整个界面');
+  await choose('typography-family-label', '等宽');
+  await choose('typography-size-label', '20 px');
+  await choose('typography-weight-label', '粗体 700');
+  await choose('typography-line-height-label', '1.8 倍');
+  await page.locator('input[type="color"][aria-labelledby="typography-color-label"]').evaluate((input: HTMLInputElement) => {
+    input.value = '#336699';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  const preview = page.locator('.typography-preview p');
+  await expect(preview).toHaveCSS('font-size', '20px');
+  await expect(preview).toHaveCSS('font-weight', '700');
+  await expect(preview).toHaveCSS('color', 'rgb(51, 102, 153)');
+  const hostTitle = page.locator('#wb-assistant-panel .wb-assistant-title-copy strong');
+  await expect(hostTitle).toHaveCSS('color', 'rgb(51, 102, 153)');
+  await expect(hostTitle).toHaveCSS('font-size', '20px');
+  await expect(hostTitle).toHaveCSS('font-weight', '700');
+  await expect.poll(() => page.evaluate(() => (globalThis as Record<string, any>).getVariables().worldbook_assistant_state_v1.typography)).toMatchObject({
+    scope: 'interface', family: 'mono', size: 20, weight: 700, color: '#336699', line_height: 1.8,
+  });
+
+  await page.locator('.utility-page-back').click();
+  await page.locator('.mobile-archive-entry-main').first().click();
+  const editor = page.locator('.mobile-pane:visible .editor-content-area');
+  await expect(editor).toHaveCSS('font-size', '20px');
+  await expect(editor).toHaveCSS('font-weight', '700');
+  await expect(editor).toHaveCSS('color', 'rgb(51, 102, 153)');
+  await expect(editor).toHaveCSS('line-height', '36px');
+  await expect(editor).toHaveCSS('font-family', /monospace/);
+  await page.getByRole('button', { name: '浏览', exact: true }).click();
+  await page.locator('.mobile-browse-grid .browse-card-header').first().click();
+  const reading = page.locator('.mobile-reading-content');
+  await expect(reading).toHaveCSS('font-size', '20px');
+  await expect(reading).toHaveCSS('color', 'rgb(51, 102, 153)');
+
+  await openAssistant(page);
+  await expect(page.locator('.wb-assistant-root')).toHaveClass(/wb-custom-font-size/);
+  await page.getByRole('button', { name: '列表', exact: true }).click();
+  await openUtilityPage(page, '⚙️ 设置', '⚙️ 设置中心');
+  await expect(page.locator('.typography-preview p')).toHaveCSS('font-size', '20px');
+  await page.getByRole('button', { name: '恢复默认', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => (globalThis as Record<string, any>).getVariables().worldbook_assistant_state_v1.typography)).toEqual({
+    scope: 'entries', family: 'default', size: null, weight: null, color: null, line_height: null,
+  });
+  await expect(page.locator('.wb-assistant-root')).not.toHaveClass(/wb-custom-font-size|wb-custom-font-color/);
+  await expect(hostTitle).toHaveCSS('color', 'rgb(23, 44, 70)');
+  await expect(hostTitle).toHaveCSS('font-size', '12px');
+});
+
+test('applies entry typography to the desktop editor', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openAssistant(page);
+  await page.locator('.studio-rail [title="设置中心"]').click();
+  await page.locator('[aria-labelledby="typography-size-label"]').click();
+  await page.getByRole('option', { name: '22 px', exact: true }).click();
+  await page.locator('[aria-labelledby="typography-weight-label"]').click();
+  await page.getByRole('option', { name: '半粗 600', exact: true }).click();
+  await page.locator('input[type="color"][aria-labelledby="typography-color-label"]').evaluate((input: HTMLInputElement) => {
+    input.value = '#a14535';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.locator('.utility-page-back').click();
+  const editor = page.locator('.wb-editor .editor-content-area');
+  await expect(editor).toBeVisible();
+  await expect(editor).toHaveCSS('font-size', '22px');
+  await expect(editor).toHaveCSS('font-weight', '600');
+  await expect(editor).toHaveCSS('color', 'rgb(161, 69, 53)');
+});
+
+test('keeps font settings usable at the largest interface size on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAssistant(page);
+  await openUtilityPage(page, '⚙️ 设置', '⚙️ 设置中心');
+  await page.locator('[aria-labelledby="typography-scope-label"]').click();
+  await page.getByRole('option', { name: '整个界面', exact: true }).click();
+  await page.locator('[aria-labelledby="typography-size-label"]').click();
+  await page.getByRole('option', { name: '28 px', exact: true }).click();
+  await expect(page.locator('.typography-preview p')).toHaveCSS('font-size', '28px');
+  await expect(page.locator('[aria-labelledby="typography-scope-label"]')).toContainText('整个界面');
+  const overflow = await page.evaluate(() => ['#wb-assistant-panel', '.typography-settings'].map(selector => {
+    const element = document.querySelector<HTMLElement>(selector)!;
+    return element.scrollWidth - element.clientWidth;
+  }));
+  expect(overflow.every(value => value <= 0)).toBe(true);
+  await page.getByRole('button', { name: '恢复默认', exact: true }).click();
+  await expect(page.locator('.typography-preview p')).toHaveCSS('font-size', '16px');
+});
+
+test('keeps the mobile header aligned with the selected theme', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAssistant(page);
+  const header = page.locator('#wb-assistant-panel .wb-assistant-header');
+  const title = page.locator('#wb-assistant-panel .wb-assistant-title-copy strong');
+  await expect(header).toHaveCSS('background-color', 'rgb(250, 247, 240)');
+  await expect(title).toHaveCSS('color', 'rgb(23, 44, 70)');
+  await page.locator('#wb-assistant-panel .wb-assistant-theme').click();
+  await page.getByRole('button', { name: '雾松夜', exact: true }).click();
+  await expect(header).toHaveCSS('background-color', 'rgb(20, 28, 24)');
+  await expect(title).toHaveCSS('color', 'rgb(233, 239, 234)');
+  await page.locator('#wb-assistant-panel .wb-assistant-theme').click();
+  await page.getByRole('button', { name: '雾松纸', exact: true }).click();
+  await expect(header).toHaveCSS('background-color', 'rgb(250, 247, 240)');
+});
+
 test('switches between the pine light and night themes', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/tests/worldbook_assistant_build/e2e/host.html');
@@ -335,10 +448,13 @@ test('switches between the pine light and night themes', async ({ page }) => {
 
   const root = page.locator('.wb-assistant-root');
   await expect(root).toHaveCSS('--wb-bg-root', '#f2efe6');
+  const header = page.locator('#wb-assistant-panel .wb-assistant-header');
+  await expect(header).toHaveCSS('background-color', 'rgb(255, 253, 248)');
 
   await page.locator('#wb-assistant-panel .wb-assistant-theme').click();
   await page.getByRole('button', { name: '雾松夜', exact: true }).click();
   await expect(root).toHaveCSS('--wb-bg-root', '#0d1310');
+  await expect(header).toHaveCSS('background-color', 'rgb(20, 28, 24)');
   await expect.poll(() => page.evaluate(() => {
     const state = (globalThis as Record<string, any>).getVariables()['worldbook_assistant_state_v1'];
     return state?.theme;

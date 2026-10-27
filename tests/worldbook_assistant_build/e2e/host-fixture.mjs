@@ -24,7 +24,7 @@ const worldbooks = {
   '大型世界书 B': createEntries(120).map(entry => ({ ...entry, uid: entry.uid + 1000, name: `第二世界书条目 ${entry.uid}` })),
 };
 const clone = value => structuredClone(value);
-const scriptVariables = {
+const fixtureVariables = {
   worldbook_assistant_state_v1: {
     last_worldbook: '大型世界书 A',
     theme: 'pine',
@@ -40,11 +40,15 @@ const scriptVariables = {
     cross_copy: { last_source_worldbook: '', last_target_worldbook: '', use_draft_source_when_current: true, snapshot_before_apply: true, desktop_left_width: 320, controls_collapsed: true, workspace_tools_expanded: false },
   },
 };
+const scriptVariables = JSON.parse(sessionStorage.getItem('__WB_E2E_VARIABLES__') || 'null') ?? fixtureVariables;
 
 Object.assign(globals, {
   getScriptId: () => 'worldbook-host-e2e',
   getVariables: () => scriptVariables,
-  replaceVariables: variables => Object.assign(scriptVariables, variables),
+  replaceVariables: variables => {
+    Object.assign(scriptVariables, variables);
+    sessionStorage.setItem('__WB_E2E_VARIABLES__', JSON.stringify(scriptVariables));
+  },
   getWorldbookNames: () => Object.keys(worldbooks),
   getWorldbook: async name => clone(worldbooks[name] ?? []),
   updateWorldbookWith: async (name, updater) => {

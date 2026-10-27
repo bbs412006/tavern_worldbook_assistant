@@ -1,4 +1,5 @@
 import { klona } from 'klona';
+import { createDefaultTypography, normalizeTypography } from './typography';
 import {
   type ThemeKey,
   TAG_COLORS,
@@ -639,6 +640,7 @@ export function createDefaultPersistedState(): PersistedState {
     last_global_preset_id: '',
     role_override_baseline: null,
     theme: 'pine',
+    typography: createDefaultTypography(),
     ai_chat: { sessions: [], activeSessionId: null },
     worldbook_tags: { definitions: [], assignments: {} },
     tag_filter: createDefaultTagFilterState(),
@@ -804,6 +806,7 @@ export function normalizePersistedState(input: unknown): PersistedState {
     last_global_preset_id: toStringSafe(root.last_global_preset_id),
     role_override_baseline: roleOverrideBaseline,
     theme: (toStringSafe(root.theme) as ThemeKey) || 'pine',
+    typography: normalizeTypography(root.typography),
     ai_chat: aiChat,
     worldbook_tags: { definitions: tagDefs.slice(0, TAG_LIMIT), assignments: tagAssignmentsNorm },
     tag_filter: normalizedTagFilter,

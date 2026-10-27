@@ -236,8 +236,9 @@ function ensurePanelStyle(): void {
   align-items: center;
   justify-content: space-between;
   padding: 0 12px 0 14px;
-  background: linear-gradient(180deg, #17221b, #111a14);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--wb-host-header-bg, #141c18);
+  border-bottom: 1px solid var(--wb-host-border, #334155);
+  font-family: var(--wb-host-font-family, inherit);
   cursor: move;
   user-select: none;
   position: relative;
@@ -248,7 +249,8 @@ function ensurePanelStyle(): void {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  color: #eef4ef;
+  min-width: 0;
+  color: var(--wb-host-text, #eef4ef);
   font-size: 12px;
   font-weight: 600;
 }
@@ -259,8 +261,8 @@ function ensurePanelStyle(): void {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: #e8f4ec;
-  color: #142019;
+  background: var(--wb-host-accent-soft, #e8f4ec);
+  color: var(--wb-host-accent, #142019);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 9px;
   font-weight: 700;
@@ -271,18 +273,23 @@ function ensurePanelStyle(): void {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  min-width: 0;
   line-height: 1;
 }
 
 #${PANEL_ID} .wb-assistant-title-copy strong {
-  color: #eef4ef;
-  font-size: 12px;
-  font-weight: 620;
+  display: block;
+  overflow: hidden;
+  color: var(--wb-host-text, #eef4ef);
+  font-size: clamp(12px, var(--wb-host-font-size, 12px), 22px);
+  font-weight: var(--wb-host-font-weight, 620);
   letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #${PANEL_ID} .wb-assistant-title-copy small {
-  color: #8fa499;
+  color: var(--wb-host-muted, #8fa499);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 7px;
   font-weight: 500;
@@ -290,7 +297,9 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-assistant-header-actions {
+  position: relative;
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 6px;
 }
@@ -298,10 +307,10 @@ function ensurePanelStyle(): void {
 #${PANEL_ID} .wb-assistant-tool {
   width: 28px;
   height: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid var(--wb-host-tool-border, #334155);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  color: #dce8df;
+  background: var(--wb-host-tool-bg, #18221d);
+  color: var(--wb-host-text, #dce8df);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -321,8 +330,8 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-assistant-tool:hover {
-  border-color: rgba(103, 216, 178, 0.28);
-  background: rgba(103, 216, 178, 0.10);
+  border-color: var(--wb-host-accent, #61d6ae);
+  background: var(--wb-host-accent-soft, rgba(103, 216, 178, 0.10));
   transform: translateY(-1px);
   box-shadow: none;
 }
@@ -333,23 +342,23 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-assistant-theme:hover {
-  border-color: #a78bfa;
+  border-color: var(--wb-host-accent, #a78bfa);
 }
 
 #${PANEL_ID} .wb-assistant-save:hover {
-  border-color: #34d399;
+  border-color: var(--wb-host-accent, #34d399);
 }
 
 @keyframes wb-pulse-glow {
-  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); border-color: rgba(52, 211, 153, 0.6); }
-  70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); border-color: rgba(52, 211, 153, 1); }
-  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); border-color: rgba(52, 211, 153, 0.6); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--wb-host-accent, #34d399) 40%, transparent); border-color: var(--wb-host-accent, #34d399); }
+  70% { box-shadow: 0 0 0 6px transparent; border-color: var(--wb-host-accent, #34d399); }
+  100% { box-shadow: 0 0 0 0 transparent; border-color: var(--wb-host-accent, #34d399); }
 }
 
 #${PANEL_ID} .wb-assistant-save.glow-pulse {
   animation: wb-pulse-glow 2s infinite ease-out;
-  border-color: #34d399;
-  color: #34d399;
+  border-color: var(--wb-host-accent, #34d399);
+  color: var(--wb-host-accent, #34d399);
 }
 
 #${PANEL_ID} .wb-assistant-close {
@@ -358,7 +367,7 @@ function ensurePanelStyle(): void {
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: #dce8df;
+  color: var(--wb-host-text, #dce8df);
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -439,12 +448,12 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-theme-dropdown button:hover {
-  background: rgba(90, 217, 180, 0.12);
+  background: var(--wb-host-accent-soft, rgba(90, 217, 180, 0.12));
 }
 
 #${PANEL_ID} .wb-theme-dropdown button.active {
-  background: rgba(90, 217, 180, 0.18);
-  color: #5ad9b4;
+  background: var(--wb-host-accent-soft, rgba(90, 217, 180, 0.18));
+  color: var(--wb-host-accent, #5ad9b4);
 }
 
 @media (orientation: portrait), (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
@@ -597,8 +606,8 @@ function ensurePanelStyle(): void {
 }
 
 #${PANEL_ID} .wb-assistant-fab-toggle.fab-on {
-  border-color: #34d399;
-  color: #34d399;
+  border-color: var(--wb-host-accent, #34d399);
+  color: var(--wb-host-accent, #34d399);
 }
 `;
   doc.head.append(style);
@@ -681,7 +690,7 @@ function ensurePanelElement(): JQuery {
     <div class="wb-assistant-header-actions">
       <button type="button" class="wb-assistant-tool wb-assistant-refresh" title="刷新" aria-label="刷新"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-4L3 10M3 4v6h6M4 13a8 8 0 0 0 14 4l3-3M21 20v-6h-6"/></svg></button>
       <button type="button" class="wb-assistant-tool wb-assistant-fab-toggle" title="悬浮按钮" aria-label="悬浮按钮"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg></button>
-      <button type="button" class="wb-assistant-tool wb-assistant-theme" title="切换主题" aria-label="切换主题"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none"/></svg></button>
+      <button type="button" class="wb-assistant-tool wb-assistant-theme" title="切换主题" aria-label="切换主题" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none"/></svg></button>
       <button type="button" class="wb-assistant-tool wb-assistant-save" title="保存" aria-label="保存"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
       <button type="button" class="wb-assistant-close" title="关闭" aria-label="关闭">×</button>
     </div>
@@ -734,19 +743,19 @@ const THEME_ITEMS: { key: string; label: string }[] = [
 ];
 
 function toggleThemeDropdown(panel: HTMLDivElement): void {
-  const existing = panel.querySelector('.wb-theme-dropdown');
+  const themeBtn = panel.querySelector<HTMLElement>('.wb-assistant-theme');
+  const existing = panel.querySelector<HTMLElement>('.wb-theme-dropdown');
   if (existing) {
-    existing.classList.remove('show');
-    // Cancel any previous pending remove timer
     const prevTimer = (existing as any).__removeTimer as number | undefined;
     if (prevTimer) clearTimeout(prevTimer);
-    (existing as any).__removeTimer = setTimeout(() => existing.remove(), 200);
-    return;
-  }
-
-  const themeBtn = panel.querySelector('.wb-assistant-theme') as HTMLElement;
-  if (themeBtn) {
-    themeBtn.style.position = 'relative';
+    if (existing.classList.contains('show')) {
+      existing.classList.remove('show');
+      themeBtn?.setAttribute('aria-expanded', 'false');
+      (existing as any).__removeTimer = setTimeout(() => existing.remove(), 200);
+      return;
+    }
+    // A second tap while the closing animation runs should reopen the menu.
+    existing.remove();
   }
 
   const dropdown = document.createElement('div');
@@ -757,23 +766,20 @@ function toggleThemeDropdown(panel: HTMLDivElement): void {
     btn.type = 'button';
     btn.textContent = item.label;
     btn.dataset.themeKey = item.key;
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', event => {
+      event.stopPropagation();
       window.dispatchEvent(new CustomEvent('wb-helper:set-theme', { detail: item.key }));
-      dropdown.classList.remove('show');
-      const timer = setTimeout(() => dropdown.remove(), 200);
-      (dropdown as any).__removeTimer = timer;
+      themeBtn?.setAttribute('aria-expanded', 'false');
+      dropdown.remove();
     });
     dropdown.appendChild(btn);
   }
 
-  if (themeBtn) {
-    themeBtn.appendChild(dropdown);
-  } else {
-    panel.querySelector('.wb-assistant-header-actions')?.appendChild(dropdown);
-  }
-
-  // trigger animation
-  requestAnimationFrame(() => dropdown.classList.add('show'));
+  panel.querySelector('.wb-assistant-header-actions')?.appendChild(dropdown);
+  themeBtn?.setAttribute('aria-expanded', 'true');
+  requestAnimationFrame(() => {
+    if (dropdown.isConnected && themeBtn?.getAttribute('aria-expanded') === 'true') dropdown.classList.add('show');
+  });
 }
 
 function closeThemeDropdownOnOutside(event: PointerEvent): void {
@@ -788,6 +794,7 @@ function closeThemeDropdownOnOutside(event: PointerEvent): void {
   const dropdown = doc.querySelector('.wb-theme-dropdown');
   if (dropdown) {
     dropdown.classList.remove('show');
+    doc.querySelector('.wb-assistant-theme')?.setAttribute('aria-expanded', 'false');
     const timer = setTimeout(() => dropdown.remove(), 200);
     (dropdown as any).__removeTimer = timer;
   }

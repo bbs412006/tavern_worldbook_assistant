@@ -9,6 +9,7 @@
         <aside class="settings-page-nav" aria-label="设置分区">
           <span class="settings-page-nav-label">SETTINGS</span>
           <a href="#settings-experience" class="on"><span>◉</span>体验</a>
+          <a href="#settings-typography"><span>文</span>字体</a>
           <a href="#settings-version"><span>◇</span>版本</a>
           <a href="#settings-api"><span>⌘</span>API 与模型</a>
           <div class="settings-page-nav-sep"></div>
@@ -90,6 +91,8 @@
             启用毛玻璃特效 (Glassmorphism)
           </BaseSwitch>
         </div>
+
+        <TypographySettings :preferences="typographyPreferences" :theme-color="typographyThemeColor" @update="updateTypography" @reset="resetTypography" />
 
         <div id="settings-version" class="settings-card">
           <div class="settings-section-title">版本与更新</div>
@@ -232,7 +235,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { ThemeKey } from '../domain/uiConstants';
+import { THEMES, type ThemeKey } from '../domain/uiConstants';
+import { createDefaultTypography, normalizeTypography, type TypographyPreferences } from '../domain/typography';
+import TypographySettings from './TypographySettings.vue';
 
 import BaseButton from './controls/BaseButton.vue';
 import BaseInput from './controls/BaseInput.vue';
@@ -255,6 +260,7 @@ const props = defineProps<{
   fabVisible: boolean;
   floorBtnVisible: boolean;
   currentTheme: ThemeKey;
+  isMobile?: boolean;
   themeOptions: Array<{ key: ThemeKey; label: string }>;
   apiModelList: string[];
   apiModelLoading: boolean;
@@ -287,6 +293,18 @@ const sortModeOptions: BaseSelectOption[] = [
 const themeSelectOptions = computed<BaseSelectOption[]>(() =>
   props.themeOptions.map(item => ({ value: item.key, label: item.label })),
 );
+const typographyPreferences = computed(() => normalizeTypography(props.persistedState.typography));
+const typographyThemeColor = computed(() => props.isMobile && props.currentTheme === 'pine'
+  ? '#172c46'
+  : THEMES[props.currentTheme]?.colors['--wb-text-main'] ?? '#17201b');
+function updateTypography(patch: Partial<TypographyPreferences>): void {
+  emit('update-persisted-state', state => {
+    state.typography = normalizeTypography({ ...state.typography, ...patch });
+  });
+}
+function resetTypography(): void {
+  emit('update-persisted-state', state => { state.typography = createDefaultTypography(); });
+}
 const modelOptions = computed<BaseSelectOption[]>(() => [
   { value: '', label: '请选择模型' },
   ...props.apiModelList.map(model => ({ value: model, label: model })),

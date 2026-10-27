@@ -1,4 +1,5 @@
 import type { ThemeKey } from './uiConstants';
+import type { TypographyPreferences } from './typography';
 
 export type StrategyType = WorldbookEntry['strategy']['type'];
 export type SecondaryLogic = WorldbookEntry['strategy']['keys_secondary']['logic'];
@@ -293,6 +294,7 @@ export interface PersistedState {
   last_global_preset_id: string;
   role_override_baseline: { preset_id: string; worldbooks: string[] } | null;
   theme: ThemeKey;
+  typography: TypographyPreferences;
   ai_chat: AIGeneratorState;
   worldbook_tags: WorldbookTagState;
   tag_filter: TagFilterState;
