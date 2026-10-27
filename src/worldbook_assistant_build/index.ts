@@ -476,8 +476,21 @@ function ensurePanelStyle(): void {
   }
 
   #${PANEL_ID} .wb-assistant-header {
+    height: 44px;
+    min-height: 44px;
+    padding: 0 12px;
+    background: var(--wb-host-header-bg, #faf7f0);
+    border-bottom: 1px solid var(--wb-host-border, #e6e0d7);
     cursor: default;
   }
+  #${PANEL_ID} .wb-assistant-title-copy strong,
+  #${PANEL_ID} .wb-assistant-header-title,
+  #${PANEL_ID} .wb-assistant-tool,
+  #${PANEL_ID} .wb-assistant-close { color: var(--wb-host-text, #172c46); }
+  #${PANEL_ID} .wb-assistant-brand-mark,
+  #${PANEL_ID} .wb-assistant-title-copy small { display: none; }
+  #${PANEL_ID} .wb-assistant-tool,
+  #${PANEL_ID} .wb-assistant-close { width: 40px; height: 40px; border: 0; background: transparent; }
 
   #${PANEL_BODY_ID} {
     flex: 1;

@@ -68,6 +68,11 @@
             <div class="mobile-page-heading"><div><h2>世界书</h2><span class="mobile-save-state">共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span></div><div class="mobile-heading-actions"><BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook"><StudioIcon name="save" :size="18" /></BaseButton></div></div>
             <WorldbookPicker :model-value="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择世界书" @update:model-value="handleWorldbookSelectionUpdate" />
             <BaseInput v-model="searchText" class="browse-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目" />
+            <div class="mobile-archive-filters" aria-label="条目筛选">
+              <BaseButton size="sm" :class="{ active: !onlyEnabled && !studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = false">全部</BaseButton>
+              <BaseButton size="sm" :class="{ active: onlyEnabled }" @click="onlyEnabled = true; studioConstantOnly = false">已启用</BaseButton>
+              <BaseButton size="sm" :class="{ active: studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = true">常驻</BaseButton>
+            </div>
           </section>
 
           <!-- Mobile browse card list -->
@@ -94,16 +99,15 @@
                 <div v-if="!expandedBrowseCardUids.has(entry.uid)" class="browse-card-header" role="button" tabindex="0" @click="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)" @keydown.enter.prevent="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)" @keydown.space.prevent="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)">
                   <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
                   <span class="browse-card-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
-                  <BaseCheckbox
-                    :model-value="entry.enabled"
-                    class="browse-toggle-wrap"
-                    :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
-                    @click.stop
-                    @keydown.stop
-                    @update:model-value="browseToggleEnabled(entry)"
-                  >
-                    <span class="browse-toggle-label">{{ entry.enabled ? '已启用' : '已停用' }}</span>
-                  </BaseCheckbox>
+                  <div class="browse-toggle-wrap" @click.stop @keydown.stop>
+                    <BaseSwitch
+                      :model-value="entry.enabled"
+                      :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
+                      @update:model-value="browseToggleEnabled(entry)"
+                    >
+                      <span class="browse-toggle-label">{{ entry.enabled ? '已启用' : '已停用' }}</span>
+                    </BaseSwitch>
+                  </div>
                 </div>
                 <div v-if="!expandedBrowseCardUids.has(entry.uid) && entry.strategy.keys.length" class="browse-card-keys" @click="toggleBrowseCard(entry.uid)">
                   <span v-for="(k, ki) in entry.strategy.keys.slice(0, 4)" :key="`mbk-${entry.uid}-${ki}`" class="browse-key-chip">{{ String(k) }}</span>
@@ -122,7 +126,7 @@
                   <div class="mobile-reading-top">
                     <BaseButton type="button" class="mobile-reading-back" @click="toggleBrowseCard(entry.uid)">← 返回</BaseButton>
                     <div class="mobile-reading-actions">
-                      <BaseCheckbox :model-value="entry.enabled" :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`" @update:model-value="browseToggleEnabled(entry)">{{ entry.enabled ? '已启用' : '已停用' }}</BaseCheckbox>
+                      <BaseSwitch :model-value="entry.enabled" :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`" @update:model-value="browseToggleEnabled(entry)">{{ entry.enabled ? '已启用' : '已停用' }}</BaseSwitch>
                       <BaseButton size="sm" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">保存</BaseButton>
                     </div>
                   </div>
@@ -132,7 +136,6 @@
                   </div>
                   <dl class="mobile-reading-meta"><div><dt>策略</dt><dd>{{ browseGetStrategyLabel(entry) }}</dd></div><div><dt>位置</dt><dd>{{ browseGetPositionLabel(entry) }}</dd></div><div><dt>权重</dt><dd>{{ entry.position.order }}</dd></div></dl>
                   <div class="mobile-reading-content">{{ entry.content || '暂无内容' }}</div>
-                  <BaseButton class="mobile-reading-edit" variant="primary" @click="switchToEditorForEntry(entry.uid)">✏️ 完整编辑</BaseButton>
                   <details class="mobile-inline-editor">
                     <summary>快速编辑</summary>
                   <label class="field">
@@ -187,6 +190,7 @@
               </div>
             </div>
           </div>
+          <div v-if="mobileReadingEntry" class="mobile-reading-footer"><BaseButton class="mobile-reading-edit" variant="primary" @click="switchToEditorForEntry(mobileReadingEntry.uid)"><StudioIcon name="pen" :size="18" /> 编辑条目</BaseButton></div>
         </div>
         <!-- Mobile browse bottom tabs -->
         <div v-if="!browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" class="mobile-tab-bar" style="display:flex !important;flex-shrink:0;">
@@ -216,10 +220,13 @@
           <!-- Tab: 列表 -->
           <Transition name="mobile-tab">
             <div v-show="mobileTab === 'list'" class="mobile-pane">
-              <section class="wb-toolbar mobile-library-toolbar">
-                <div class="mobile-page-heading"><div><span class="mobile-kicker">WORLDBOOK / 工作台</span><h2>条目列表</h2></div><span class="mobile-save-state">{{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span></div>
-                <label class="toolbar-label">
-                  <span>世界书</span>
+              <section class="wb-toolbar mobile-library-toolbar mobile-archive-library">
+                <div class="mobile-library-heading">
+                  <div><h2>世界书</h2><span>共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span></div>
+                  <BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook"><StudioIcon name="save" :size="18" /></BaseButton>
+                </div>
+                <label class="toolbar-label mobile-library-picker">
+                  <span class="sr-only">世界书</span>
                   <WorldbookPicker
                     :model-value="selectedWorldbookName"
                     :names="selectableWorldbookNames"
@@ -239,8 +246,16 @@
                     @update:tag-filter-logic="updateTagFilterLogic"
                     @update:tag-filter-match-mode="updateTagFilterMatchMode"
                   />
-              </label>
-              <div class="toolbar-btns" style="display:flex;gap:6px;flex-wrap:wrap;">
+                </label>
+                <BaseInput v-model="searchText" class="mobile-list-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目" />
+                <div class="mobile-archive-filters" aria-label="条目筛选">
+              <BaseButton size="sm" :class="{ active: !onlyEnabled && !studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = false">全部</BaseButton>
+              <BaseButton size="sm" :class="{ active: onlyEnabled }" @click="onlyEnabled = true; studioConstantOnly = false">已启用</BaseButton>
+              <BaseButton size="sm" :class="{ active: studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = true">常驻</BaseButton>
+            </div>
+                <details class="mobile-library-actions">
+                  <summary>世界书操作</summary>
+                  <div class="toolbar-btns">
                 <BaseButton variant="primary" size="sm" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾 保存</BaseButton>
                 <BaseButton size="sm" @click="addEntry">+ 新条目</BaseButton>
                 <BaseButton size="sm" @click="triggerImport">📥 导入</BaseButton>
@@ -252,8 +267,9 @@
                 <BaseButton size="sm" :disabled="!draftEntries.length" :class="{ active: viewSortActive }" @click="sortEntries">🔢 排序</BaseButton>
                 <BaseButton size="sm" :disabled="!selectedEntry" @click="openEntryHistoryModal">🕰️ 条目时光机</BaseButton>
                 <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal">⏪ 整本时光机</BaseButton>
-              </div>
-            </section>
+                  </div>
+                </details>
+              </section>
             <div class="wb-bindings" v-if="bindings.global.length || bindings.charPrimary || bindings.charAdditional.length || bindings.chat">
               <span v-for="name in bindings.global" :key="`bg-m-${name}`" class="binding-chip global" :title="name">{{ name }}</span>
               <span v-if="bindings.charPrimary" :key="`bc-m-${bindings.charPrimary}`" class="binding-chip char" :title="bindings.charPrimary">{{ bindings.charPrimary }}</span>
@@ -325,7 +341,6 @@
               </div>
             </div>
             <div class="mobile-list-heading"><div><strong>全部条目</strong><span>{{ filteredEntries.length }} / {{ draftEntries.length }}</span></div><small>长按条目可多选</small></div>
-            <BaseInput v-model="searchText" class="mobile-list-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目" />
             <div class="mobile-entry-list">
               <div v-if="mobileMultiSelectMode" class="mobile-multi-toolbar">
                 <span class="mobile-multi-title">多选模式 · 已选 {{ selectedEntryCount }}</span>
@@ -335,11 +350,10 @@
                   <BaseButton class="btn mini" type="button" @click="finishMobileMultiSelectMode">完成</BaseButton>
                 </div>
               </div>
-              <BaseButton
+              <article
                 v-for="entry in mobileEditorVisibleEntries"
                 :key="`me-${entry.uid}`"
-                type="button"
-                class="entry-item"
+                class="entry-item mobile-archive-entry"
                 :data-status="getEntryVisualStatus(entry)"
                 :class="{
                   selected: selectedEntryUidSet.has(entry.uid),
@@ -348,41 +362,50 @@
                   'mobile-multi-item': mobileMultiSelectMode,
                 }"
                 @click="selectEntry(entry.uid, $event)"
-                @pointerdown="startMobileEntryLongPress(entry.uid, $event)"
-                @pointermove="handleMobileEntryLongPressMove($event)"
-                @pointerup="finishMobileEntryLongPress($event)"
-                @pointercancel="finishMobileEntryLongPress($event)"
-                @lostpointercapture="finishMobileEntryLongPress()"
-                @contextmenu.prevent
-                style="border: 1px solid var(--wb-border-subtle); border-radius: 8px; padding: 8px 10px; margin-bottom: 4px;"
               >
-                <div class="entry-item-head">
-                  <div class="mobile-entry-title-group">
-                    <BaseCheckbox
-                      v-if="mobileMultiSelectMode"
-                      class="mobile-multi-checkbox"
-                      :model-value="selectedEntryUidSet.has(entry.uid)"
-                      @click.stop
-                      @update:model-value="toggleMobileEntrySelection(entry.uid)"
-                    />
-                    <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
-                    <div class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</div>
+                <BaseButton
+                  type="button"
+                  class="mobile-archive-entry-main"
+                  :aria-pressed="mobileMultiSelectMode ? selectedEntryUidSet.has(entry.uid) : undefined"
+                  @pointerdown="startMobileEntryLongPress(entry.uid, $event)"
+                  @pointermove="handleMobileEntryLongPressMove($event)"
+                  @pointerup="finishMobileEntryLongPress($event)"
+                  @pointercancel="finishMobileEntryLongPress($event)"
+                  @lostpointercapture="finishMobileEntryLongPress()"
+                  @contextmenu.prevent
+                >
+                  <div class="entry-item-head">
+                    <div class="mobile-entry-title-group">
+                      <span v-if="mobileMultiSelectMode" class="mobile-archive-selected" aria-hidden="true">{{ selectedEntryUidSet.has(entry.uid) ? '☑' : '☐' }}</span>
+                      <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
+                      <span class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
+                    </div>
+                    <div class="mobile-entry-meta">
+                      <span v-if="mobileMultiSelectMode && selectedEntryUid === entry.uid && selectedEntryUidSet.has(entry.uid)" class="entry-chip mono">样板</span>
+                      <span class="entry-chip uid">#{{ entry.uid }}</span>
+                    </div>
                   </div>
-                  <div class="mobile-entry-meta">
-                    <span v-if="mobileMultiSelectMode && selectedEntryUid === entry.uid && selectedEntryUidSet.has(entry.uid)" class="entry-chip mono">样板</span>
-                    <span class="entry-chip uid">#{{ entry.uid }}</span>
+                  <div v-if="entry.strategy.keys?.length" class="mobile-archive-keywords">
+                    <span v-for="(key, index) in entry.strategy.keys.slice(0, 4)" :key="`mkey-${entry.uid}-${index}`">{{ String(key) }}</span>
+                    <span v-if="entry.strategy.keys.length > 4">+{{ entry.strategy.keys.length - 4 }}</span>
                   </div>
+                  <div class="mobile-archive-preview">{{ browseGetContentPreview(entry) }}</div>
+                  <div class="mobile-entry-details">
+                    <span>{{ browseGetStrategyLabel(entry) }}</span>
+                    <span>{{ getPositionTypeLabel(entry.position.type, entry.position.role) }}</span>
+                    <span>权重 {{ entry.position.order }}</span>
+                    <span v-if="entry.recursion.prevent_incoming">不可递归命中</span>
+                    <span v-if="entry.recursion.prevent_outgoing">阻止后续递归</span>
+                  </div>
+                </BaseButton>
+                <div v-if="!mobileMultiSelectMode" class="mobile-archive-entry-toggle" @click.stop>
+                  <BaseSwitch
+                    :model-value="entry.enabled"
+                    :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
+                    @update:model-value="browseToggleEnabled(entry)"
+                  >{{ entry.enabled ? '已启用' : '已停用' }}</BaseSwitch>
                 </div>
-                <div class="entry-item-keys" v-if="entry.strategy.keys?.length">
-                  {{ entry.strategy.keys.join(', ') }}
-                </div>
-                <div class="mobile-entry-details">
-                  <span style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;">📍 {{ getPositionTypeLabel(entry.position.type, entry.position.role) }}</span>
-                  <span style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;">⚖️ #{{ entry.position.order }}</span>
-                  <span v-if="entry.recursion.prevent_incoming" style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;color:#f59e0b;">🚫入</span>
-                  <span v-if="entry.recursion.prevent_outgoing" style="background:var(--wb-input-bg);padding:2px 6px;border-radius:4px;color:#f59e0b;">🚫出</span>
-                </div>
-              </BaseButton>
+              </article>
               <div v-if="mobileEditorHasMoreEntries" class="mobile-entry-load-more">
                 <BaseButton size="sm" type="button" @click="mobileEditorLoadMore">
                   加载更多（{{ mobileEditorVisibleEntries.length }} / {{ filteredEntries.length }}）
@@ -399,7 +422,7 @@
               <template v-if="selectedEntry">
               <div class="mobile-editor-heading"><BaseButton type="button" @click="mobileTab = 'list'">‹ 返回</BaseButton><h2>编辑条目</h2><BaseButton variant="primary" size="sm" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">保存</BaseButton></div>
               <div class="mobile-editor-save-state">{{ hasUnsavedChanges ? '● 未保存的更改' : '已保存' }}</div>
-              <div class="mobile-editor-enabled"><span>启用条目</span><BaseCheckbox v-model="selectedEntry.enabled" aria-label="启用条目" /></div>
+              <div class="mobile-editor-enabled"><span>启用条目</span><BaseSwitch v-model="selectedEntry.enabled" aria-label="启用条目" /></div>
               <header class="editor-head">
                 <label class="field editor-comment">
                   <span>备注</span>
@@ -3078,6 +3101,7 @@ import AIConfigPage from './components/AIConfigPage.vue';
 import StudioIcon from './components/StudioIcon.vue';
 import BaseButton from './components/controls/BaseButton.vue';
 import BaseCheckbox from './components/controls/BaseCheckbox.vue';
+import BaseSwitch from './components/controls/BaseSwitch.vue';
 import BaseInput from './components/controls/BaseInput.vue';
 import BaseTextarea from './components/controls/BaseTextarea.vue';
 import BaseSelect, { type BaseSelectOption } from './components/controls/BaseSelect.vue';
@@ -3808,24 +3832,35 @@ const focusEditorSideWidth = ref(FOCUS_EDITOR_SIDE_DEFAULT);
 const paneResizeState = ref<PaneResizeState | null>(null);
 const hostResizeWindow = ref<Window | null>(null);
 
-const screenWidth = ref(typeof window !== 'undefined' ? window.screen.width : 1440);
-const screenHeight = ref(typeof window !== 'undefined' ? window.screen.height : 900);
+const responsiveWindow = typeof window === 'undefined' ? null : (() => {
+  try {
+    const host = getHostWindow();
+    void host.innerWidth;
+    return host;
+  } catch {
+    return window;
+  }
+})();
+const screenWidth = ref(responsiveWindow?.screen.width ?? 1440);
+const screenHeight = ref(responsiveWindow?.screen.height ?? 900);
+const hostViewportWidth = ref(responsiveWindow?.innerWidth ?? 1440);
+const isMobile = computed(() => hostViewportWidth.value <= 760 || screenWidth.value < screenHeight.value || (screenWidth.value <= 1000 && screenHeight.value <= 600));
 
-const isMobile = computed(() => screenWidth.value < screenHeight.value || (screenWidth.value <= 1000 && screenHeight.value <= 600));
-
-// Keep screen dimensions in sync on orientation change
+// The assistant is mounted in the host document even when this script runs in an iframe.
 let _screenSyncCleanup: (() => void) | null = null;
-if (typeof window !== 'undefined') {
+if (responsiveWindow) {
+  const hostWindow = responsiveWindow;
   const syncScreenDims = () => {
-    screenWidth.value = window.screen.width;
-    screenHeight.value = window.screen.height;
+    screenWidth.value = hostWindow.screen.width;
+    screenHeight.value = hostWindow.screen.height;
+    hostViewportWidth.value = hostWindow.innerWidth;
   };
   const orientHandler = () => setTimeout(syncScreenDims, 150);
-  window.addEventListener('orientationchange', orientHandler);
-  window.addEventListener('resize', syncScreenDims);
+  hostWindow.addEventListener('orientationchange', orientHandler);
+  hostWindow.addEventListener('resize', syncScreenDims);
   _screenSyncCleanup = () => {
-    window.removeEventListener('orientationchange', orientHandler);
-    window.removeEventListener('resize', syncScreenDims);
+    hostWindow.removeEventListener('orientationchange', orientHandler);
+    hostWindow.removeEventListener('resize', syncScreenDims);
   };
 }
 const showMobileEditor = computed(() => isMobile.value && selectedEntryUid.value !== null);
@@ -6244,6 +6279,7 @@ function applyPanelModeFromPersisted(): void {
 }
 
 const browseVisibleEntries = computed(() => filteredEntries.value.slice(0, browseRenderLimit.value));
+const mobileReadingEntry = computed(() => browseVisibleEntries.value.find(entry => expandedBrowseCardUids.value.has(entry.uid)) ?? null);
 const browseHasMoreEntries = computed(() => browseRenderLimit.value < filteredEntries.value.length);
 const desktopEditorVisibleEntries = computed(() => filteredEntries.value.slice(0, desktopEditorRenderLimit.value));
 const desktopEditorHasMoreEntries = computed(() => desktopEditorRenderLimit.value < filteredEntries.value.length);
@@ -20317,4 +20353,36 @@ watch(hasUnsavedChanges, (val) => {
 .is-mobile .mobile-tab-bar { border-color: var(--wb-border-subtle); background: var(--wb-bg-panel); }
 .is-mobile .mobile-tab-bar :deep(.wb-control-button.active) { background: transparent; color: var(--wb-primary); }
 
+/* Shared text-first entry list for both persisted mobile modes. */
+.is-mobile .mobile-archive-library { padding: 18px 20px 12px; border: 0; border-radius: 0; background: var(--wb-bg-panel); }
+.mobile-library-heading { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; }
+.mobile-library-heading h2 { margin: 0 0 6px; color: var(--wb-text-main); font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 28px; }
+.mobile-library-heading span { color: var(--wb-text-muted); font-size: 11px; }
+.mobile-library-picker { width: 100%; }
+.mobile-library-picker .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.is-mobile .mobile-archive-library .mobile-list-search { width: 100%; margin: 0; }
+.mobile-archive-filters { display: flex; align-items: center; gap: 6px; width: 100%; overflow-x: auto; }
+.mobile-archive-filters :deep(.wb-control-button) { flex: 0 0 auto; min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--wb-bg-soft); color: var(--wb-text-main); font-size: 12px; }
+.mobile-archive-filters :deep(.wb-control-button.active) { background: var(--wb-primary); color: var(--wb-on-primary); }
+.mobile-library-actions { width: 100%; border-bottom: 1px solid var(--wb-border-subtle); }
+.mobile-library-actions summary { padding: 10px 0; color: var(--wb-text-muted); font-size: 12px; cursor: pointer; }
+.is-mobile .mobile-library-actions .toolbar-btns { flex-wrap: wrap !important; overflow: visible !important; padding-bottom: 10px; }
+.is-mobile .mobile-list-heading { margin: 16px 4px 8px; }
+.is-mobile .mobile-entry-list { gap: 0; }
+.is-mobile .mobile-entry-list .mobile-archive-entry { position: relative; display: block !important; padding: 0 !important; margin: 0 !important; border: 0 !important; border-bottom: 1px solid var(--wb-border-subtle) !important; border-radius: 0 !important; background: transparent; box-shadow: none; opacity: 1; }
+.is-mobile .mobile-entry-list .mobile-archive-entry.selected, .is-mobile .mobile-entry-list .mobile-archive-entry.primary { background: transparent; box-shadow: none; }
+.is-mobile .mobile-entry-list .mobile-archive-entry-main { display: flex !important; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; height: auto; min-height: 0; padding: 16px 0; border: 0; border-radius: 0; background: transparent; color: var(--wb-text-main); text-align: left; white-space: normal; }
+.is-mobile .mobile-entry-list .mobile-archive-entry-main .entry-item-head { box-sizing: border-box; padding-right: 90px; }
+.is-mobile .mobile-entry-list .mobile-archive-entry .entry-item-title { font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 18px; font-weight: 700; }
+.mobile-archive-entry-toggle { position: absolute; top: 12px; right: 0; }
+.mobile-archive-keywords { display: flex; flex-wrap: wrap; gap: 5px; }
+.mobile-archive-keywords span { padding: 4px 9px; border-radius: 999px; background: var(--wb-bg-soft); color: var(--wb-text-main); font-size: 11px; }
+.mobile-archive-preview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; color: var(--wb-text-main); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.is-mobile .mobile-archive-entry .mobile-entry-details { justify-content: flex-start; margin: 0; }
+.is-mobile .mobile-archive-entry .mobile-entry-details span { padding: 0 !important; background: transparent !important; color: var(--wb-text-muted); }
+.mobile-reading-footer { flex: 0 0 auto; padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--wb-border-subtle); background: var(--wb-bg-panel); }
+.is-mobile .mobile-reading-footer .mobile-reading-edit { margin: 0; }
+
+.is-mobile .mobile-entry-list .mobile-archive-entry::before { display: none; }
+.is-mobile .mobile-pane .editor-keyword-grid :deep(textarea) { min-height: 48px !important; height: 48px !important; }
 </style>

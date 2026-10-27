@@ -15,6 +15,10 @@ async function openUtilityPage(
   label: '⚙️ 设置' | '🔧 AI配置',
   heading: '⚙️ 设置中心' | '🔧 AI 配置世界书',
 ): Promise<void> {
+  const actions = page.locator('.mobile-library-actions');
+  if (await actions.isVisible() && !(await actions.evaluate(element => (element as HTMLDetailsElement).open))) {
+    await actions.locator('summary').click();
+  }
   await page.getByRole('button', { name: label, exact: true }).first().click();
   await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
 }
@@ -49,6 +53,52 @@ test('loads the tracked production bundle in a mobile host without overflow', as
   expect(geometry.errors).toEqual([]);
 });
 
+test('opens the redesigned list for existing mobile editor users and preserves list interactions', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAssistant(page);
+
+  // The host fixture persists panel_mode: editor, as an existing user would.
+  const list = page.locator('.mobile-entry-list');
+  const rows = list.locator('.mobile-archive-entry');
+  await expect(page.getByRole('heading', { name: '世界书', exact: true })).toBeVisible();
+  await expect(rows).toHaveCount(18);
+  const first = rows.filter({ hasText: '大型世界书条目 1' }).first();
+  await expect(first.locator('.mobile-archive-keywords')).toContainText('关键词1');
+  await expect(first.locator('.mobile-archive-preview')).toContainText('这是第 1 个条目的正文内容');
+  await expect(first.locator('.mobile-entry-details')).toContainText('权重 1');
+
+  const firstSwitch = first.getByRole('switch', { name: '大型世界书条目 1启用状态' });
+  await expect(firstSwitch).not.toBeChecked();
+  await first.locator('.wb-control-switch-track').click();
+  await expect(firstSwitch).toBeChecked();
+  await expect(list).toBeVisible();
+  await expect(page.getByRole('heading', { name: '编辑条目', exact: true })).not.toBeVisible();
+
+  const filters = page.locator('.mobile-archive-library .mobile-archive-filters');
+  await filters.getByRole('button', { name: '已启用', exact: true }).click();
+  await expect(list.getByText('大型世界书条目 6', { exact: true })).toHaveCount(0);
+  await expect(first).toBeVisible();
+  await filters.getByRole('button', { name: '常驻', exact: true }).click();
+  await expect(list.getByText('大型世界书条目 2', { exact: true })).toHaveCount(0);
+  await expect(list.getByText('大型世界书条目 8', { exact: true })).toBeVisible();
+  await filters.getByRole('button', { name: '全部', exact: true }).click();
+
+  const firstMain = list.locator('.mobile-archive-entry').first().locator('.mobile-archive-entry-main');
+  await firstMain.scrollIntoViewIfNeeded();
+  const box = await firstMain.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + 30, box!.y + 20);
+  await page.mouse.down();
+  await page.waitForTimeout(500); // Longer than the mobile long-press threshold.
+  await page.mouse.up();
+  await expect(list.locator('.mobile-multi-toolbar')).toContainText('已选 1');
+  await list.locator('.mobile-archive-entry').nth(1).locator('.mobile-archive-entry-main').click();
+  await expect(list.locator('.mobile-multi-toolbar')).toContainText('已选 2');
+  await list.getByRole('button', { name: '完成', exact: true }).click();
+  await expect(list.locator('.mobile-multi-toolbar')).toHaveCount(0);
+  expect(await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? [])).toEqual([]);
+});
+
 test('keeps the mobile workspace inside the viewport in landscape', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 844, height: 390 }, screen: { width: 844, height: 390 } });
   const page = await context.newPage();
@@ -79,7 +129,7 @@ test('searches entries and opens a browse card in the full mobile editor', async
   await expect(card).toContainText('大型世界书条目 42');
   await card.locator('.browse-card-header').click();
   await expect(card.locator('.mobile-reading-content')).toContainText('这是第 42 个条目的正文内容');
-  await card.getByRole('button', { name: '✏️ 完整编辑' }).click();
+  await page.getByRole('button', { name: '编辑条目', exact: true }).click();
 
   const editor = page.locator('.mobile-pane:visible');
   await expect(editor.locator('.editor-comment input')).toHaveValue('大型世界书条目 42');
