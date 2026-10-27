@@ -49,6 +49,65 @@ test('loads the tracked production bundle in a mobile host without overflow', as
   expect(geometry.errors).toEqual([]);
 });
 
+test('keeps the mobile workspace inside the viewport in landscape', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 844, height: 390 }, screen: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  await openAssistant(page);
+  await expect(page.locator('.mobile-entry-list')).toBeVisible();
+  const bounds = await page.locator('#wb-assistant-panel').boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(844);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(390);
+  await context.close();
+});
+
+test('searches entries and opens a browse card in the full mobile editor', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAssistant(page);
+
+  const search = page.getByRole('textbox', { name: '搜索世界书条目' });
+  await search.fill('关键词42');
+  const entries = page.locator('.mobile-entry-list .entry-item');
+  await expect(entries).toHaveCount(1);
+  await expect(entries.first()).toContainText('大型世界书条目 42');
+
+  await page.getByRole('button', { name: '浏览', exact: true }).click();
+  const card = page.locator('.mobile-browse-grid .browse-card');
+  await expect(card).toHaveCount(1);
+  await expect(card).toContainText('大型世界书条目 42');
+  await card.locator('.browse-card-header').click();
+  await expect(card.locator('.mobile-reading-content')).toContainText('这是第 42 个条目的正文内容');
+  await card.getByRole('button', { name: '✏️ 完整编辑' }).click();
+
+  const editor = page.locator('.mobile-pane:visible');
+  await expect(editor.locator('.editor-comment input')).toHaveValue('大型世界书条目 42');
+  await expect(editor.locator('textarea.editor-content-area')).toHaveValue(/这是第 42 个条目的正文内容/);
+  expect(await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? [])).toEqual([]);
+});
+
+test('saves mobile browse changes to the selected worldbook', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAssistant(page);
+  await page.getByRole('textbox', { name: '搜索世界书条目' }).fill('关键词42');
+  await page.getByRole('button', { name: '浏览', exact: true }).click();
+
+  const card = page.locator('.mobile-browse-grid .browse-card');
+  await expect(card).toHaveCount(1);
+  await card.locator('.browse-card-header').click();
+  await card.locator('.mobile-inline-editor summary').click();
+  const content = card.locator('textarea.browse-content-input');
+  await content.fill('移动端修改后的世界书内容');
+  await card.getByRole('button', { name: '保存', exact: true }).click();
+
+  await expect.poll(() => page.evaluate(async () => {
+    const entries = await (globalThis as any).getWorldbook('大型世界书 A');
+    return entries.find((entry: { uid: number }) => entry.uid === 42)?.content;
+  })).toBe('移动端修改后的世界书内容');
+  expect(await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? [])).toEqual([]);
+});
+
 test('reopens the retained panel repeatedly without duplicate roots or runtime errors', async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 932 });
   await openAssistant(page);
@@ -87,6 +146,11 @@ test('keeps the production workspace and owned resources bounded across 20 utili
     await page.locator('.utility-page-back').click();
     await expect(originalWorkspace).toBeVisible();
   }
+
+  await expect.poll(() => page.evaluate(() => {
+    const target = globalThis as Record<string, any>;
+    return target.__WB_ASSISTANT_PERFORMANCE_SNAPSHOT__?.().metrics['return-main']?.count;
+  })).toBe(40);
 
   const snapshot = await page.evaluate(() => {
     const target = globalThis as Record<string, any>;

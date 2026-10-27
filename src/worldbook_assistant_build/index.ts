@@ -447,7 +447,7 @@ function ensurePanelStyle(): void {
   color: #5ad9b4;
 }
 
-@media (orientation: portrait) {
+@media (orientation: portrait), (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
   #${PANEL_ID} {
     inset: 0 !important;
     margin: auto !important;
@@ -455,7 +455,7 @@ function ensurePanelStyle(): void {
     width: calc(100vw - 16px) !important;
     height: min(720px, calc(100lvh - 24px)) !important;
     min-width: unset;
-    min-height: 360px;
+    min-height: 0;
     max-width: 520px;
     max-height: calc(100lvh - 24px);
     border-radius: 12px;
@@ -491,6 +491,10 @@ function ensurePanelStyle(): void {
     display: flex;
     flex-direction: column;
   }
+}
+
+@media (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
+  #${PANEL_ID} { max-width: calc(100vw - 16px); }
 }
 
 #${FAB_ID} {

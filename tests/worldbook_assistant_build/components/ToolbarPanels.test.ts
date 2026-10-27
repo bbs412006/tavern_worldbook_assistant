@@ -26,8 +26,9 @@ describe('BrowsePanel', () => {
     expect(wrapper.emitted('update:modelValue')).toEqual([['B']]);
     await wrapper.get('input[aria-label="搜索世界书条目"]').setValue('beta');
     expect(wrapper.text()).toContain('条目 1 / 2');
+    expect(wrapper.emitted('update:searchText')).toEqual([['beta']]);
     await wrapper.findAll('button').find(button => button.text() === '新建')!.trigger('click');
-    await wrapper.findAll('button').find(button => button.text() === '💾 保存')!.trigger('click');
+    await wrapper.findAll('button').find(button => button.text() === '保存')!.trigger('click');
     expect(wrapper.emitted('create')).toHaveLength(1);
     expect(wrapper.emitted('save')).toHaveLength(1);
   });

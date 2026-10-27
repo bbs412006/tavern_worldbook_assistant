@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode }]" :style="themeStyles">
+  <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode, 'is-archive-mobile': isMobile && currentTheme === 'pine' }]" :style="themeStyles">
     <SettingsPage
       v-if="utilityPage === 'settings'"
       :persisted-state="persistedState"
@@ -64,25 +64,26 @@
       <template v-if="panelMode === 'browse'">
         <div class="mobile-browse-view">
           <!-- Mobile browse toolbar -->
-          <section class="wb-toolbar browse-toolbar mobile-browse-toolbar">
-            <WorldbookPicker :model-value="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择" @update:model-value="handleWorldbookSelectionUpdate" />
-            <BaseInput v-model="searchText" class="browse-search" placeholder="🔍 搜索..." aria-label="搜索世界书条目" />
-            <BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾</BaseButton>
+          <section v-if="!browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" class="wb-toolbar browse-toolbar mobile-browse-toolbar">
+            <div class="mobile-page-heading"><div><h2>世界书</h2><span class="mobile-save-state">共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span></div><div class="mobile-heading-actions"><BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook"><StudioIcon name="save" :size="18" /></BaseButton></div></div>
+            <WorldbookPicker :model-value="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择世界书" @update:model-value="handleWorldbookSelectionUpdate" />
+            <BaseInput v-model="searchText" class="browse-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目" />
           </section>
 
           <!-- Mobile browse card list -->
           <div class="browse-scroll-area mobile-browse-scroll">
-            <section class="browse-bindings mobile-browse-bindings">
-              <span v-if="bindings.global.length" class="binding-tag global">🟢 全局</span>
-              <span v-if="bindings.charPrimary" class="binding-tag char">🔵 角色</span>
-              <span v-if="bindings.chat" class="binding-tag chat">🟡 聊天</span>
-              <span class="browse-entry-count">{{ filteredEntries.length }} / {{ draftEntries.length }}</span>
+            <section v-if="!browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" class="browse-bindings mobile-browse-bindings">
+              <span v-if="bindings.global.length" class="binding-tag global">全局</span>
+              <span v-if="bindings.charPrimary" class="binding-tag char">角色</span>
+              <span v-if="bindings.chat" class="binding-tag chat">聊天</span>
+              <span class="browse-entry-count">条目 <b>{{ filteredEntries.length }}</b> / {{ draftEntries.length }}</span>
               <BaseButton size="sm" icon-only aria-label="新增条目" :disabled="!selectedWorldbookName" @click="addEntry">+</BaseButton>
             </section>
             <div class="browse-grid mobile-browse-grid">
               <article
                 v-for="entry in browseVisibleEntries"
                 :key="`mbrowse-card-${entry.uid}`"
+                v-show="!browseVisibleEntries.some(item => expandedBrowseCardUids.has(item.uid)) || expandedBrowseCardUids.has(entry.uid)"
                 class="browse-card"
                 :class="{
                   expanded: expandedBrowseCardUids.has(entry.uid),
@@ -90,7 +91,7 @@
                 }"
                 :data-status="getEntryVisualStatus(entry)"
               >
-                <div class="browse-card-header" @click="toggleBrowseCard(entry.uid)">
+                <div v-if="!expandedBrowseCardUids.has(entry.uid)" class="browse-card-header" role="button" tabindex="0" @click="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)" @keydown.enter.prevent="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)" @keydown.space.prevent="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)">
                   <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
                   <span class="browse-card-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
                   <BaseCheckbox
@@ -98,9 +99,10 @@
                     class="browse-toggle-wrap"
                     :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
                     @click.stop
+                    @keydown.stop
                     @update:model-value="browseToggleEnabled(entry)"
                   >
-                    <span class="browse-toggle-label">{{ entry.enabled ? 'ON' : 'OFF' }}</span>
+                    <span class="browse-toggle-label">{{ entry.enabled ? '已启用' : '已停用' }}</span>
                   </BaseCheckbox>
                 </div>
                 <div v-if="!expandedBrowseCardUids.has(entry.uid) && entry.strategy.keys.length" class="browse-card-keys" @click="toggleBrowseCard(entry.uid)">
@@ -112,11 +114,27 @@
                 </div>
                 <div v-if="!expandedBrowseCardUids.has(entry.uid)" class="browse-card-meta" @click="toggleBrowseCard(entry.uid)">
                   <span class="browse-meta-pill" :data-status="getEntryVisualStatus(entry)">{{ browseGetStrategyLabel(entry) }}</span>
-                  <span class="browse-meta-pill">📍 {{ browseGetPositionLabel(entry) }}</span>
+                  <span class="browse-meta-pill">{{ browseGetPositionLabel(entry) }}</span>
                 </div>
 
-                <!-- Mobile expanded inline editor -->
+                <!-- Reading view; quick editing remains available without leaving browse mode. -->
                 <div v-if="expandedBrowseCardUids.has(entry.uid)" class="browse-card-expanded">
+                  <div class="mobile-reading-top">
+                    <BaseButton type="button" class="mobile-reading-back" @click="toggleBrowseCard(entry.uid)">← 返回</BaseButton>
+                    <div class="mobile-reading-actions">
+                      <BaseCheckbox :model-value="entry.enabled" :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`" @update:model-value="browseToggleEnabled(entry)">{{ entry.enabled ? '已启用' : '已停用' }}</BaseCheckbox>
+                      <BaseButton size="sm" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">保存</BaseButton>
+                    </div>
+                  </div>
+                  <h2 class="mobile-reading-title">{{ entry.name || `条目 ${entry.uid}` }}</h2>
+                  <div v-if="entry.strategy.keys.length" class="mobile-reading-keys">
+                    <span v-for="(key, index) in entry.strategy.keys" :key="`mread-key-${entry.uid}-${index}`" class="browse-key-chip">{{ String(key) }}</span>
+                  </div>
+                  <dl class="mobile-reading-meta"><div><dt>策略</dt><dd>{{ browseGetStrategyLabel(entry) }}</dd></div><div><dt>位置</dt><dd>{{ browseGetPositionLabel(entry) }}</dd></div><div><dt>权重</dt><dd>{{ entry.position.order }}</dd></div></dl>
+                  <div class="mobile-reading-content">{{ entry.content || '暂无内容' }}</div>
+                  <BaseButton class="mobile-reading-edit" variant="primary" @click="switchToEditorForEntry(entry.uid)">✏️ 完整编辑</BaseButton>
+                  <details class="mobile-inline-editor">
+                    <summary>快速编辑</summary>
                   <label class="field">
                     <span>备注</span>
                     <BaseInput v-model="entry.name" placeholder="名称" />
@@ -154,13 +172,13 @@
                     <BaseCheckbox v-model="entry.recursion.prevent_outgoing">🚫 阻止后续递归</BaseCheckbox>
                   </div>
                   <div class="browse-card-actions">
-                    <BaseButton variant="danger" size="sm" icon-only aria-label="删除条目" @click="removeSelectedEntry" @mousedown="selectEntry(entry.uid)">🗑</BaseButton>
-                    <BaseButton variant="secondary" size="sm" @click="switchToEditorForEntry(entry.uid)">✏️ 完整编辑</BaseButton>
+                    <BaseButton variant="danger" size="sm" icon-only aria-label="删除条目" @click="removeBrowseEntry(entry.uid)">🗑</BaseButton>
                     <BaseButton variant="ghost" size="sm" @click="toggleBrowseCard(entry.uid)">收起</BaseButton>
                   </div>
+                  </details>
                 </div>
               </article>
-              <div v-if="browseHasMoreEntries" ref="browseLoadMoreSentinelRef" class="browse-load-more-sentinel">
+              <div v-if="browseHasMoreEntries && !browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" ref="browseLoadMoreSentinelRef" class="browse-load-more-sentinel">
                 <span class="browse-load-more-text">已加载 {{ browseVisibleEntries.length }} / {{ filteredEntries.length }} …</span>
               </div>
               <div v-if="!filteredEntries.length" class="browse-empty">
@@ -171,12 +189,21 @@
           </div>
         </div>
         <!-- Mobile browse bottom tabs -->
-        <div class="mobile-tab-bar" style="display:flex !important;flex-shrink:0;">
+        <div v-if="!browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" class="mobile-tab-bar" style="display:flex !important;flex-shrink:0;">
           <BaseButton class="active">
-            <span class="tab-icon">📖</span><span class="tab-label">浏览</span>
+            <span class="tab-icon"><StudioIcon name="eye" :size="19" /></span><span class="tab-label">浏览</span>
           </BaseButton>
-          <BaseButton @click="switchPanelMode('editor')">
-            <span class="tab-icon">✏️</span><span class="tab-label">编辑</span>
+          <BaseButton @click="switchPanelMode('editor'); mobileTab = 'list'">
+            <span class="tab-icon"><StudioIcon name="list" :size="19" /></span><span class="tab-label">列表</span>
+          </BaseButton>
+          <BaseButton @click="switchPanelMode('editor'); mobileTab = 'edit'">
+            <span class="tab-icon"><StudioIcon name="pen" :size="19" /></span><span class="tab-label">编辑</span>
+          </BaseButton>
+          <BaseButton @click="switchPanelMode('editor'); mobileTab = 'settings'">
+            <span class="tab-icon"><StudioIcon name="sliders" :size="19" /></span><span class="tab-label">配置</span>
+          </BaseButton>
+          <BaseButton @click="switchPanelMode('editor'); mobileTab = 'tools'">
+            <span class="tab-icon"><StudioIcon name="workbench" :size="19" /></span><span class="tab-label">工具</span>
           </BaseButton>
         </div>
       </template>
@@ -189,7 +216,8 @@
           <!-- Tab: 列表 -->
           <Transition name="mobile-tab">
             <div v-show="mobileTab === 'list'" class="mobile-pane">
-              <section class="wb-toolbar">
+              <section class="wb-toolbar mobile-library-toolbar">
+                <div class="mobile-page-heading"><div><span class="mobile-kicker">WORLDBOOK / 工作台</span><h2>条目列表</h2></div><span class="mobile-save-state">{{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span></div>
                 <label class="toolbar-label">
                   <span>世界书</span>
                   <WorldbookPicker
@@ -296,6 +324,8 @@
                 <div v-else style="font-size:11px;opacity:0.5;">选择预设后可配置角色绑定</div>
               </div>
             </div>
+            <div class="mobile-list-heading"><div><strong>全部条目</strong><span>{{ filteredEntries.length }} / {{ draftEntries.length }}</span></div><small>长按条目可多选</small></div>
+            <BaseInput v-model="searchText" class="mobile-list-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目" />
             <div class="mobile-entry-list">
               <div v-if="mobileMultiSelectMode" class="mobile-multi-toolbar">
                 <span class="mobile-multi-title">多选模式 · 已选 {{ selectedEntryCount }}</span>
@@ -367,10 +397,13 @@
           <Transition name="mobile-tab">
             <div v-show="mobileTab === 'edit'" class="mobile-pane">
               <template v-if="selectedEntry">
+              <div class="mobile-editor-heading"><BaseButton type="button" @click="mobileTab = 'list'">‹ 返回</BaseButton><h2>编辑条目</h2><BaseButton variant="primary" size="sm" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">保存</BaseButton></div>
+              <div class="mobile-editor-save-state">{{ hasUnsavedChanges ? '● 未保存的更改' : '已保存' }}</div>
+              <div class="mobile-editor-enabled"><span>启用条目</span><BaseCheckbox v-model="selectedEntry.enabled" aria-label="启用条目" /></div>
               <header class="editor-head">
                 <label class="field editor-comment">
-                  <span>备注 (COMMENT)</span>
-                  <BaseInput v-model="selectedEntry.name" type="text" class="text-input" tabindex="-1" />
+                  <span>备注</span>
+                  <BaseInput v-model="selectedEntry.name" type="text" class="text-input" />
                 </label>
                 <div class="editor-badges">
                   <span class="editor-badge" :class="selectedEntry.enabled ? 'on' : 'off'">{{ selectedEntry.enabled ? 'EN' : 'OFF' }}</span>
@@ -380,11 +413,11 @@
               </header>
               <section class="editor-grid two-cols editor-keyword-grid">
                 <label class="field">
-                  <span>主要关键词 (KEYS)</span>
+                  <span>主要关键词</span>
                   <BaseTextarea :model-value="selectedKeysRaw" @update:model-value="selectedKeysRaw = $event" @blur="commitKeysFromRaw" class="text-area compact"></BaseTextarea>
                 </label>
                 <label class="field">
-                  <span>次要关键词 (SECONDARY)</span>
+                  <span>次要关键词</span>
                   <BaseTextarea :model-value="selectedSecondaryKeysRaw" @update:model-value="selectedSecondaryKeysRaw = $event" @blur="commitSecondaryKeysFromRaw" class="text-area compact"></BaseTextarea>
                 </label>
               </section>
@@ -393,7 +426,7 @@
                   <span class="content-top-drag-grip">━━━</span>
                 </div>
                 <div v-if="mobileMultiSelectMode" class="mobile-multi-content-note">多选模式下仅支持配置联动，内容编辑已禁用</div>
-                <div class="editor-content-title">世界观设定 / 内容 (CONTENT)</div>
+                <div class="editor-content-title">内容</div>
                 <BaseTextarea
                   ref="contentTextareaRef"
                   v-model="selectedEntry.content"
@@ -405,8 +438,9 @@
                   <span class="content-resize-grip">━━━</span>
                 </div>
               </section>
+              <BaseButton type="button" class="mobile-editor-config" @click="mobileTab = 'settings'"><StudioIcon name="sliders" :size="20" /><span><strong>触发与插入配置</strong><small>{{ browseGetStrategyLabel(selectedEntry) }} · {{ browseGetPositionLabel(selectedEntry) }}</small></span><span aria-hidden="true">›</span></BaseButton>
             </template>
-            <div v-else class="empty-block">请在列表中选择一个条目</div>
+            <div v-else class="empty-block mobile-editor-empty"><StudioIcon name="pen" :size="28" /><strong>开始编辑条目</strong><span>从列表中选择一个条目，或新建条目。</span><BaseButton variant="primary" @click="mobileTab = 'list'">前往条目列表</BaseButton></div>
           </div>
           </Transition>
 
@@ -747,28 +781,28 @@
       <!-- Tab Bar: bottom, direct child of wb-assistant-root via fragment -->
       <div class="mobile-tab-bar" style="display:flex !important;flex-shrink:0;">
         <BaseButton @click="switchPanelMode('browse')">
-          <span class="tab-icon">📖</span><span class="tab-label">浏览</span>
+          <span class="tab-icon"><StudioIcon name="eye" :size="19" /></span><span class="tab-label">浏览</span>
         </BaseButton>
         <BaseButton @click="mobileTab = 'list'" :class="{ active: mobileTab === 'list' }">
-          <span class="tab-icon">📋</span><span class="tab-label">列表</span>
+          <span class="tab-icon"><StudioIcon name="list" :size="19" /></span><span class="tab-label">列表</span>
         </BaseButton>
         <BaseButton @click="mobileTab = 'edit'" :class="{ active: mobileTab === 'edit' }">
-          <span class="tab-icon">✏️</span><span class="tab-label">编辑</span>
+          <span class="tab-icon"><StudioIcon name="pen" :size="19" /></span><span class="tab-label">编辑</span>
         </BaseButton>
         <BaseButton @click="mobileTab = 'settings'" :class="{ active: mobileTab === 'settings' }">
-          <span class="tab-icon">⚙️</span><span class="tab-label">配置</span>
+          <span class="tab-icon"><StudioIcon name="sliders" :size="19" /></span><span class="tab-label">配置</span>
         </BaseButton>
         <BaseButton @click="mobileTab = 'tools'" :class="{ active: mobileTab === 'tools' }">
-          <span class="tab-icon">🧰</span><span class="tab-label">工具</span>
+          <span class="tab-icon"><StudioIcon name="workbench" :size="19" /></span><span class="tab-label">工具</span>
         </BaseButton>
         <BaseButton v-if="mobileTab === 'copy'" class="active" type="button" @click="mobileTab = 'copy'">
-          <span class="tab-icon">📚</span><span class="tab-label">复制</span>
+          <span class="tab-icon"><StudioIcon name="copy" :size="19" /></span><span class="tab-label">复制</span>
         </BaseButton>
         <BaseButton v-if="mobileTab === 'ai'" class="active" type="button" @click="mobileTab = 'ai'">
-          <span class="tab-icon">🤖</span><span class="tab-label">AI</span>
+          <span class="tab-icon"><StudioIcon name="sparkle" :size="19" /></span><span class="tab-label">AI</span>
         </BaseButton>
         <BaseButton @click="mobileTab = 'tags'" :class="{ active: mobileTab === 'tags' }">
-          <span class="tab-icon">🏷️</span><span class="tab-label">标签</span>
+          <span class="tab-icon"><StudioIcon name="tags" :size="19" /></span><span class="tab-label">标签</span>
         </BaseButton>
       </div>
       </template><!-- end mobile editor mode -->
@@ -813,6 +847,7 @@
     <template v-if="panelMode === 'browse'">
       <BrowsePanel
         :model-value="selectedWorldbookName"
+        v-model:search-text="searchText"
         :entries="draftEntries"
         :worldbookNames="selectableWorldbookNames"
         :bindings="bindings"
@@ -3776,7 +3811,7 @@ const hostResizeWindow = ref<Window | null>(null);
 const screenWidth = ref(typeof window !== 'undefined' ? window.screen.width : 1440);
 const screenHeight = ref(typeof window !== 'undefined' ? window.screen.height : 900);
 
-const isMobile = computed(() => screenWidth.value < screenHeight.value);
+const isMobile = computed(() => screenWidth.value < screenHeight.value || (screenWidth.value <= 1000 && screenHeight.value <= 600));
 
 // Keep screen dimensions in sync on orientation change
 let _screenSyncCleanup: (() => void) | null = null;
@@ -5270,6 +5305,7 @@ watch(draftEntries, () => {
 }, { deep: true, immediate: true, flush: 'post' });
 
 watch(selectedWorldbookName, name => {
+  expandedBrowseCardUids.value.clear();
   mobileMultiSelectMode.value = false;
   clearMobileLongPressState();
   mobileSuppressNextTap.value = false;
@@ -6139,7 +6175,30 @@ function toggleBrowseCard(uid: number): void {
 function switchToEditorForEntry(uid: number): void {
   panelMode.value = 'editor';
   updatePersistedState(s => { s.panel_mode = 'editor'; });
-  selectEntry(uid);
+  if (isMobile.value) {
+    mobileMultiSelectMode.value = false;
+    selectedEntryUid.value = uid;
+    selectedEntryUids.value = [uid];
+    selectedEntryAnchorUid.value = uid;
+    mobileTab.value = 'edit';
+  } else {
+    selectEntry(uid);
+  }
+}
+
+function removeBrowseEntry(uid: number): void {
+  const entry = draftEntries.value.find(item => item.uid === uid);
+  if (!entry || !confirm(`确定删除条目 "${entry.name}" ?`)) return;
+  pushEntrySnapshotsBulk([{ label: '删除前快照', uid: entry.uid, name: entry.name, entry }]);
+  draftEntries.value = draftEntries.value.filter(item => item.uid !== uid);
+  selectedEntryUids.value = selectedEntryUids.value.filter(selectedUid => selectedUid !== uid);
+  if (selectedEntryUid.value === uid) {
+    selectedEntryUid.value = null;
+    selectedEntryAnchorUid.value = null;
+    if (!isMobile.value) ensureSelectedEntryExists();
+  }
+  expandedBrowseCardUids.value.delete(uid);
+  setStatus('已删除条目');
 }
 
 function switchPanelMode(mode: 'browse' | 'editor' | string): void {
@@ -20099,4 +20158,163 @@ watch(hasUnsavedChanges, (val) => {
   font-size: 10.5px;
   color: var(--wb-text-dim, var(--wb-text-muted));
 }
+/* Mobile reading and writing workspace */
+.wb-assistant-root.is-mobile { padding: 0; gap: 0; }
+.is-mobile .mobile-pane { padding: 18px 16px 32px; }
+.mobile-page-heading, .mobile-editor-heading {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+  width: 100%; margin-bottom: 14px;
+}
+.mobile-page-heading h2, .mobile-editor-heading h2 {
+  margin: 4px 0 0; color: var(--wb-text-main); font-size: 23px; line-height: 1.2; letter-spacing: -.03em;
+}
+.mobile-kicker { color: var(--wb-primary); font-size: 10px; font-weight: 700; letter-spacing: .13em; }
+.mobile-heading-actions { display: flex; align-items: center; gap: 10px; }
+.mobile-save-state { color: var(--wb-text-muted); font-size: 11px; white-space: nowrap; }
+.is-mobile .mobile-library-toolbar, .is-mobile .mobile-browse-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px;
+  border: 0; border-radius: 0; background: var(--wb-bg-panel); box-shadow: none;
+}
+.is-mobile .mobile-library-toolbar { margin: -18px -16px 0; }
+.mobile-library-toolbar .toolbar-label { width: 100%; max-width: none; }
+.mobile-library-toolbar .toolbar-label > span { color: var(--wb-text-muted); font-size: 12px; font-weight: 600; }
+.is-mobile .mobile-library-toolbar .toolbar-btns { gap: 8px !important; padding: 2px 0 4px; }
+.is-mobile .mobile-library-toolbar .toolbar-btns :deep(.wb-control-button) {
+  min-height: 38px; padding: 8px 12px; border-radius: 10px; font-size: 12px;
+}
+.mobile-list-heading { display: flex; align-items: end; justify-content: space-between; gap: 8px; margin: 22px 0 12px; }
+.mobile-list-heading > div { display: flex; align-items: baseline; gap: 8px; }
+.mobile-list-heading strong { color: var(--wb-text-main); font-size: 17px; }
+.mobile-list-heading span, .mobile-list-heading small { color: var(--wb-text-muted); font-size: 11px; }
+.mobile-list-search { display: block; width: 100%; margin-bottom: 12px; }
+.is-mobile .mobile-list-search :deep(input), .is-mobile .mobile-browse-toolbar .browse-search :deep(input) {
+  min-height: 44px; padding-inline: 14px; border-radius: 11px; font-size: 16px;
+}
+.is-mobile .mobile-entry-list { gap: 9px; }
+.is-mobile .mobile-entry-list .entry-item {
+  padding: 15px !important; margin: 0 !important; border-radius: 14px !important;
+  background: var(--wb-bg-card); box-shadow: 0 3px 12px rgba(20, 30, 25, .04);
+}
+.is-mobile .mobile-entry-list .entry-item.selected, .is-mobile .mobile-entry-list .entry-item.primary {
+  border-color: var(--wb-primary) !important; background: color-mix(in srgb, var(--wb-primary) 6%, var(--wb-bg-card));
+}
+.is-mobile .mobile-entry-list .entry-item-title { font-size: 15px; font-weight: 650; }
+.is-mobile .mobile-entry-list .entry-item-keys { margin-top: 7px; color: var(--wb-text-muted); font-size: 12px; line-height: 1.5; }
+.is-mobile .mobile-entry-details { justify-content: flex-start; gap: 6px; margin-top: 10px; opacity: 1; }
+.is-mobile .mobile-entry-details span { padding: 4px 8px !important; border-radius: 6px !important; font-size: 11px !important; }
+.is-mobile .mobile-browse-toolbar .worldbook-picker { flex: 1 1 calc(100% - 55px); max-width: none; min-width: 0; }
+.is-mobile .mobile-browse-toolbar .browse-search { flex: 1 1 100%; order: 3; max-width: none; }
+.is-mobile .mobile-browse-scroll { padding: 8px 16px 24px; }
+.is-mobile .mobile-browse-bindings { display: flex; align-items: center; gap: 6px; padding: 8px 0 14px; }
+.is-mobile .browse-entry-count { margin-left: auto; color: var(--wb-text-muted); font-size: 12px; }
+.is-mobile .mobile-browse-grid { gap: 10px; }
+.is-mobile .mobile-browse-grid .browse-card { padding: 16px; border-radius: 14px; background: var(--wb-bg-card); box-shadow: 0 3px 12px rgba(20,30,25,.04); }
+.is-mobile .mobile-browse-grid .browse-card-header { min-height: 32px; gap: 9px; }
+.is-mobile .mobile-browse-grid .browse-card-title { font-size: 15px; line-height: 1.4; }
+.is-mobile .mobile-browse-grid .browse-card-preview { margin-top: 10px; font-size: 13px; line-height: 1.65; }
+.is-mobile .mobile-browse-grid .browse-card-keys { margin-top: 9px; font-size: 12px; }
+.is-mobile .mobile-browse-grid .browse-card-meta { margin-top: 12px; }
+.is-mobile .mobile-browse-grid .browse-card-expanded { padding-top: 14px; }
+.is-mobile .mobile-browse-grid .browse-card-expanded .field { margin-bottom: 12px; }
+.is-mobile .mobile-browse-grid .browse-card-expanded :deep(input),
+.is-mobile .mobile-browse-grid .browse-card-expanded :deep(textarea) { font-size: 16px; }
+.mobile-editor-heading { margin-bottom: 18px; }
+.mobile-editor-heading button { display: inline-flex; align-items: center; gap: 5px; min-height: 40px; padding: 0 11px; border: 1px solid var(--wb-border-subtle); border-radius: 10px; background: var(--wb-bg-card); color: var(--wb-text-main); font-size: 12px; }
+.is-mobile .mobile-pane .editor-head { padding: 16px; border: 1px solid var(--wb-border-subtle); border-radius: 14px; background: var(--wb-bg-card); }
+.is-mobile .mobile-pane .editor-head .editor-comment > span:first-child,
+.is-mobile .mobile-pane .editor-keyword-grid .field > span:first-child,
+.is-mobile .mobile-pane .editor-content-title { color: var(--wb-text-muted); font-size: 12px; font-weight: 650; letter-spacing: .03em; }
+.is-mobile .mobile-pane .editor-head .editor-comment :deep(input) { font-size: 20px; }
+.is-mobile .mobile-pane .editor-keyword-grid { gap: 12px; margin: 16px 0; }
+.is-mobile .mobile-pane .editor-keyword-grid .field { padding: 14px; border: 1px solid var(--wb-border-subtle); border-radius: 14px; background: var(--wb-bg-card); }
+.is-mobile .mobile-pane .editor-keyword-grid :deep(textarea) { font-size: 16px; line-height: 1.5; }
+.is-mobile .mobile-pane .editor-content-block { padding: 14px; border: 1px solid var(--wb-border-subtle); border-radius: 14px; background: var(--wb-bg-card); }
+.is-mobile .mobile-pane .editor-content-area { min-height: 300px !important; padding: 14px; font-size: 16px; line-height: 1.7; }
+.mobile-editor-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 20px; text-align: center; color: var(--wb-text-muted); }
+.mobile-editor-empty strong { color: var(--wb-text-main); font-size: 18px; }
+.is-mobile .mobile-tab-bar { height: calc(64px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px env(safe-area-inset-bottom, 0px); gap: 3px; }
+.is-mobile .mobile-tab-bar :deep(.wb-control-button) { flex: 1 0 48px; min-height: 52px; padding: 5px 4px; border-radius: 10px; font-size: 11px; }
+.is-mobile .mobile-tab-bar :deep(.wb-control-button.active) { color: var(--wb-primary); background: var(--wb-primary-soft); }
+.is-mobile .mobile-tab-bar .tab-icon { display: flex; align-items: center; justify-content: center; }
+.is-mobile .mobile-tab-bar .tab-label { font-size: 11px; }
+
+
+.is-mobile .mobile-pane .editor-head .editor-comment > span:first-child { display: block; }
+/* Give the desktop writing canvas the same readable hierarchy. */
+.wb-assistant-root:not(.is-mobile) .editor-center { padding: 24px 28px; gap: 18px; }
+.wb-assistant-root:not(.is-mobile) .editor-head .editor-comment :deep(.wb-control-input) { font-size: 24px; }
+.wb-assistant-root:not(.is-mobile) .editor-badge { padding: 4px 8px; font-size: 10px; }
+.wb-assistant-root:not(.is-mobile) .editor-keyword-grid .field > span,
+.wb-assistant-root:not(.is-mobile) .editor-content-title { font-size: 11px; }
+.wb-assistant-root:not(.is-mobile) .editor-keyword-grid .text-area.compact { min-height: 42px; height: auto; font-size: 13px; }
+.wb-assistant-root:not(.is-mobile) .editor-content-area { font-size: 15px; }
+/* Text-first mobile archive, using the selected theme outside the default paper palette. */
+.wb-assistant-root.is-archive-mobile {
+  --wb-bg-root: #f8f5ee !important;
+  --wb-bg-panel: #faf7f0 !important;
+  --wb-bg-card: #faf7f0 !important;
+  --wb-bg-soft: #f0ece4 !important;
+  --wb-input-bg: #faf8f2 !important;
+  --wb-text-main: #172c46 !important;
+  --wb-text-muted: #687282 !important;
+  --wb-primary: #b9503f !important;
+  --wb-primary-light: #a94637 !important;
+  --wb-primary-soft: #f5e8de !important;
+  --wb-border-subtle: #e6e0d7 !important;
+  --wb-border-main: #d9d3ca !important;
+}
+.is-mobile .mobile-browse-view, .is-mobile .mobile-tab-view { background: var(--wb-bg-panel); }
+.is-mobile .mobile-browse-toolbar { padding: 18px 20px 12px; background: transparent; }
+.is-mobile .mobile-browse-toolbar .mobile-page-heading { margin-bottom: 2px; align-items: center; }
+.is-mobile .mobile-browse-toolbar h2 { margin: 0 0 6px; font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 28px; letter-spacing: .02em; }
+.is-mobile .mobile-browse-toolbar .worldbook-picker { flex-basis: 100%; }
+.is-mobile .mobile-browse-toolbar .browse-search { order: initial; }
+.is-mobile .mobile-browse-scroll { padding: 0 20px 20px; }
+.is-mobile .mobile-browse-bindings { padding: 8px 0; border-bottom: 1px solid var(--wb-border-subtle); }
+.is-mobile .mobile-browse-grid { gap: 0; }
+.is-mobile .mobile-browse-grid .browse-card:not(.expanded) {
+  padding: 16px 2px; border: 0; border-bottom: 1px solid var(--wb-border-subtle); border-radius: 0; background: transparent; box-shadow: none; opacity: 1;
+}
+.is-mobile .mobile-browse-grid .browse-card.disabled:not(.expanded) .browse-card-title { opacity: .6; }
+.is-mobile .mobile-browse-grid .browse-card-title { font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 18px; font-weight: 700; }
+.is-mobile .mobile-browse-grid .browse-card-preview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; color: var(--wb-text-main); font-size: 13px; line-height: 1.65; }
+.is-mobile .mobile-browse-grid .browse-key-chip, .mobile-reading-keys .browse-key-chip { padding: 4px 9px; border: 0; border-radius: 999px; background: var(--wb-bg-soft); color: var(--wb-text-main); font-size: 11px; }
+.is-mobile .mobile-browse-grid .browse-meta-pill { background: transparent; padding: 0; color: var(--wb-text-muted); font-size: 11px; }
+.is-mobile .mobile-browse-grid .browse-card.expanded { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; opacity: 1; }
+.is-mobile .mobile-browse-grid .browse-card.expanded .browse-card-expanded { padding: 0; border: 0; }
+.mobile-reading-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; }
+.mobile-reading-actions { display: flex; align-items: center; gap: 12px; }
+.mobile-reading-back { min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--wb-text-main); font-size: 15px; }
+.mobile-reading-title { margin: 16px 0; color: var(--wb-text-main); font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 27px; line-height: 1.3; overflow-wrap: anywhere; }
+.mobile-reading-keys { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+.mobile-reading-meta { display: grid; gap: 9px; margin: 0; padding: 0 0 22px; border-bottom: 1px solid var(--wb-border-main); }
+.mobile-reading-meta div { display: flex; gap: 24px; font-size: 13px; }
+.mobile-reading-meta dt { flex: 0 0 36px; color: var(--wb-text-main); font-weight: 700; }
+.mobile-reading-meta dd { margin: 0; color: var(--wb-text-muted); }
+.mobile-reading-content { min-height: 160px; padding: 26px 2px; color: var(--wb-text-main); font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 16px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; }
+.is-mobile .mobile-reading-edit { width: 100%; min-height: 48px; margin-bottom: 12px; border-radius: 10px; font-size: 15px; }
+.mobile-inline-editor { margin: 0 0 12px; padding: 0 14px 14px; border: 1px solid var(--wb-border-subtle); border-radius: 10px; }
+.mobile-inline-editor summary { padding: 14px 0; color: var(--wb-text-main); font-size: 14px; font-weight: 600; cursor: pointer; }
+.is-mobile .mobile-editor-heading { align-items: center; margin-bottom: 8px; }
+.is-mobile .mobile-editor-heading h2 { margin: 0; font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 19px; }
+.is-mobile .mobile-editor-heading > button:first-child { padding: 0; border: 0; background: transparent; font-size: 14px; }
+.is-mobile .mobile-editor-heading :deep(.wb-control-button--primary) { min-height: 44px; padding: 0 18px; border-radius: 10px; }
+.mobile-editor-save-state { padding: 10px 12px; border-radius: 9px; background: var(--wb-primary-soft); color: var(--wb-primary-light); font-size: 12px; }
+.mobile-editor-enabled { display: flex; align-items: center; justify-content: space-between; min-height: 48px; margin-top: 8px; color: var(--wb-text-main); font-size: 14px; font-weight: 600; }
+.is-mobile .mobile-pane .editor-head { display: block; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.is-mobile .mobile-pane .editor-head .editor-comment > span:first-child { margin-bottom: 7px; color: var(--wb-text-main); font-family: inherit; font-size: 14px; }
+.is-mobile .mobile-pane .editor-head .editor-comment :deep(input) { min-height: 44px; padding: 9px 12px; border: 1px solid var(--wb-border-main); border-radius: 9px; background: var(--wb-input-bg); font-size: 16px; font-weight: 400; letter-spacing: 0; }
+.is-mobile .mobile-pane .editor-badges { margin-top: 8px; }
+.is-mobile .mobile-pane .editor-keyword-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0; }
+.is-mobile .mobile-pane .editor-keyword-grid .field { padding: 0; border: 0; background: transparent; }
+.is-mobile .mobile-pane .editor-keyword-grid .field > span:first-child, .is-mobile .mobile-pane .editor-content-title { color: var(--wb-text-main); font-family: inherit; font-size: 14px; font-weight: 700; }
+.is-mobile .mobile-pane .editor-keyword-grid :deep(textarea) { min-height: 48px; height: auto; padding: 10px 12px; border: 1px solid var(--wb-border-main); border-radius: 9px; background: var(--wb-input-bg); }
+.is-mobile .mobile-pane .editor-content-block { padding: 0; border: 0; background: transparent; }
+.is-mobile .mobile-pane .editor-content-area { min-height: 300px !important; border: 1px solid var(--wb-border-main); border-radius: 9px; background: var(--wb-input-bg); font-family: 'Songti SC', 'Noto Serif CJK SC', serif; }
+.mobile-editor-config { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; margin-top: 16px; padding: 12px; border: 1px solid var(--wb-border-main); border-radius: 10px; background: transparent; color: var(--wb-text-main); text-align: left; }
+.mobile-editor-config > span:nth-child(2) { display: grid; flex: 1; gap: 4px; }
+.mobile-editor-config small { color: var(--wb-text-muted); font-size: 11px; }
+.is-mobile .mobile-tab-bar { border-color: var(--wb-border-subtle); background: var(--wb-bg-panel); }
+.is-mobile .mobile-tab-bar :deep(.wb-control-button.active) { background: transparent; color: var(--wb-primary); }
+
 </style>
