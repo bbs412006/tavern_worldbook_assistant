@@ -61,6 +61,15 @@ const icons: Record<string, string[]> = {
   lock: ['M5 10h14v11H5z', 'M8 10V7a4 4 0 0 1 8 0v3'],
   sliders: ['M4 7h10', 'M18 7h2', 'M4 17h2', 'M10 17h10', 'M14 4v6', 'M8 14v6'],
   activity: ['M3 12h4l2-6 4 12 2-6h6'],
+  'chevron-left': ['m15 18-6-6 6-6'],
+  'chevron-right': ['m9 18 6-6-6-6'],
+  'chevron-down': ['m6 9 6 6 6-6'],
+  more: ['M5 12h.01', 'M12 12h.01', 'M19 12h.01'],
+  sort: ['M3 6h18', 'M7 12h10', 'M10 18h4'],
+  expand: ['M15 3h6v6', 'M9 21H3v-6', 'M21 3l-7 7', 'M3 21l7-7'],
+  collapse: ['M4 14h6v6', 'M20 10h-6V4', 'M14 10l7-7', 'M3 21l7-7'],
+  chat: ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+  layers: ['m12 2 9 4.5-9 4.5L3 6.5 12 2Z', 'm3 12 9 4.5 9-4.5', 'm3 17.5 9 4.5 9-4.5'],
 };
 
 const paths = computed(() => icons[props.name] ?? icons.workbench);

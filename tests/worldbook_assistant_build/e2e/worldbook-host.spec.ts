@@ -15,11 +15,13 @@ async function openUtilityPage(
   label: '⚙️ 设置' | '🔧 AI配置',
   heading: '⚙️ 设置中心' | '🔧 AI 配置世界书',
 ): Promise<void> {
-  const actions = page.locator('.mobile-library-actions');
-  if (await actions.isVisible() && !(await actions.evaluate(element => (element as HTMLDetailsElement).open))) {
-    await actions.locator('summary').click();
+  const nav = page.locator('.mobile-tab-bar');
+  if (label === '⚙️ 设置') {
+    await nav.getByRole('button', { name: '设置', exact: true }).click();
+  } else {
+    await nav.getByRole('button', { name: '工具', exact: true }).click();
+    await page.getByRole('button', { name: /AI配置/ }).first().click();
   }
-  await page.getByRole('button', { name: label, exact: true }).first().click();
   await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
 }
 
@@ -113,7 +115,7 @@ test('keeps the mobile workspace inside the viewport in landscape', async ({ bro
   await context.close();
 });
 
-test('searches entries and opens a browse card in the full mobile editor', async ({ page }) => {
+test('searches entries, expands inline reader, and opens the full-screen segmented mobile editor', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openAssistant(page);
 
@@ -123,17 +125,17 @@ test('searches entries and opens a browse card in the full mobile editor', async
   await expect(entries).toHaveCount(1);
   await expect(entries.first()).toContainText('大型世界书条目 42');
 
-  await page.getByRole('button', { name: '浏览', exact: true }).click();
-  const card = page.locator('.mobile-browse-grid .browse-card');
-  await expect(card).toHaveCount(1);
-  await expect(card).toContainText('大型世界书条目 42');
-  await card.locator('.browse-card-header').click();
-  await expect(card.locator('.mobile-reading-content')).toContainText('这是第 42 个条目的正文内容');
-  await page.getByRole('button', { name: '编辑条目', exact: true }).click();
+  await entries.first().getByRole('button', { name: /阅读/ }).click();
+  await expect(entries.first().locator('.m-inline-reader .mobile-reading-content')).toContainText('这是第 42 个条目的正文内容');
+  await entries.first().locator('.m-inline-reader').getByRole('button', { name: '编辑条目' }).click();
 
-  const editor = page.locator('.mobile-pane:visible');
+  const editor = page.locator('.m-detail-pane:visible');
   await expect(editor.locator('.editor-comment input')).toHaveValue('大型世界书条目 42');
   await expect(editor.locator('textarea.editor-content-area')).toHaveValue(/这是第 42 个条目的正文内容/);
+  await editor.getByRole('tab', { name: '配置', exact: true }).click();
+  await expect(editor.getByText('触发策略', { exact: true })).toBeVisible();
+  await editor.getByRole('tab', { name: '阅读', exact: true }).click();
+  await expect(editor.locator('.m-reader-surface .mobile-reading-content')).toContainText('这是第 42 个条目的正文内容');
   expect(await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? [])).toEqual([]);
 });
 
@@ -188,24 +190,27 @@ test('edits mobile keyword chips and saves an unconfirmed draft', async ({ page 
   expect(await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? [])).toEqual([]);
 });
 
-test('saves mobile browse changes to the selected worldbook', async ({ page }) => {
+test('saves mobile detail changes to the selected worldbook and navigates Global and Tools tabs', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openAssistant(page);
   await page.getByRole('textbox', { name: '搜索世界书条目' }).fill('关键词42');
-  await page.getByRole('button', { name: '浏览', exact: true }).click();
+  await expect(page.locator('.mobile-entry-list .entry-item-title').first()).toContainText('大型世界书条目 42');
+  await page.locator('.mobile-entry-list .entry-item').first().locator('.mobile-archive-entry-main').click();
 
-  const card = page.locator('.mobile-browse-grid .browse-card');
-  await expect(card).toHaveCount(1);
-  await card.locator('.browse-card-header').click();
-  await card.locator('.mobile-inline-editor summary').click();
-  const content = card.locator('textarea.browse-content-input');
-  await content.fill('移动端修改后的世界书内容');
-  await card.getByRole('button', { name: '保存', exact: true }).click();
+  const editor = page.locator('.m-detail-pane:visible');
+  await editor.locator('textarea.editor-content-area').fill('移动端修改后的世界书内容');
+  await editor.locator('.mobile-editor-heading').getByRole('button', { name: '保存', exact: true }).click();
 
   await expect.poll(() => page.evaluate(async () => {
     const entries = await (globalThis as any).getWorldbook('大型世界书 A');
     return entries.find((entry: { uid: number }) => entry.uid === 42)?.content;
   })).toBe('移动端修改后的世界书内容');
+
+  await editor.getByRole('button', { name: '返回' }).click();
+  await page.locator('.mobile-tab-bar').getByRole('button', { name: '全局', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '全局与绑定', exact: true })).toBeVisible();
+  await page.locator('.mobile-tab-bar').getByRole('button', { name: '工具', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '工作台工具', exact: true })).toBeVisible();
   expect(await page.evaluate(() => (globalThis as unknown as Record<string, unknown[]>).__WB_E2E_ERRORS__ ?? [])).toEqual([]);
 });
 
@@ -364,15 +369,13 @@ test('persists typography settings and applies them to reading and editing', asy
   await expect(editor).toHaveCSS('color', 'rgb(51, 102, 153)');
   await expect(editor).toHaveCSS('line-height', '36px');
   await expect(editor).toHaveCSS('font-family', /monospace/);
-  await page.getByRole('button', { name: '浏览', exact: true }).click();
-  await page.locator('.mobile-browse-grid .browse-card-header').first().click();
-  const reading = page.locator('.mobile-reading-content');
+  await page.getByRole('tab', { name: '阅读', exact: true }).click();
+  const reading = page.locator('.m-reader-surface .mobile-reading-content');
   await expect(reading).toHaveCSS('font-size', '20px');
   await expect(reading).toHaveCSS('color', 'rgb(51, 102, 153)');
 
   await openAssistant(page);
   await expect(page.locator('.wb-assistant-root')).toHaveClass(/wb-custom-font-size/);
-  await page.getByRole('button', { name: '列表', exact: true }).click();
   await openUtilityPage(page, '⚙️ 设置', '⚙️ 设置中心');
   await expect(page.locator('.typography-preview p')).toHaveCSS('font-size', '20px');
   await page.getByRole('button', { name: '恢复默认', exact: true }).click();
@@ -380,8 +383,8 @@ test('persists typography settings and applies them to reading and editing', asy
     scope: 'entries', family: 'default', size: null, weight: null, color: null, line_height: null,
   });
   await expect(page.locator('.wb-assistant-root')).not.toHaveClass(/wb-custom-font-size|wb-custom-font-color/);
-  await expect(hostTitle).toHaveCSS('color', 'rgb(23, 44, 70)');
-  await expect(hostTitle).toHaveCSS('font-size', '12px');
+  await expect(hostTitle).toHaveCSS('color', 'rgb(23, 32, 27)');
+  await expect(hostTitle).toHaveCSS('font-size', '15px');
 });
 
 test('applies entry typography to the desktop editor', async ({ page }) => {
@@ -428,15 +431,18 @@ test('keeps the mobile header aligned with the selected theme', async ({ page })
   await openAssistant(page);
   const header = page.locator('#wb-assistant-panel .wb-assistant-header');
   const title = page.locator('#wb-assistant-panel .wb-assistant-title-copy strong');
-  await expect(header).toHaveCSS('background-color', 'rgb(250, 247, 240)');
-  await expect(title).toHaveCSS('color', 'rgb(23, 44, 70)');
+  await expect(header).toHaveCSS('background-color', 'rgb(255, 253, 248)');
+  await expect(title).toHaveCSS('color', 'rgb(23, 32, 27)');
   await page.locator('#wb-assistant-panel .wb-assistant-theme').click();
   await page.getByRole('button', { name: '雾松夜', exact: true }).click();
   await expect(header).toHaveCSS('background-color', 'rgb(20, 28, 24)');
   await expect(title).toHaveCSS('color', 'rgb(233, 239, 234)');
   await page.locator('#wb-assistant-panel .wb-assistant-theme').click();
+  await page.getByRole('button', { name: '深海', exact: true }).click();
+  await expect(page.locator('#wb-assistant-panel')).toHaveAttribute('data-wb-theme', 'ocean');
+  await page.locator('#wb-assistant-panel .wb-assistant-theme').click();
   await page.getByRole('button', { name: '雾松纸', exact: true }).click();
-  await expect(header).toHaveCSS('background-color', 'rgb(250, 247, 240)');
+  await expect(header).toHaveCSS('background-color', 'rgb(255, 253, 248)');
 });
 
 test('switches between the pine light and night themes', async ({ page }) => {

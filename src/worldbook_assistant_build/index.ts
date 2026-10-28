@@ -456,20 +456,22 @@ function ensurePanelStyle(): void {
   color: var(--wb-host-accent, #5ad9b4);
 }
 
-@media (orientation: portrait), (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
+@media (max-width: 760px), (orientation: portrait), (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
   #${PANEL_ID} {
     inset: 0 !important;
-    margin: auto !important;
+    margin: 0 !important;
     transform: none !important;
-    width: calc(100vw - 16px) !important;
-    height: calc(100lvh - 24px) !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
     min-width: unset;
     min-height: 0;
-    max-width: 520px;
-    max-height: calc(100lvh - 24px);
-    border-radius: 12px;
-    border: 1px solid var(--wb-host-border, #334155);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.48);
+    max-width: 100vw;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
     resize: none;
     /* Mobile: use display:none to avoid blocking FAB behind the invisible panel */
     display: none;
@@ -485,21 +487,78 @@ function ensurePanelStyle(): void {
   }
 
   #${PANEL_ID} .wb-assistant-header {
-    height: 44px;
-    min-height: 44px;
-    padding: 0 12px;
-    background: var(--wb-host-header-bg, #faf7f0);
-    border-bottom: 1px solid var(--wb-host-border, #e6e0d7);
+    height: auto;
+    min-height: 46px;
+    padding: env(safe-area-inset-top, 0px) 8px 0 14px;
+    background: var(--wb-host-header-bg, #fffdf8);
+    border-bottom: 1px solid var(--wb-host-tool-border, var(--wb-host-border, #e6e0d3));
     cursor: default;
   }
-  #${PANEL_ID} .wb-assistant-title-copy strong,
-  #${PANEL_ID} .wb-assistant-header-title,
+
+  #${PANEL_ID} .wb-assistant-header-title {
+    gap: 8px;
+    color: var(--wb-host-text, #17201b);
+  }
+
+  #${PANEL_ID} .wb-assistant-brand-mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    font-size: 9px;
+  }
+
+  #${PANEL_ID} .wb-assistant-title-copy small {
+    display: none;
+  }
+
+  #${PANEL_ID} .wb-assistant-title-copy strong {
+    color: var(--wb-host-text, #17201b);
+    font-size: clamp(14px, var(--wb-host-font-size, 15px), 22px);
+    font-weight: var(--wb-host-font-weight, 650);
+    letter-spacing: -0.01em;
+  }
+
+  #${PANEL_ID} .wb-assistant-header-actions {
+    gap: 2px;
+  }
+
   #${PANEL_ID} .wb-assistant-tool,
-  #${PANEL_ID} .wb-assistant-close { color: var(--wb-host-text, #172c46); }
-  #${PANEL_ID} .wb-assistant-brand-mark,
-  #${PANEL_ID} .wb-assistant-title-copy small { display: none; }
-  #${PANEL_ID} .wb-assistant-tool,
-  #${PANEL_ID} .wb-assistant-close { width: 40px; height: 40px; border: 0; background: transparent; }
+  #${PANEL_ID} .wb-assistant-close {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--wb-host-text, #17201b);
+  }
+
+  #${PANEL_ID} .wb-assistant-tool svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  #${PANEL_ID} .wb-assistant-save.glow-pulse {
+    background: var(--wb-host-accent-soft, rgba(34, 103, 79, 0.12));
+    color: var(--wb-host-accent, #22674f);
+  }
+
+  #${PANEL_ID} .wb-theme-dropdown {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(104px, 1fr));
+    gap: 4px;
+    right: 4px;
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 14px;
+    min-width: 224px;
+  }
+
+  #${PANEL_ID} .wb-theme-dropdown button {
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 500;
+  }
 
   #${PANEL_BODY_ID} {
     flex: 1;
@@ -513,10 +572,6 @@ function ensurePanelStyle(): void {
     display: flex;
     flex-direction: column;
   }
-}
-
-@media (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
-  #${PANEL_ID} { max-width: calc(100vw - 16px); }
 }
 
 #${FAB_ID} {
@@ -766,6 +821,9 @@ function toggleThemeDropdown(panel: HTMLDivElement): void {
     btn.type = 'button';
     btn.textContent = item.label;
     btn.dataset.themeKey = item.key;
+    if (panel.dataset.wbTheme === item.key) {
+      btn.classList.add('active');
+    }
     btn.addEventListener('click', event => {
       event.stopPropagation();
       window.dispatchEvent(new CustomEvent('wb-helper:set-theme', { detail: item.key }));
@@ -836,8 +894,14 @@ function enablePanelDrag(panel: HTMLDivElement): void {
   };
 
   handle.addEventListener('pointerdown', event => {
-    // Disable drag on mobile portrait mode
-    if (window.matchMedia('(orientation: portrait)').matches) return;
+    // Disable drag on mobile viewports
+    if (
+      hostWin.innerWidth <= 760
+      || hostWin.matchMedia('(orientation: portrait)').matches
+      || (hostWin.innerWidth <= 1000 && hostWin.innerHeight <= 600)
+    ) {
+      return;
+    }
     if (event.button !== 0) {
       return;
     }

@@ -1019,7 +1019,7 @@ describe('App utility navigation', () => {
       expect(workspaceRule).toMatch(/width:\s*100%;/);
 
       const activeTab = wrapper.get('.mobile-tab-bar button.active');
-      expect(activeTab.text()).toContain('标签');
+      expect(activeTab.text()).toContain('工具');
       expect(wrapper.get('.mobile-tab-view').isVisible()).toBe(true);
     };
 
@@ -1033,6 +1033,44 @@ describe('App utility navigation', () => {
     await returnToMain(wrapper);
     expect(wrapper.get('[data-main-workspace]').element).toBe(originalWorkspace);
     assertMobileLayoutState();
+
+    wrapper.unmount();
+  });
+
+  it('unifies mobile browse/editor into 4 native bottom tabs, inline reader, and 3-way segmented entry detail', async () => {
+    Object.defineProperty(window.screen, 'width', { configurable: true, value: 390 });
+    Object.defineProperty(window.screen, 'height', { configurable: true, value: 844 });
+    const globals = globalThis as Record<string, any>;
+    globals.getWorldbookNames = vi.fn(() => ['移动端世界书']);
+    globals.getWorldbook = vi.fn(async () => [
+      normalizeEntry({ uid: 1, name: '设定条目 A', content: '第一条详细设定正文' }, 1),
+      normalizeEntry({ uid: 2, name: '设定条目 B', content: '第二条详细设定正文' }, 2),
+    ]);
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      panelMode: string;
+      mobileTab: string;
+      mobileDetailSegment: string;
+      reloadWorldbookNames(preferred?: string): Promise<boolean>;
+    };
+    vm.panelMode = 'browse';
+    await vm.reloadWorldbookNames('移动端世界书');
+    await nextTick();
+
+    const navButtons = wrapper.findAll('.mobile-tab-bar button');
+    expect(navButtons.map(btn => btn.text())).toEqual(['条目', '全局', '工具', '设置']);
+    expect(wrapper.findAll('.mobile-entry-list .entry-item')).toHaveLength(2);
+
+    await wrapper.get('.m-inline-read-btn').trigger('click');
+    expect(wrapper.get('.m-inline-reader .mobile-reading-content').text()).toContain('第一条详细设定正文');
+
+    await wrapper.get('.m-inline-reader').findAll('button')[1].trigger('click');
+    expect(vm.mobileTab).toBe('edit');
+    expect(vm.mobileDetailSegment).toBe('config');
+
+    const segmentTabs = wrapper.findAll('.m-segmented [role="tab"]');
+    expect(segmentTabs.map(tab => tab.text())).toEqual(['内容', '配置', '阅读']);
 
     wrapper.unmount();
   });

@@ -294,9 +294,7 @@ const themeSelectOptions = computed<BaseSelectOption[]>(() =>
   props.themeOptions.map(item => ({ value: item.key, label: item.label })),
 );
 const typographyPreferences = computed(() => normalizeTypography(props.persistedState.typography));
-const typographyThemeColor = computed(() => props.isMobile && props.currentTheme === 'pine'
-  ? '#172c46'
-  : THEMES[props.currentTheme]?.colors['--wb-text-main'] ?? '#17201b');
+const typographyThemeColor = computed(() => THEMES[props.currentTheme]?.colors['--wb-text-main'] ?? '#17201b');
 function updateTypography(patch: Partial<TypographyPreferences>): void {
   emit('update-persisted-state', state => {
     state.typography = normalizeTypography({ ...state.typography, ...patch });
@@ -354,7 +352,7 @@ function updateNumberApiField(field: string, fallback: number, event: Event): vo
   flex-direction: column;
   overflow: hidden;
   color: var(--wb-text-main, #e2e8f0);
-  background: var(--wb-bg, #0f172a);
+  background: var(--wb-bg-root, var(--wb-bg, #0f172a));
 }
 
 .utility-page-header {
@@ -365,7 +363,7 @@ function updateNumberApiField(field: string, fallback: number, event: Event): vo
   flex: 0 0 auto;
   padding: 12px 16px;
   border-bottom: 1px solid var(--wb-border-subtle, #334155);
-  background: var(--wb-panel-bg, #111827);
+  background: var(--wb-bg-panel, var(--wb-panel-bg, #111827));
 }
 
 .utility-page-back { justify-self: start; }
@@ -671,6 +669,119 @@ function updateNumberApiField(field: string, fallback: number, event: Event): vo
   .settings-page-nav-sep,
   .settings-page-nav p {
     display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .utility-page-body {
+    padding: 12px 14px calc(26px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .settings-page-shell {
+    gap: 12px;
+  }
+
+  .settings-page-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: var(--wb-bg-card, var(--wb-bg-panel));
+    scrollbar-width: none;
+  }
+
+  .settings-page-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .settings-page-nav a,
+  .settings-page-nav button {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: var(--wb-bg-soft);
+    color: var(--wb-text-main);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .settings-page-nav a.on {
+    background: var(--wb-primary);
+    color: var(--wb-on-primary, #fff);
+  }
+
+  .settings-page-nav a span {
+    display: none;
+  }
+
+  .settings-page-shell .settings-card {
+    padding: 14px;
+    border-radius: 16px;
+    background: var(--wb-bg-card, var(--wb-bg-panel));
+  }
+
+  .settings-page-shell .settings-card-head {
+    margin-bottom: 10px;
+  }
+
+  .settings-page-shell .settings-card-head b {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .settings-page-shell .settings-card-head span {
+    font-size: 11.5px;
+  }
+
+  .settings-page-shell .setting-line {
+    min-height: 46px;
+    padding: 8px 0;
+    gap: 12px;
+  }
+
+  .settings-page-shell .setting-line .copy b {
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  .settings-page-shell .setting-line .copy span {
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
+
+  .settings-page-shell .settings-choice-list .settings-field > span,
+  .settings-page-shell .settings-card > label.field.settings-field > span {
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .settings-page-shell .theme-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .settings-page-shell .theme-card {
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .settings-page-shell .theme-card b {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .settings-page-shell .version-box {
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .api-number-fields {
+    flex-direction: column;
   }
 }
 </style>

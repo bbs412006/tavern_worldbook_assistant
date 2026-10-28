@@ -247,11 +247,25 @@ function emitBack(): void {
   .utility-page-header { grid-template-columns: auto 1fr; padding: 10px 12px; }
   .utility-page-title { justify-self: end; font-size: 14px; }
   .utility-page-back-placeholder { min-width: 72px; }
-  .utility-page-body { padding: 12px; }
+  .utility-page-body { padding: 12px 14px calc(24px + env(safe-area-inset-bottom, 0px)); }
   .utility-actions .wb-control-button { min-height: 40px; }
   .preview-actions { justify-content: stretch; }
   .preview-actions .wb-control-button { flex: 1 1 auto; }
   .apply-action { flex-basis: 100% !important; margin-left: 0; }
+}
+
+@media (max-width: 760px) {
+  .ai-config-input-stage,
+  .preview-stage {
+    padding: 14px;
+    border: 1px solid var(--wb-border-subtle, #334155);
+    border-radius: 16px;
+    background: var(--wb-bg-card, var(--wb-bg-panel));
+  }
+  .preview-table-wrap {
+    border-radius: 12px;
+    background: var(--wb-bg-soft, transparent);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

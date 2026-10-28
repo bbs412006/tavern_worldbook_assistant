@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode, 'is-archive-mobile': isMobile && currentTheme === 'pine', 'wb-typography-interface': persistedState.typography.scope === 'interface', 'wb-custom-font-family': persistedState.typography.family !== 'default', 'wb-custom-font-size': persistedState.typography.size !== null, 'wb-custom-font-weight': persistedState.typography.weight !== null, 'wb-custom-font-color': persistedState.typography.color !== null, 'wb-custom-line-height': persistedState.typography.line_height !== null }]" :style="[themeStyles, userTypographyStyles]">
+  <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode, 'wb-typography-interface': persistedState.typography.scope === 'interface', 'wb-custom-font-family': persistedState.typography.family !== 'default', 'wb-custom-font-size': persistedState.typography.size !== null, 'wb-custom-font-weight': persistedState.typography.weight !== null, 'wb-custom-font-color': persistedState.typography.color !== null, 'wb-custom-line-height': persistedState.typography.line_height !== null }]" :style="[themeStyles, userTypographyStyles]">
     <SettingsPage
       v-if="utilityPage === 'settings'"
       :persisted-state="persistedState"
@@ -57,313 +57,221 @@
       :aria-hidden="!isMainWorkspaceActive"
       :inert="!isMainWorkspaceActive || undefined"
     >
+      <!-- unified-control-exception: hidden native file input required for browser file picker -->
+      <input
+        ref="importFileInput"
+        class="hidden-input"
+        type="file"
+        accept=".json,application/json"
+        @change="onImportChange"
+      />
 
     <!-- ═══ Mobile Tab View ═══ -->
     <template v-if="isMobile">
-
-      <!-- ═══ Mobile Browse Mode ═══ -->
-      <template v-if="panelMode === 'browse'">
-        <div class="mobile-browse-view">
-          <!-- Mobile browse toolbar -->
-          <section v-if="!browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" class="wb-toolbar browse-toolbar mobile-browse-toolbar">
-            <div class="mobile-page-heading"><h2>世界书</h2><div class="mobile-heading-actions"><BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook"><StudioIcon name="save" :size="18" /></BaseButton></div></div>
-            <WorldbookPicker class="archive-book-picker" :model-value="selectedWorldbookName" :names="selectableWorldbookNames" placeholder="请选择世界书" @update:model-value="handleWorldbookSelectionUpdate" />
-            <span class="mobile-book-meta">共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span>
-            <BaseInput v-model="searchText" class="browse-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目"><template #prefix><StudioIcon name="search" :size="17" /></template></BaseInput>
-            <div class="mobile-archive-filters" aria-label="条目筛选">
-              <BaseButton size="sm" :class="{ active: !onlyEnabled && !studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = false">全部</BaseButton>
-              <BaseButton size="sm" :class="{ active: onlyEnabled }" @click="onlyEnabled = true; studioConstantOnly = false">已启用</BaseButton>
-              <BaseButton size="sm" :class="{ active: studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = true">常驻</BaseButton>
-            </div>
-          </section>
-
-          <!-- Mobile browse card list -->
-          <div class="browse-scroll-area mobile-browse-scroll">
-            <section v-if="!browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" class="browse-bindings mobile-browse-bindings">
-              <span v-if="bindings.global.length" class="binding-tag global">全局</span>
-              <span v-if="bindings.charPrimary" class="binding-tag char">角色</span>
-              <span v-if="bindings.chat" class="binding-tag chat">聊天</span>
-              <span class="browse-entry-count">条目 <b>{{ filteredEntries.length }}</b> / {{ draftEntries.length }}</span>
-              <BaseButton size="sm" icon-only aria-label="新增条目" :disabled="!selectedWorldbookName" @click="addEntry">+</BaseButton>
-            </section>
-            <div class="browse-grid mobile-browse-grid">
-              <article
-                v-for="entry in browseVisibleEntries"
-                :key="`mbrowse-card-${entry.uid}`"
-                v-show="!browseVisibleEntries.some(item => expandedBrowseCardUids.has(item.uid)) || expandedBrowseCardUids.has(entry.uid)"
-                class="browse-card"
-                :class="{
-                  expanded: expandedBrowseCardUids.has(entry.uid),
-                  disabled: !entry.enabled,
-                }"
-                :data-status="getEntryVisualStatus(entry)"
-              >
-                <div v-if="!expandedBrowseCardUids.has(entry.uid)" class="browse-card-header" role="button" tabindex="0" @click="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)" @keydown.enter.prevent="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)" @keydown.space.prevent="expandedBrowseCardUids.clear(); toggleBrowseCard(entry.uid)">
-                  <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
-                  <span class="browse-card-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
-                  <div class="browse-toggle-wrap" @click.stop @keydown.stop>
-                    <BaseSwitch
-                      :model-value="entry.enabled"
-                      :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
-                      @update:model-value="browseToggleEnabled(entry)"
-                    >
-                      <span class="browse-toggle-label">{{ entry.enabled ? '已启用' : '已停用' }}</span>
-                    </BaseSwitch>
-                  </div>
-                </div>
-                <div v-if="!expandedBrowseCardUids.has(entry.uid) && entry.strategy.keys.length" class="browse-card-keys" @click="toggleBrowseCard(entry.uid)">
-                  <span v-for="(k, ki) in entry.strategy.keys.slice(0, 4)" :key="`mbk-${entry.uid}-${ki}`" class="browse-key-chip">{{ String(k) }}</span>
-                  <span v-if="entry.strategy.keys.length > 4" class="browse-key-chip more">+{{ entry.strategy.keys.length - 4 }}</span>
-                </div>
-                <div v-if="!expandedBrowseCardUids.has(entry.uid)" class="browse-card-preview" @click="toggleBrowseCard(entry.uid)">
-                  {{ browseGetContentPreview(entry) }}
-                </div>
-                <div v-if="!expandedBrowseCardUids.has(entry.uid)" class="browse-card-meta" @click="toggleBrowseCard(entry.uid)">
-                  <span class="browse-meta-pill" :data-status="getEntryVisualStatus(entry)">{{ browseGetStrategyLabel(entry) }}</span>
-                  <span class="browse-meta-pill">{{ browseGetPositionLabel(entry) }}</span>
-                </div>
-
-                <!-- Reading view; quick editing remains available without leaving browse mode. -->
-                <div v-if="expandedBrowseCardUids.has(entry.uid)" class="browse-card-expanded">
-                  <div class="mobile-reading-top">
-                    <BaseButton type="button" class="mobile-reading-back" @click="toggleBrowseCard(entry.uid)">← 返回</BaseButton>
-                    <div class="mobile-reading-actions">
-                      <BaseSwitch :model-value="entry.enabled" :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`" @update:model-value="browseToggleEnabled(entry)">{{ entry.enabled ? '已启用' : '已停用' }}</BaseSwitch>
-                      <BaseButton size="sm" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">保存</BaseButton>
-                    </div>
-                  </div>
-                  <h2 class="mobile-reading-title">{{ entry.name || `条目 ${entry.uid}` }}</h2>
-                  <div v-if="entry.strategy.keys.length" class="mobile-reading-keys">
-                    <span v-for="(key, index) in entry.strategy.keys" :key="`mread-key-${entry.uid}-${index}`" class="browse-key-chip">{{ String(key) }}</span>
-                  </div>
-                  <dl class="mobile-reading-meta"><div><dt>策略</dt><dd>{{ browseGetStrategyLabel(entry) }}</dd></div><div><dt>位置</dt><dd>{{ browseGetPositionLabel(entry) }}</dd></div><div><dt>权重</dt><dd>{{ entry.position.order }}</dd></div></dl>
-                  <div class="mobile-reading-content">{{ entry.content || '暂无内容' }}</div>
-                  <details class="mobile-inline-editor">
-                    <summary>快速编辑</summary>
-                  <label class="field">
-                    <span>备注</span>
-                    <BaseInput v-model="entry.name" placeholder="名称" />
-                  </label>
-                  <label class="field">
-                    <span>主要关键词</span>
-                    <BaseTextarea
-                      class="browse-keys-input"
-                      :model-value="entry.strategy.keys.map(k => String(k)).join(', ')"
-                      placeholder="逗号分隔"
-                      rows="1"
-                      @change="entry.strategy.keys = ($event.target as HTMLTextAreaElement).value.split(',').map(s => s.trim()).filter(Boolean) as any"
-                    />
-                  </label>
-                  <label class="field">
-                    <span>内容</span>
-                    <BaseTextarea v-model="entry.content" class="browse-content-input" placeholder="条目内容..." />
-                  </label>
-                  <div class="browse-config-grid mobile-config-grid">
-                    <label class="field">
-                      <span>策略</span>
-                      <BaseSelect v-model="entry.strategy.type" :options="strategySelectOptions" :searchable="false" size="sm" aria-label="策略" />
-                    </label>
-                    <label class="field">
-                      <span>位置</span>
-                      <BaseSelect :model-value="getEntryPositionSelectValue(entry)" :options="positionSelectControlOptions" :searchable="false" size="sm" aria-label="位置" @update:model-value="setEntryPositionSelectValue(entry, $event)" />
-                    </label>
-                    <label class="field">
-                      <span>权重</span>
-                      <BaseInput v-model="entry.position.order" type="number" />
-                    </label>
-                  </div>
-                  <div class="browse-recursion-row">
-                    <BaseCheckbox v-model="entry.recursion.prevent_incoming">🚫 不可递归命中</BaseCheckbox>
-                    <BaseCheckbox v-model="entry.recursion.prevent_outgoing">🚫 阻止后续递归</BaseCheckbox>
-                  </div>
-                  <div class="browse-card-actions">
-                    <BaseButton variant="danger" size="sm" icon-only aria-label="删除条目" @click="removeBrowseEntry(entry.uid)">🗑</BaseButton>
-                    <BaseButton variant="ghost" size="sm" @click="toggleBrowseCard(entry.uid)">收起</BaseButton>
-                  </div>
-                  </details>
-                </div>
-              </article>
-              <div v-if="browseHasMoreEntries && !browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" ref="browseLoadMoreSentinelRef" class="browse-load-more-sentinel">
-                <span class="browse-load-more-text">已加载 {{ browseVisibleEntries.length }} / {{ filteredEntries.length }} …</span>
-              </div>
-              <div v-if="!filteredEntries.length" class="browse-empty">
-                <div class="browse-empty-icon">📖</div>
-                <div class="browse-empty-text">{{ selectedWorldbookName ? '无条目' : '请选择世界书' }}</div>
-              </div>
-            </div>
-          </div>
-          <div v-if="mobileReadingEntry" class="mobile-reading-footer"><BaseButton class="mobile-reading-edit" variant="primary" @click="switchToEditorForEntry(mobileReadingEntry.uid)"><StudioIcon name="pen" :size="18" /> 编辑条目</BaseButton></div>
-        </div>
-        <!-- Mobile browse bottom tabs -->
-        <div v-if="!browseVisibleEntries.some(entry => expandedBrowseCardUids.has(entry.uid))" class="mobile-tab-bar" style="display:flex !important;flex-shrink:0;">
-          <BaseButton class="active">
-            <span class="tab-icon"><StudioIcon name="eye" :size="19" /></span><span class="tab-label">浏览</span>
-          </BaseButton>
-          <BaseButton @click="switchPanelMode('editor'); mobileTab = 'list'">
-            <span class="tab-icon"><StudioIcon name="list" :size="19" /></span><span class="tab-label">列表</span>
-          </BaseButton>
-          <BaseButton @click="switchPanelMode('editor'); mobileTab = 'edit'">
-            <span class="tab-icon"><StudioIcon name="pen" :size="19" /></span><span class="tab-label">编辑</span>
-          </BaseButton>
-          <BaseButton @click="switchPanelMode('editor'); mobileTab = 'settings'">
-            <span class="tab-icon"><StudioIcon name="sliders" :size="19" /></span><span class="tab-label">配置</span>
-          </BaseButton>
-          <BaseButton @click="switchPanelMode('editor'); mobileTab = 'tools'">
-            <span class="tab-icon"><StudioIcon name="workbench" :size="19" /></span><span class="tab-label">工具</span>
-          </BaseButton>
-        </div>
-      </template>
-
-      <!-- ═══ Mobile Editor Mode ═══ -->
-      <template v-if="panelMode === 'editor'">
       <div class="mobile-tab-view">
         <div class="mobile-tab-content">
 
-          <!-- Tab: 列表 -->
-          <Transition name="mobile-tab">
-            <div v-show="mobileTab === 'list'" class="mobile-pane">
-              <section class="wb-toolbar mobile-library-toolbar mobile-archive-library">
-                <div class="mobile-library-heading">
-                  <div><h2>世界书</h2></div>
-                  <BaseButton variant="primary" size="sm" icon-only aria-label="保存世界书" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook"><StudioIcon name="save" :size="18" /></BaseButton>
+          <!-- ═══ Tab 1: 条目主页 (Unified List & Inline Reader) ═══ -->
+          <div v-show="mobileTab === 'list'" class="mobile-pane m-list-pane" @scroll.passive="onMobileListScroll">
+            <section class="wb-toolbar mobile-library-toolbar mobile-archive-library m-home-hero">
+              <div class="m-home-top">
+                <div class="m-home-title-wrap">
+                  <h2>世界书</h2>
+                  <span class="m-home-count">{{ draftEntries.length }} 条目 · {{ enabledEntryCount }} 启用</span>
                 </div>
-                <label class="toolbar-label mobile-library-picker">
-                  <span class="sr-only">世界书</span>
-                  <WorldbookPicker
-                    class="archive-book-picker"
-                    :model-value="selectedWorldbookName"
-                    :names="selectableWorldbookNames"
-                    placeholder="请选择世界书"
-                    search-placeholder="搜索世界书..."
-                    no-match-text="没有匹配的世界书"
-                    show-tag-filter
-                    :tag-definitions="tagDefinitions"
-                    :tag-assignments="tagAssignments"
-                    :tag-path-map="tagPathMap"
-                    :selected-tag-ids="selectedTagFilterIds"
-                    :tag-filter-logic="tagFilterLogic"
-                    :tag-filter-match-mode="tagFilterMatchMode"
-                    mobile-tag-view
-                    @update:model-value="handleWorldbookSelectionUpdate"
-                    @update:selected-tag-ids="updateSelectedTagFilterIds"
-                    @update:tag-filter-logic="updateTagFilterLogic"
-                    @update:tag-filter-match-mode="updateTagFilterMatchMode"
-                  />
-                </label>
-                <span class="mobile-book-meta">共 {{ draftEntries.length }} 条目 · {{ hasUnsavedChanges ? '有未保存的更改' : '已保存' }}</span>
-                <BaseInput v-model="searchText" class="mobile-list-search" placeholder="搜索条目名称、关键词或内容" aria-label="搜索世界书条目"><template #prefix><StudioIcon name="search" :size="17" /></template></BaseInput>
+                <div class="m-home-actions">
+                  <BaseButton
+                    variant="primary"
+                    size="sm"
+                    class="m-save-pill"
+                    :class="{ 'glow-pulse': hasUnsavedChanges }"
+                    aria-label="保存世界书"
+                    :disabled="!hasUnsavedChanges"
+                    @click="saveCurrentWorldbook"
+                  >
+                    <StudioIcon name="save" :size="15" />
+                    <span>{{ hasUnsavedChanges ? '保存' : '已存' }}</span>
+                  </BaseButton>
+                  <BaseButton
+                    size="sm"
+                    class="m-new-entry-btn"
+                    aria-label="新增条目"
+                    :disabled="!selectedWorldbookName"
+                    @click="addMobileEntry"
+                  >
+                    <StudioIcon name="plus" :size="15" />
+                    <span>新建</span>
+                  </BaseButton>
+                  <BaseButton
+                    size="sm"
+                    icon-only
+                    class="m-more-btn"
+                    aria-label="世界书操作"
+                    @click="mobileBookSheetOpen = true"
+                  >
+                    <StudioIcon name="more" :size="18" />
+                  </BaseButton>
+                </div>
+              </div>
+
+              <label class="toolbar-label mobile-library-picker m-picker-wrap">
+                <span class="sr-only">世界书</span>
+                <WorldbookPicker
+                  class="archive-book-picker m-book-picker"
+                  :model-value="selectedWorldbookName"
+                  :names="selectableWorldbookNames"
+                  placeholder="请选择世界书"
+                  search-placeholder="搜索世界书..."
+                  no-match-text="没有匹配的世界书"
+                  show-tag-filter
+                  :tag-definitions="tagDefinitions"
+                  :tag-assignments="tagAssignments"
+                  :tag-path-map="tagPathMap"
+                  :selected-tag-ids="selectedTagFilterIds"
+                  :tag-filter-logic="tagFilterLogic"
+                  :tag-filter-match-mode="tagFilterMatchMode"
+                  mobile-tag-view
+                  @update:model-value="handleWorldbookSelectionUpdate"
+                  @update:selected-tag-ids="updateSelectedTagFilterIds"
+                  @update:tag-filter-logic="updateTagFilterLogic"
+                  @update:tag-filter-match-mode="updateTagFilterMatchMode"
+                />
+              </label>
+
+              <div class="m-status-strip">
+                <div class="m-binding-pills">
+                  <!-- unified-control-exception: mobile compact status pill -->
+                  <button
+                    type="button"
+                    class="m-bind-pill"
+                    :class="{ active: bindings.global.length > 0 || globalWorldbookMode }"
+                    @click="mobileTab = 'global'"
+                  >
+                    <StudioIcon name="globe" :size="12" />
+                    <span>全局 {{ bindings.global.length }}</span>
+                  </button>
+                  <span v-if="bindings.charPrimary" class="m-bind-pill char" :title="bindings.charPrimary">
+                    角色 · {{ bindings.charPrimary }}
+                  </span>
+                  <span v-if="bindings.chat" class="m-bind-pill chat" :title="bindings.chat">
+                    聊天 · {{ bindings.chat }}
+                  </span>
+                  <span v-if="globalWorldbookMode" class="m-bind-pill mode" @click="toggleGlobalMode">
+                    仅看全局 ×
+                  </span>
+                </div>
+                <span class="m-sync-badge" :class="{ dirty: hasUnsavedChanges }">
+                  {{ hasUnsavedChanges ? '● 未保存' : '✓ 已同步' }}
+                </span>
+              </div>
+
+              <div class="m-search-row">
+                <BaseInput
+                  v-model="searchText"
+                  class="mobile-list-search m-search-input"
+                  placeholder="搜索条目名称、关键词或正文…"
+                  aria-label="搜索世界书条目"
+                >
+                  <template #prefix><StudioIcon name="search" :size="16" /></template>
+                  <template v-if="searchText" #suffix>
+                    <!-- unified-control-exception: inline search clear button -->
+                    <button type="button" class="m-search-clear" aria-label="清空搜索" @click="searchText = ''">×</button>
+                  </template>
+                </BaseInput>
+              </div>
+
+              <div class="m-filter-bar">
                 <div class="mobile-archive-filters" aria-label="条目筛选">
-              <BaseButton size="sm" :class="{ active: !onlyEnabled && !studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = false">全部</BaseButton>
-              <BaseButton size="sm" :class="{ active: onlyEnabled }" @click="onlyEnabled = true; studioConstantOnly = false">已启用</BaseButton>
-              <BaseButton size="sm" :class="{ active: studioConstantOnly }" @click="onlyEnabled = false; studioConstantOnly = true">常驻</BaseButton>
+                  <BaseButton
+                    size="sm"
+                    :class="{ active: !onlyEnabled && !studioConstantOnly && !mobileSelectiveOnly }"
+                    @click="setMobileListFilter('all')"
+                  >全部</BaseButton>
+                  <BaseButton
+                    size="sm"
+                    :class="{ active: onlyEnabled }"
+                    @click="setMobileListFilter('enabled')"
+                  >已启用</BaseButton>
+                  <BaseButton
+                    size="sm"
+                    :class="{ active: studioConstantOnly }"
+                    @click="setMobileListFilter('constant')"
+                  >常驻</BaseButton>
+                  <BaseButton
+                    size="sm"
+                    :class="{ active: mobileSelectiveOnly }"
+                    @click="setMobileListFilter('selective')"
+                  >关键词</BaseButton>
+                </div>
+                <div class="m-filter-tools">
+                  <!-- unified-control-exception: mobile filter quick action -->
+                  <button
+                    type="button"
+                    class="m-quick-chip"
+                    :class="{ active: viewSortActive }"
+                    :disabled="!draftEntries.length"
+                    aria-label="排序条目"
+                    @click="sortEntries"
+                  >
+                    <StudioIcon name="sort" :size="14" />
+                  </button>
+                  <!-- unified-control-exception: mobile multi-select quick toggle -->
+                  <button
+                    type="button"
+                    class="m-quick-chip"
+                    :class="{ active: mobileMultiSelectMode }"
+                    :disabled="!draftEntries.length"
+                    @click="toggleMobileMultiSelectFromToolbar"
+                  >
+                    <StudioIcon name="check" :size="14" />
+                    <span>{{ mobileMultiSelectMode ? '退出' : '多选' }}</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <div class="mobile-list-heading m-section-bar">
+              <div>
+                <strong>条目列表</strong>
+                <span>显示 {{ filteredEntries.length }} / {{ draftEntries.length }}</span>
+              </div>
+              <small>{{ mobileMultiSelectMode ? `已选 ${selectedEntryCount} 项` : '点按编辑 · 长按多选' }}</small>
             </div>
-                <details class="mobile-library-actions">
-                  <summary>世界书操作</summary>
-                  <div class="toolbar-btns">
-                <BaseButton variant="primary" size="sm" :class="{ 'glow-pulse': hasUnsavedChanges }" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">💾 保存</BaseButton>
-                <BaseButton size="sm" @click="addEntry">+ 新条目</BaseButton>
-                <BaseButton size="sm" @click="triggerImport">📥 导入</BaseButton>
-                <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook">📤 导出</BaseButton>
-                <BaseButton size="sm" :class="{ active: globalWorldbookMode }" @click="toggleGlobalMode">🌐 全局</BaseButton>
-                <BaseButton size="sm" @click="extractFromChat">📥 提取</BaseButton>
-                <BaseButton size="sm" @click="openSettingsPage">⚙️ 设置</BaseButton>
-                <BaseButton size="sm" @click="openAiConfigPage">🔧 AI配置</BaseButton>
-                <BaseButton size="sm" :disabled="!draftEntries.length" :class="{ active: viewSortActive }" @click="sortEntries">🔢 排序</BaseButton>
-                <BaseButton size="sm" :disabled="!selectedEntry" @click="openEntryHistoryModal">🕰️ 条目时光机</BaseButton>
-                <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal">⏪ 整本时光机</BaseButton>
-                  </div>
-                </details>
-              </section>
-            <div class="wb-bindings" v-if="bindings.global.length || bindings.charPrimary || bindings.charAdditional.length || bindings.chat">
-              <span v-for="name in bindings.global" :key="`bg-m-${name}`" class="binding-chip global" :title="name">{{ name }}</span>
-              <span v-if="bindings.charPrimary" :key="`bc-m-${bindings.charPrimary}`" class="binding-chip char" :title="bindings.charPrimary">{{ bindings.charPrimary }}</span>
-              <span v-for="name in bindings.charAdditional" :key="`bca-m-${name}`" class="binding-chip char" :title="name">{{ name }}</span>
-              <span v-if="bindings.chat" :key="`bch-m-${bindings.chat}`" class="binding-chip chat" :title="bindings.chat">{{ bindings.chat }}</span>
-            </div>
-            <!-- Global Mode Panel (mobile) -->
-            <div v-if="globalWorldbookMode" style="border:1px solid var(--wb-border-subtle);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--wb-bg-card);">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <span style="font-weight:600;font-size:13px;">🌐 全局世界书（{{ bindings.global.length }}）</span>
-                <BaseButton class="btn mini danger" type="button" :disabled="!bindings.global.length" @click="clearGlobalWorldbooks" style="font-size:11px;">清空</BaseButton>
-              </div>
-              <label class="field" style="margin-bottom:6px;">
-                <span style="font-size:12px;">预设（切换即应用）</span>
-                <BaseSelect v-model="selectedGlobalPresetId" :options="globalPresetOptions" :searchable="false" size="sm" aria-label="全局预设" @update:model-value="onGlobalPresetSelectionChanged" />
-              </label>
-              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
-                <BaseButton class="btn mini" type="button" :disabled="!bindings.global.length" @click="saveCurrentAsGlobalPreset" style="font-size:11px;">保存组合</BaseButton>
-                <BaseButton class="btn mini" type="button" :disabled="!selectedGlobalPreset" @click="overwriteSelectedGlobalPreset" style="font-size:11px;">覆盖预设</BaseButton>
-                <BaseButton class="btn mini danger" type="button" :disabled="!selectedGlobalPreset" @click="deleteSelectedGlobalPreset" style="font-size:11px;">删除预设</BaseButton>
-              </div>
-              <label class="field" style="margin-bottom:6px;">
-                <span style="font-size:12px;">搜索并添加</span>
-                <BaseInput v-model="globalAddSearchText" type="text" class="text-input" placeholder="搜索世界书..." @keydown.enter.prevent="addFirstGlobalCandidate" style="font-size:12px;" />
-              </label>
-              <div v-if="globalAddCandidates.length" style="max-height:120px;overflow-y:auto;margin-bottom:6px;">
-                <BaseButton v-for="name in globalAddCandidates" :key="`m-add-${name}`" type="button" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;margin-bottom:2px;cursor:pointer;" @click="addGlobalWorldbook(name)">
-                  <span>{{ name }}</span><span style="color:#22c55e;">+ 添加</span>
-                </BaseButton>
-              </div>
-              <div v-if="filteredGlobalWorldbooks.length" style="font-size:12px;margin-bottom:4px;opacity:0.7;">已启用：</div>
-              <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px;">
-                <BaseButton v-for="name in filteredGlobalWorldbooks" :key="`m-gl-${name}`" type="button" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;cursor:pointer;" @click="removeGlobalWorldbook(name)">
-                  <span>{{ name }}</span><span style="color:#ef4444;">移除</span>
-                </BaseButton>
-              </div>
-              <!-- Role Binding Section -->
-              <div style="border-top:1px solid var(--wb-border-subtle);padding-top:8px;margin-top:4px;">
-                <div style="font-size:12px;font-weight:600;margin-bottom:6px;">角色绑定</div>
-                <div style="font-size:11px;margin-bottom:6px;opacity:0.8;" :style="{ color: currentRoleContext ? '#60a5fa' : '#94a3b8' }">
-                  {{ currentRoleContext ? `当前角色: ${currentRoleContext.name}` : '当前未进入角色聊天' }}
-                </div>
-                <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
-                  <BaseButton class="btn mini" type="button" :disabled="!selectedGlobalPreset || !currentRoleContext" @click="bindCurrentRoleToSelectedPreset" style="font-size:11px;">绑定当前角色</BaseButton>
-                  <BaseButton class="btn mini" type="button" :disabled="!selectedGlobalPreset || !isCurrentRoleBoundToSelectedPreset" @click="unbindCurrentRoleFromSelectedPreset" style="font-size:11px;">解绑当前角色</BaseButton>
-                </div>
-                <div style="margin-bottom:6px;">
-                  <BaseButton type="button" :disabled="!selectedGlobalPreset" @click="toggleRolePicker" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:1px solid var(--wb-border-subtle);border-radius:4px;background:var(--wb-input-bg);color:var(--wb-text-main);font-size:12px;cursor:pointer;">
-                    <span>{{ selectedGlobalPreset ? '从角色卡列表选择绑定' : '请先选择预设' }}</span>
-                    <span>{{ rolePickerOpen ? '▴' : '▾' }}</span>
-                  </BaseButton>
-                  <div v-if="rolePickerOpen" style="margin-top:4px;">
-                    <BaseInput v-model="roleBindSearchText" type="text" class="text-input" placeholder="搜索角色名..." style="font-size:12px;margin-bottom:4px;" @keydown.enter.prevent="bindFirstRoleCandidate" />
-                    <div style="max-height:120px;overflow-y:auto;">
-                      <BaseButton v-for="candidate in roleBindingCandidates" :key="`m-role-${candidate.key}`" type="button" :disabled="candidate.bound" style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 8px;border:none;background:var(--wb-input-bg);border-radius:4px;color:var(--wb-text-main);font-size:12px;margin-bottom:2px;cursor:pointer;opacity: 1;" :style="{ opacity: candidate.bound ? '0.5' : '1' }" @click="bindRoleCandidateToSelectedPreset(candidate)">
-                        <span>{{ candidate.name }}</span><span :style="{ color: candidate.bound ? '#94a3b8' : '#22c55e' }">{{ candidate.bound ? '已绑定' : '绑定' }}</span>
-                      </BaseButton>
-                      <div v-if="!roleBindingCandidates.length" style="font-size:11px;opacity:0.5;padding:4px;">没有匹配角色</div>
-                    </div>
-                  </div>
-                </div>
-                <div v-if="selectedGlobalPreset" style="display:flex;flex-wrap:wrap;gap:4px;">
-                  <BaseButton v-for="binding in selectedGlobalPresetRoleBindings" :key="`m-rb-${selectedGlobalPreset?.id}-${binding.key}`" type="button" style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--wb-border-subtle);border-radius:4px;background:var(--wb-input-bg);color:var(--wb-text-main);font-size:11px;cursor:pointer;" @click="removeRoleBindingFromSelectedPreset(binding.key)">
-                    {{ binding.name }} <span style="color:#ef4444;">×</span>
-                  </BaseButton>
-                  <div v-if="!selectedGlobalPresetRoleBindings.length" style="font-size:11px;opacity:0.5;">当前预设尚未绑定角色</div>
-                </div>
-                <div v-else style="font-size:11px;opacity:0.5;">选择预设后可配置角色绑定</div>
-              </div>
-            </div>
-            <div class="mobile-list-heading"><div><strong>全部条目</strong><span>{{ filteredEntries.length }} / {{ draftEntries.length }}</span></div><small>长按条目可多选</small></div>
             <div class="mobile-entry-list">
-              <div v-if="mobileMultiSelectMode" class="mobile-multi-toolbar">
-                <span class="mobile-multi-title">多选模式 · 已选 {{ selectedEntryCount }}</span>
-                <div class="mobile-multi-actions">
-                  <BaseButton class="btn mini" type="button" @click="selectAllVisibleForMobileMultiSelect">全选可见</BaseButton>
-                  <BaseButton class="btn mini" type="button" @click="clearMobileMultiSelectSelection">清空</BaseButton>
-                  <BaseButton class="btn mini" type="button" @click="finishMobileMultiSelectMode">完成</BaseButton>
+              <div v-if="mobileMultiSelectMode" class="mobile-multi-toolbar m-multi-dock">
+                <div class="m-multi-top">
+                  <span class="mobile-multi-title">多选模式 · 已选 {{ selectedEntryCount }}</span>
+                  <div class="mobile-multi-actions">
+                    <BaseButton class="btn mini" size="sm" type="button" @click="selectAllVisibleForMobileMultiSelect">全选可见</BaseButton>
+                    <BaseButton class="btn mini" size="sm" type="button" @click="clearMobileMultiSelectSelection">清空</BaseButton>
+                    <BaseButton class="btn mini" size="sm" variant="primary" type="button" @click="finishMobileMultiSelectMode">完成</BaseButton>
+                  </div>
+                </div>
+                <div v-if="selectedEntryCount > 0" class="m-multi-batch-row">
+                  <!-- unified-control-exception: mobile batch pill -->
+                  <button type="button" class="m-batch-pill" @click="setStudioSelectedEntriesEnabled(true)">启用</button>
+                  <!-- unified-control-exception: mobile batch pill -->
+                  <button type="button" class="m-batch-pill" @click="setStudioSelectedEntriesEnabled(false)">停用</button>
+                  <!-- unified-control-exception: mobile batch pill -->
+                  <button type="button" class="m-batch-pill" @click="duplicateStudioSelectedEntries">复制</button>
+                  <!-- unified-control-exception: mobile batch pill -->
+                  <button type="button" class="m-batch-pill accent" @click="openMobileBatchConfig">联动配置</button>
+                  <!-- unified-control-exception: mobile batch pill -->
+                  <button type="button" class="m-batch-pill danger" @click="removeSelectedEntry">删除</button>
                 </div>
               </div>
+
               <article
                 v-for="entry in mobileEditorVisibleEntries"
                 :key="`me-${entry.uid}`"
-                class="entry-item mobile-archive-entry"
+                class="entry-item mobile-archive-entry m-entry-card"
                 :data-status="getEntryVisualStatus(entry)"
                 :class="{
                   selected: selectedEntryUidSet.has(entry.uid),
                   primary: entry.uid === selectedEntryUid,
                   disabled: !entry.enabled,
                   'mobile-multi-item': mobileMultiSelectMode,
+                  'is-inline-reading': mobileExpandedReadUid === entry.uid,
                 }"
                 @click="selectEntry(entry.uid, $event)"
               >
@@ -380,7 +288,7 @@
                 >
                   <div class="entry-item-head">
                     <div class="mobile-entry-title-group">
-                      <span v-if="mobileMultiSelectMode" class="mobile-archive-selected" aria-hidden="true">{{ selectedEntryUidSet.has(entry.uid) ? '☑' : '☐' }}</span>
+                      <span v-if="mobileMultiSelectMode" class="mobile-archive-selected" :class="{ on: selectedEntryUidSet.has(entry.uid) }" aria-hidden="true">{{ selectedEntryUidSet.has(entry.uid) ? '✓' : '' }}</span>
                       <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
                       <span class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
                     </div>
@@ -391,175 +299,712 @@
                   </div>
                   <div v-if="entry.strategy.keys?.length" class="mobile-archive-keywords">
                     <span v-for="(key, index) in entry.strategy.keys.slice(0, 4)" :key="`mkey-${entry.uid}-${index}`">{{ String(key) }}</span>
-                    <span v-if="entry.strategy.keys.length > 4">+{{ entry.strategy.keys.length - 4 }}</span>
+                    <span v-if="entry.strategy.keys.length > 4" class="is-more">+{{ entry.strategy.keys.length - 4 }}</span>
                   </div>
-                  <div class="mobile-archive-preview">{{ browseGetContentPreview(entry) }}</div>
+                  <div v-if="mobileExpandedReadUid !== entry.uid" class="mobile-archive-preview">{{ browseGetContentPreview(entry) }}</div>
                   <div class="mobile-entry-details">
-                    <span>{{ browseGetStrategyLabel(entry) }}</span>
-                    <span>{{ getPositionTypeLabel(entry.position.type, entry.position.role) }}</span>
-                    <span>权重 {{ entry.position.order }}</span>
-                    <span v-if="entry.recursion.prevent_incoming">不可递归命中</span>
-                    <span v-if="entry.recursion.prevent_outgoing">阻止后续递归</span>
+                    <span class="m-detail-tag" :data-status="getEntryVisualStatus(entry)">{{ browseGetStrategyLabel(entry) }}</span>
+                    <span class="m-detail-tag">{{ getPositionTypeLabel(entry.position.type, entry.position.role) }}</span>
+                    <span class="m-detail-tag">权重 {{ entry.position.order }}</span>
+                    <span v-if="entry.recursion.prevent_incoming || entry.recursion.prevent_outgoing" class="m-detail-tag warn">防递归</span>
                   </div>
                 </BaseButton>
+
                 <div v-if="!mobileMultiSelectMode" class="mobile-archive-entry-toggle" @click.stop>
                   <BaseSwitch
                     :model-value="entry.enabled"
                     :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
                     @update:model-value="browseToggleEnabled(entry)"
-                  >{{ entry.enabled ? '已启用' : '已停用' }}</BaseSwitch>
+                  />
+                </div>
+
+                <div v-if="!mobileMultiSelectMode" class="m-card-quick-actions" @click.stop>
+                  <!-- unified-control-exception: mobile card inline reader toggle -->
+                  <button
+                    type="button"
+                    class="m-inline-read-btn"
+                    :class="{ active: mobileExpandedReadUid === entry.uid }"
+                    :aria-label="mobileExpandedReadUid === entry.uid ? `收起阅读 ${entry.name || entry.uid}` : `阅读 ${entry.name || entry.uid}`"
+                    @click.stop="toggleMobileInlineRead(entry.uid)"
+                  >
+                    <StudioIcon :name="mobileExpandedReadUid === entry.uid ? 'collapse' : 'eye'" :size="13" />
+                    <span>{{ mobileExpandedReadUid === entry.uid ? '收起' : '阅读' }}</span>
+                  </button>
+                </div>
+
+                <div v-if="mobileExpandedReadUid === entry.uid" class="m-inline-reader" @click.stop>
+                  <div class="mobile-reading-content">{{ entry.content || '（暂无正文内容）' }}</div>
+                  <div class="m-inline-reader-foot">
+                    <BaseButton size="sm" variant="primary" @click="openMobileEntryForEdit(entry.uid, 'content')">
+                      <StudioIcon name="pen" :size="14" /> 编辑条目
+                    </BaseButton>
+                    <BaseButton size="sm" @click="openMobileEntryForEdit(entry.uid, 'config')">
+                      <StudioIcon name="sliders" :size="14" /> 配置
+                    </BaseButton>
+                  </div>
                 </div>
               </article>
+
               <div v-if="mobileEditorHasMoreEntries" class="mobile-entry-load-more">
-                <BaseButton size="sm" type="button" @click="mobileEditorLoadMore">
+                <BaseButton size="sm" type="button" class="m-load-more-btn" @click="mobileEditorLoadMore">
                   加载更多（{{ mobileEditorVisibleEntries.length }} / {{ filteredEntries.length }}）
                 </BaseButton>
               </div>
-              <div v-if="!filteredEntries.length" class="empty-note">暂无条目</div>
+              <div v-if="!filteredEntries.length" class="empty-note m-empty-card">
+                <StudioIcon name="book" :size="26" />
+                <strong>{{ selectedWorldbookName ? '没有匹配的条目' : '请选择一本世界书' }}</strong>
+                <span>{{ searchText || onlyEnabled || studioConstantOnly || mobileSelectiveOnly ? '可尝试清空搜索词或切换上方筛选标签' : '点击右上角“新建”创建第一条设定' }}</span>
+              </div>
             </div>
-            </div>
-          </Transition>
-
-          <!-- Tab: 编辑 -->
-          <Transition name="mobile-tab">
-            <div v-show="mobileTab === 'edit'" class="mobile-pane mobile-editor-pane">
-              <template v-if="selectedEntry">
-              <div class="mobile-editor-heading"><BaseButton type="button" @click="mobileTab = 'list'">‹ 返回</BaseButton><h2>编辑条目</h2><BaseButton variant="primary" size="sm" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook">保存</BaseButton></div>
-              <div class="mobile-editor-save-state">{{ hasUnsavedChanges ? '● 未保存的更改' : '已保存' }}</div>
-              <div class="mobile-editor-enabled"><span>启用条目</span><BaseSwitch v-model="selectedEntry.enabled" aria-label="启用条目" /></div>
-              <header class="editor-head">
-                <label class="field editor-comment">
-                  <span>备注</span>
-                  <BaseInput v-model="selectedEntry.name" type="text" class="text-input" />
-                </label>
-                <div class="editor-badges">
-                  <span class="editor-badge" :class="selectedEntry.enabled ? 'on' : 'off'">{{ selectedEntry.enabled ? 'EN' : 'OFF' }}</span>
-                  <span class="editor-badge mono">#{{ selectedEntry.uid }}</span>
-                  <span class="editor-badge mono">~{{ selectedTokenEstimate }}T</span>
-                </div>
-              </header>
-              <section class="editor-grid two-cols editor-keyword-grid">
-                <div v-for="secondary in [false, true]" :key="String(secondary)" class="mobile-keyword-field">
-                  <span>{{ secondary ? '次要关键词' : '主要关键词' }}</span>
-                  <div class="mobile-keyword-chips">
-                    <BaseButton v-for="(key, index) in (secondary ? selectedEntry.strategy.keys_secondary.keys : selectedEntry.strategy.keys)" :key="`${secondary}-${index}-${stringifyKeyword(key)}`" class="mobile-keyword-chip" size="sm" :aria-label="`删除关键词 ${stringifyKeyword(key)}`" @click="removeMobileKeyword(secondary, index)">{{ stringifyKeyword(key) }} <span aria-hidden="true">×</span></BaseButton>
-                  </div>
-                  <div class="mobile-keyword-actions">
-                    <BaseButton v-if="!mobileKeywordAdding[secondary ? 'secondary' : 'primary']" class="mobile-keyword-open" size="sm" :aria-label="secondary ? '添加次要关键词' : '添加主要关键词'" @click="mobileKeywordAdding[secondary ? 'secondary' : 'primary'] = true">＋ 添加关键词</BaseButton>
-                    <div v-else class="mobile-keyword-add"><BaseInput v-model="mobileKeywordDraft[secondary ? 'secondary' : 'primary']" :aria-label="secondary ? '添加次要关键词' : '添加主要关键词'" placeholder="输入关键词" @keydown.enter.prevent="finishMobileKeywords(secondary)" @blur="finishMobileKeywords(secondary)" /><BaseButton size="sm" @click="finishMobileKeywords(secondary)">添加</BaseButton></div>
-                    <details class="mobile-keyword-raw"><summary>批量编辑</summary><BaseTextarea v-if="secondary" :model-value="selectedSecondaryKeysRaw" class="text-area compact" aria-label="批量编辑次要关键词" @update:model-value="selectedSecondaryKeysRaw = $event" @blur="commitSecondaryKeysFromRaw" /><BaseTextarea v-else :model-value="selectedKeysRaw" class="text-area compact" aria-label="批量编辑主要关键词" @update:model-value="selectedKeysRaw = $event" @blur="commitKeysFromRaw" /></details>
-                  </div>
-                </div>
-              </section>
-              <section class="editor-content-block" ref="editorContentBlockRef">
-                <div v-if="isMobile" class="content-top-drag-handle" @pointerdown="startContentTopDrag">
-                  <span class="content-top-drag-grip">━━━</span>
-                </div>
-                <div v-if="mobileMultiSelectMode" class="mobile-multi-content-note">多选模式下仅支持配置联动，内容编辑已禁用</div>
-                <div class="editor-content-title">内容</div>
-                <BaseTextarea
-                  ref="contentTextareaRef"
-                  v-model="selectedEntry.content"
-                  class="text-area large editor-content-area"
-                  :disabled="mobileMultiSelectMode"
-                  style="min-height: calc(100vh - 500px);"
-                ></BaseTextarea>
-                <div class="content-resize-handle" @pointerdown="startContentResize">
-                  <span class="content-resize-grip">━━━</span>
-                </div>
-              </section>
-              <BaseButton type="button" class="mobile-editor-config" @click="mobileTab = 'settings'"><StudioIcon name="sliders" :size="20" /><span><strong>触发与插入配置</strong><small>{{ browseGetStrategyLabel(selectedEntry) }} · {{ browseGetPositionLabel(selectedEntry) }}</small></span><span aria-hidden="true">›</span></BaseButton>
-            </template>
-            <div v-else class="empty-block mobile-editor-empty"><StudioIcon name="pen" :size="28" /><strong>开始编辑条目</strong><span>从列表中选择一个条目，或新建条目。</span><BaseButton variant="primary" @click="mobileTab = 'list'">前往条目列表</BaseButton></div>
           </div>
-          </Transition>
 
-          <!-- Tab: 设置 -->
-          <Transition name="mobile-tab">
-          <div v-show="mobileTab === 'settings'" class="mobile-pane">
+          <!-- ═══ Tab 2: 全屏条目详情页 (Content / Config / Read) ═══ -->
+          <div v-show="mobileTab === 'edit'" class="mobile-pane mobile-editor-pane m-detail-pane">
             <template v-if="selectedEntry">
-              <article class="editor-card">
-                <h4>触发策略 (STRATEGY)</h4>
-                <label class="field checkbox-inline">
-                  <BaseCheckbox v-model="selectedEntry.enabled" />
-                  <span>启用条目</span>
-                </label>
-                <div class="strategy-switch">
-                  <BaseButton type="button" class="strategy-pill constant" :class="{ active: selectedEntry.strategy.type === 'constant' }" @click="selectedEntry.strategy.type = 'constant'">🔵 常驻</BaseButton>
-                  <BaseButton type="button" class="strategy-pill vector" :class="{ active: selectedEntry.strategy.type === 'vectorized' }" @click="selectedEntry.strategy.type = 'vectorized'">📎 向量化</BaseButton>
-                  <BaseButton type="button" class="strategy-pill selective" :class="{ active: selectedEntry.strategy.type === 'selective' }" @click="selectedEntry.strategy.type = 'selective'">🟢 关键词</BaseButton>
+              <div class="mobile-editor-heading m-detail-topbar">
+                <BaseButton type="button" class="m-back-btn" @click="returnFromMobileEditor">
+                  <StudioIcon name="chevron-left" :size="17" />
+                  <span>返回</span>
+                </BaseButton>
+
+                <div class="m-entry-Locate">
+                  <!-- unified-control-exception: mobile prev entry nav -->
+                  <button
+                    type="button"
+                    class="m-nav-arrow"
+                    aria-label="上一个条目"
+                    :disabled="!canSwitchMobileEntry(-1)"
+                    @click="switchMobileAdjacentEntry(-1)"
+                  >
+                    <StudioIcon name="chevron-left" :size="15" />
+                  </button>
+                  <div class="m-detail-title-box">
+                    <h2>编辑条目</h2>
+                    <small>#{{ selectedEntry.uid }} · {{ mobileEntryPositionText }}</small>
+                  </div>
+                  <!-- unified-control-exception: mobile next entry nav -->
+                  <button
+                    type="button"
+                    class="m-nav-arrow"
+                    aria-label="下一个条目"
+                    :disabled="!canSwitchMobileEntry(1)"
+                    @click="switchMobileAdjacentEntry(1)"
+                  >
+                    <StudioIcon name="chevron-right" :size="15" />
+                  </button>
                 </div>
-                <details class="editor-advanced">
-                  <summary>高级策略设置</summary>
-                  <label class="field">
-                    <span>次要逻辑 (LOGIC)</span>
-                    <BaseSelect v-model="selectedEntry.strategy.keys_secondary.logic" :options="secondaryLogicSelectOptions" :searchable="false" size="sm" aria-label="次要逻辑" />
+
+                <BaseButton
+                  variant="primary"
+                  size="sm"
+                  class="m-detail-save"
+                  :disabled="!hasUnsavedChanges"
+                  @click="saveCurrentWorldbook"
+                >保存</BaseButton>
+              </div>
+
+              <div v-if="isMultiEditSyncActive" class="m-sync-banner">
+                <div>
+                  <strong>多选联动配置中（共 {{ selectedEntryCount }} 项）</strong>
+                  <span>当前以 #{{ selectedEntry.uid }} 为样板，修改策略/位置/递归会同步至全部选中项</span>
+                </div>
+                <BaseButton size="sm" @click="finishMobileMultiSelectMode">退出联动</BaseButton>
+              </div>
+
+              <!-- 3-Way Native Segmented Control -->
+              <div class="m-segmented" role="tablist" aria-label="条目视图模式">
+                <!-- unified-control-exception: mobile segmented tab -->
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="mobileDetailSegment === 'content'"
+                  :class="{ active: mobileDetailSegment === 'content' }"
+                  @click="mobileDetailSegment = 'content'"
+                >
+                  <StudioIcon name="pen" :size="14" />
+                  <span>内容</span>
+                </button>
+                <!-- unified-control-exception: mobile segmented tab -->
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="mobileDetailSegment === 'config'"
+                  :class="{ active: mobileDetailSegment === 'config' }"
+                  @click="mobileDetailSegment = 'config'"
+                >
+                  <StudioIcon name="sliders" :size="14" />
+                  <span>配置</span>
+                </button>
+                <!-- unified-control-exception: mobile segmented tab -->
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="mobileDetailSegment === 'read'"
+                  :class="{ active: mobileDetailSegment === 'read' }"
+                  @click="mobileDetailSegment = 'read'"
+                >
+                  <StudioIcon name="eye" :size="14" />
+                  <span>阅读</span>
+                </button>
+              </div>
+
+              <!-- Segment 1: 内容编辑 -->
+              <div v-show="mobileDetailSegment === 'content'" class="m-segment-body">
+                <header class="editor-head m-card">
+                  <div class="m-entry-meta-bar">
+                    <div class="editor-badges">
+                      <span class="editor-badge" :class="selectedEntry.enabled ? 'on' : 'off'">{{ selectedEntry.enabled ? '已启用' : '已停用' }}</span>
+                      <span class="editor-badge mono">#{{ selectedEntry.uid }}</span>
+                      <span class="editor-badge mono">~{{ selectedTokenEstimate }}T</span>
+                      <span class="editor-badge mono">{{ selectedEntry.content.length }} 字</span>
+                    </div>
+                    <BaseSwitch v-model="selectedEntry.enabled" aria-label="启用条目" />
+                  </div>
+
+                  <label class="field editor-comment">
+                    <span>条目名称 / 备注</span>
+                    <BaseInput v-model="selectedEntry.name" type="text" class="text-input" placeholder="输入条目名称…" />
                   </label>
-                  <label class="field">
-                    <span>扫描深度</span>
-                    <BaseInput v-model="selectedScanDepthText" type="text" class="text-input" placeholder="留空或 same_as_global" />
-                  </label>
-                  <label class="field">
-                    <span>概率(0-100)</span>
-                    <BaseInput v-model.number="selectedEntry.probability" type="number" class="text-input" min="0" max="100" step="1" />
-                  </label>
+
+                  <!-- unified-control-exception: mobile config quick jump -->
+                  <button type="button" class="m-quick-config-strip" @click="mobileDetailSegment = 'config'">
+                    <StudioIcon name="sliders" :size="15" />
+                    <span class="m-quick-config-text">
+                      {{ browseGetStrategyLabel(selectedEntry) }} · {{ browseGetPositionLabel(selectedEntry) }} · 权重 {{ selectedEntry.position.order }}
+                    </span>
+                    <StudioIcon name="chevron-right" :size="15" />
+                  </button>
+                </header>
+
+                <section class="editor-grid two-cols editor-keyword-grid m-card">
+                  <div v-for="secondary in [false, true]" :key="String(secondary)" class="mobile-keyword-field">
+                    <div class="m-field-head">
+                      <span>{{ secondary ? '次要关键词' : '主要关键词' }}</span>
+                      <small>{{ (secondary ? selectedEntry.strategy.keys_secondary.keys : selectedEntry.strategy.keys).length }} 个</small>
+                    </div>
+                    <div v-if="(secondary ? selectedEntry.strategy.keys_secondary.keys : selectedEntry.strategy.keys).length" class="mobile-keyword-chips">
+                      <BaseButton
+                        v-for="(key, index) in (secondary ? selectedEntry.strategy.keys_secondary.keys : selectedEntry.strategy.keys)"
+                        :key="`${secondary}-${index}-${stringifyKeyword(key)}`"
+                        class="mobile-keyword-chip"
+                        size="sm"
+                        :aria-label="`删除关键词 ${stringifyKeyword(key)}`"
+                        @click="removeMobileKeyword(secondary, index)"
+                      >
+                        {{ stringifyKeyword(key) }} <span aria-hidden="true">×</span>
+                      </BaseButton>
+                    </div>
+                    <div class="mobile-keyword-actions">
+                      <BaseButton
+                        v-if="!mobileKeywordAdding[secondary ? 'secondary' : 'primary']"
+                        class="mobile-keyword-open"
+                        size="sm"
+                        :aria-label="secondary ? '添加次要关键词' : '添加主要关键词'"
+                        @click="mobileKeywordAdding[secondary ? 'secondary' : 'primary'] = true"
+                      >＋ 添加关键词</BaseButton>
+                      <div v-else class="mobile-keyword-add">
+                        <BaseInput
+                          v-model="mobileKeywordDraft[secondary ? 'secondary' : 'primary']"
+                          :aria-label="secondary ? '添加次要关键词' : '添加主要关键词'"
+                          placeholder="输入关键词或 /regex/i，逗号分隔"
+                          @keydown.enter.prevent="finishMobileKeywords(secondary)"
+                          @blur="finishMobileKeywords(secondary)"
+                        />
+                        <BaseButton size="sm" variant="primary" @click="finishMobileKeywords(secondary)">添加</BaseButton>
+                      </div>
+                      <details class="mobile-keyword-raw">
+                        <summary>批量编辑</summary>
+                        <BaseTextarea
+                          v-if="secondary"
+                          :model-value="selectedSecondaryKeysRaw"
+                          class="text-area compact"
+                          aria-label="批量编辑次要关键词"
+                          @update:model-value="selectedSecondaryKeysRaw = $event"
+                          @blur="commitSecondaryKeysFromRaw"
+                        />
+                        <BaseTextarea
+                          v-else
+                          :model-value="selectedKeysRaw"
+                          class="text-area compact"
+                          aria-label="批量编辑主要关键词"
+                          @update:model-value="selectedKeysRaw = $event"
+                          @blur="commitKeysFromRaw"
+                        />
+                      </details>
+                    </div>
+                  </div>
+                </section>
+
+                <section ref="editorContentBlockRef" class="editor-content-block m-card">
+                  <div v-if="mobileMultiSelectMode" class="mobile-multi-content-note">
+                    多选联动模式下仅同步配置项，正文编辑已锁定（退出联动后可编辑正文）
+                  </div>
+                  <div class="m-content-head">
+                    <div class="editor-content-title">正文内容</div>
+                    <!-- unified-control-exception: mobile textarea expand toggle -->
+                    <button type="button" class="m-expand-btn" @click="mobileContentExpanded = !mobileContentExpanded">
+                      <StudioIcon :name="mobileContentExpanded ? 'collapse' : 'expand'" :size="13" />
+                      <span>{{ mobileContentExpanded ? '标准高度' : '沉浸展开' }}</span>
+                    </button>
+                  </div>
+                  <BaseTextarea
+                    ref="contentTextareaRef"
+                    v-model="selectedEntry.content"
+                    class="text-area large editor-content-area"
+                    :class="{ 'is-expanded': mobileContentExpanded }"
+                    :disabled="mobileMultiSelectMode"
+                    placeholder="输入条目设定正文…"
+                  />
+                </section>
+              </div>
+
+              <!-- Segment 2: 触发与插入配置 -->
+              <div v-show="mobileDetailSegment === 'config'" class="m-segment-body">
+                <article class="editor-card m-card">
+                  <div class="m-card-head">
+                    <h4>触发策略</h4>
+                    <BaseSwitch v-model="selectedEntry.enabled" aria-label="启用条目配置开关">
+                      {{ selectedEntry.enabled ? '已启用' : '已停用' }}
+                    </BaseSwitch>
+                  </div>
+                  <div class="m-strategy-segmented">
+                    <!-- unified-control-exception: mobile strategy segmented button -->
+                    <button
+                      type="button"
+                      :class="{ active: selectedEntry.strategy.type === 'constant' }"
+                      @click="selectedEntry.strategy.type = 'constant'"
+                    >🔵 常驻</button>
+                    <!-- unified-control-exception: mobile strategy segmented button -->
+                    <button
+                      type="button"
+                      :class="{ active: selectedEntry.strategy.type === 'selective' }"
+                      @click="selectedEntry.strategy.type = 'selective'"
+                    >🟢 关键词</button>
+                    <!-- unified-control-exception: mobile strategy segmented button -->
+                    <button
+                      type="button"
+                      :class="{ active: selectedEntry.strategy.type === 'vectorized' }"
+                      @click="selectedEntry.strategy.type = 'vectorized'"
+                    >📎 向量化</button>
+                  </div>
+                  <div class="m-form-stack">
+                    <label class="field">
+                      <span>次要关键词逻辑</span>
+                      <BaseSelect
+                        v-model="selectedEntry.strategy.keys_secondary.logic"
+                        :options="secondaryLogicSelectOptions"
+                        :searchable="false"
+                        size="sm"
+                        aria-label="次要逻辑"
+                      />
+                    </label>
+                    <div class="m-two-col">
+                      <label class="field">
+                        <span>扫描深度</span>
+                        <BaseInput v-model="selectedScanDepthText" type="text" class="text-input" placeholder="same_as_global" />
+                      </label>
+                      <label class="field">
+                        <span>触发概率 (0-100)</span>
+                        <BaseInput v-model.number="selectedEntry.probability" type="number" class="text-input" min="0" max="100" step="1" />
+                      </label>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="editor-card m-card">
+                  <h4>插入位置与顺序</h4>
+                  <div class="m-form-stack">
+                    <label class="field">
+                      <span>插入位置</span>
+                      <BaseSelect
+                        v-model="selectedPositionSelectValue"
+                        :options="positionSelectControlOptions"
+                        :searchable="false"
+                        size="sm"
+                        aria-label="位置"
+                      />
+                    </label>
+                    <label class="field">
+                      <span>权重顺序 (Order)</span>
+                      <BaseInput v-model.number="selectedEntry.position.order" type="number" class="text-input" step="1" />
+                    </label>
+                    <div class="m-two-col">
+                      <label class="field" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
+                        <span>深度角色</span>
+                        <BaseSelect
+                          v-model="selectedEntry.position.role"
+                          :options="positionRoleOptions"
+                          :searchable="false"
+                          size="sm"
+                          aria-label="深度角色"
+                          :disabled="selectedEntry.position.type !== 'at_depth'"
+                        />
+                      </label>
+                      <label class="field" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
+                        <span>深度层级</span>
+                        <BaseInput
+                          v-model.number="selectedEntry.position.depth"
+                          type="number"
+                          class="text-input"
+                          min="0"
+                          step="1"
+                          :disabled="selectedEntry.position.type !== 'at_depth'"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="editor-card m-card">
+                  <h4>递归控制</h4>
+                  <div class="m-switch-list">
+                    <BaseSwitch v-model="selectedEntry.recursion.prevent_incoming">
+                      不可递归命中（不被其他条目激活）
+                    </BaseSwitch>
+                    <BaseSwitch v-model="selectedEntry.recursion.prevent_outgoing">
+                      阻止后续递归（不继续激活其他条目）
+                    </BaseSwitch>
+                  </div>
+                </article>
+
+                <details class="editor-advanced m-card m-advanced-card">
+                  <summary>高级字段 / extra JSON</summary>
+                  <div class="m-form-stack">
+                    <BaseTextarea v-model="selectedExtraText" class="text-area compact" placeholder="{ ... }" />
+                    <div class="m-row-actions">
+                      <BaseButton size="sm" type="button" @click="applyExtraJson">应用 extra</BaseButton>
+                      <BaseButton size="sm" type="button" @click="clearExtra">清空 extra</BaseButton>
+                    </div>
+                  </div>
                 </details>
-              </article>
-              <article class="editor-card">
-                <h4>插入设置 (INSERTION)</h4>
-                <label class="field">
-                  <span>位置 (Position)</span>
-                  <BaseSelect v-model="selectedPositionSelectValue" :options="positionSelectControlOptions" :searchable="false" size="sm" aria-label="位置" />
-                </label>
-                <label class="field">
-                  <span>权重 (Order)</span>
-                  <BaseInput v-model.number="selectedEntry.position.order" type="number" class="text-input" step="1" />
-                </label>
-                <div class="editor-grid two-cols">
-                  <label class="field" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
-                    <span>深度角色</span>
-                    <BaseSelect v-model="selectedEntry.position.role" :options="positionRoleOptions" :searchable="false" size="sm" aria-label="深度角色" :disabled="selectedEntry.position.type !== 'at_depth'" />
-                  </label>
-                  <label class="field" :class="{ disabled: selectedEntry.position.type !== 'at_depth' }">
-                    <span>深度层级</span>
-                    <BaseInput v-model.number="selectedEntry.position.depth" type="number" class="text-input" min="0" step="1" :disabled="selectedEntry.position.type !== 'at_depth'" />
-                  </label>
+
+                <div class="m-card m-entry-actions-card">
+                  <BaseButton size="sm" type="button" @click="duplicateSelectedEntry">
+                    <StudioIcon name="copy" :size="15" /> 复制条目
+                  </BaseButton>
+                  <BaseButton size="sm" type="button" @click="openEntryHistoryModal">
+                    <StudioIcon name="history" :size="15" /> 条目时光机
+                  </BaseButton>
+                  <BaseButton size="sm" variant="danger" type="button" @click="removeSelectedEntry">
+                    <StudioIcon name="trash" :size="15" /> 删除条目
+                  </BaseButton>
                 </div>
-              </article>
-              <article class="editor-card">
-                <h4>递归与效果 (RECURSION)</h4>
-                <label class="field checkbox-inline">
-                  <BaseCheckbox v-model="selectedEntry.recursion.prevent_incoming" />
-                  <span>不可递归命中</span>
-                </label>
-                <label class="field checkbox-inline">
-                  <BaseCheckbox v-model="selectedEntry.recursion.prevent_outgoing" />
-                  <span>阻止后续递归</span>
-                </label>
-              </article>
-              <details class="editor-advanced">
-                <summary>高级字段 / extra JSON</summary>
-                <label class="field">
-                  <span>extra JSON（未知字段）</span>
-                  <BaseTextarea v-model="selectedExtraText" class="text-area compact" placeholder="{ ... }"></BaseTextarea>
-                </label>
-                <div class="field-actions">
-                  <BaseButton class="btn" type="button" @click="applyExtraJson">应用 extra</BaseButton>
-                  <BaseButton class="btn" type="button" @click="clearExtra">清空 extra</BaseButton>
-                </div>
-              </details>
-              <div class="mobile-danger-zone">
-                <BaseButton class="btn danger" type="button" @click="removeSelectedEntry">🗑 删除此条目</BaseButton>
-                <BaseButton class="btn" type="button" @click="duplicateSelectedEntry">📋 复制条目</BaseButton>
+              </div>
+
+              <!-- Segment 3: 沉浸阅读 -->
+              <div v-show="mobileDetailSegment === 'read'" class="m-segment-body">
+                <article class="m-card m-reader-surface">
+                  <div class="m-reader-head">
+                    <h3 class="mobile-reading-title">{{ selectedEntry.name || `条目 ${selectedEntry.uid}` }}</h3>
+                    <div class="m-reader-pills">
+                      <span>{{ browseGetStrategyLabel(selectedEntry) }}</span>
+                      <span>{{ browseGetPositionLabel(selectedEntry) }}</span>
+                      <span>权重 {{ selectedEntry.position.order }}</span>
+                      <span>~{{ selectedTokenEstimate }}T</span>
+                    </div>
+                    <div v-if="selectedEntry.strategy.keys.length" class="mobile-reading-keys">
+                      <span v-for="(key, index) in selectedEntry.strategy.keys" :key="`mread-key-${selectedEntry.uid}-${index}`" class="browse-key-chip">{{ String(key) }}</span>
+                    </div>
+                  </div>
+                  <div class="mobile-reading-content">{{ selectedEntry.content || '暂无内容' }}</div>
+                  <div class="m-reader-footer">
+                    <BaseButton variant="primary" size="sm" @click="mobileDetailSegment = 'content'">
+                      <StudioIcon name="pen" :size="15" /> 编辑正文
+                    </BaseButton>
+                  </div>
+                </article>
               </div>
             </template>
-            <div v-else class="empty-block">请在列表中选择一个条目</div>
-          </div>
-          </Transition>
 
-          <!-- Tab: 复制 -->
-          <Transition name="mobile-tab">
-          <div v-show="mobileTab === 'copy'" class="mobile-pane">
+            <div v-else class="empty-block mobile-editor-empty m-empty-card">
+              <StudioIcon name="pen" :size="28" />
+              <strong>尚未选择条目</strong>
+              <span>从条目列表中点按任一条目，或直接新建一条设定。</span>
+              <BaseButton variant="primary" @click="mobileTab = 'list'">返回条目列表</BaseButton>
+            </div>
+          </div>
+
+          <!-- ═══ Tab 3: 全局与角色绑定页 ═══ -->
+          <div v-show="mobileTab === 'global'" class="mobile-pane m-global-pane">
+            <header class="m-page-head">
+              <div>
+                <h2>全局与绑定</h2>
+                <p>管理全局常驻世界书、预设组合与角色自动切换</p>
+              </div>
+              <BaseButton
+                size="sm"
+                :class="{ active: globalWorldbookMode }"
+                @click="toggleGlobalMode"
+              >
+                {{ globalWorldbookMode ? '仅选全局: 开' : '列表筛选全局' }}
+              </BaseButton>
+            </header>
+
+            <section class="m-card">
+              <div class="m-card-head">
+                <h4>当前会话生效状态</h4>
+              </div>
+              <div class="m-binding-overview">
+                <div class="m-binding-kv">
+                  <span>角色主书</span>
+                  <strong>{{ bindings.charPrimary || '未绑定' }}</strong>
+                </div>
+                <div class="m-binding-kv">
+                  <span>聊天世界书</span>
+                  <strong>{{ bindings.chat || '未绑定' }}</strong>
+                </div>
+                <div v-if="bindings.charAdditional.length" class="m-binding-kv full">
+                  <span>角色附加书</span>
+                  <strong>{{ bindings.charAdditional.join('、') }}</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="m-card">
+              <div class="m-card-head">
+                <h4>已启用全局世界书 ({{ bindings.global.length }})</h4>
+                <BaseButton size="sm" variant="danger" :disabled="!bindings.global.length" @click="clearGlobalWorldbooks">
+                  清空全部
+                </BaseButton>
+              </div>
+
+              <div v-if="filteredGlobalWorldbooks.length" class="m-global-list">
+                <div v-for="name in filteredGlobalWorldbooks" :key="`m-gl-${name}`" class="m-global-row">
+                  <!-- unified-control-exception: mobile global book open action -->
+                  <button type="button" class="m-global-book-open" @click="handleWorldbookSelectionUpdate(name); mobileTab = 'list'">
+                    <StudioIcon name="book" :size="15" />
+                    <span>{{ name }}</span>
+                  </button>
+                  <!-- unified-control-exception: mobile global book remove action -->
+                  <button type="button" class="m-global-book-remove" @click="removeGlobalWorldbook(name)">移除</button>
+                </div>
+              </div>
+              <div v-else class="m-inline-empty">当前没有启用任何全局世界书</div>
+
+              <div class="m-global-add-box">
+                <BaseInput
+                  v-model="globalAddSearchText"
+                  type="text"
+                  placeholder="搜索世界书并加入全局…"
+                  aria-label="搜索并添加全局世界书"
+                  @keydown.enter.prevent="addFirstGlobalCandidate"
+                >
+                  <template #prefix><StudioIcon name="search" :size="15" /></template>
+                </BaseInput>
+                <div v-if="globalAddCandidates.length" class="m-candidate-list">
+                  <!-- unified-control-exception: mobile global candidate add button -->
+                  <button
+                    v-for="name in globalAddCandidates.slice(0, 12)"
+                    :key="`m-add-${name}`"
+                    type="button"
+                    class="m-candidate-row"
+                    @click="addGlobalWorldbook(name)"
+                  >
+                    <span>{{ name }}</span>
+                    <b>+ 添加</b>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="m-card">
+              <div class="m-card-head">
+                <h4>全局预设与角色联动</h4>
+              </div>
+              <div class="m-form-stack">
+                <label class="field">
+                  <span>切换预设（即时应用）</span>
+                  <BaseSelect
+                    v-model="selectedGlobalPresetId"
+                    :options="globalPresetOptions"
+                    :searchable="false"
+                    size="sm"
+                    aria-label="全局预设"
+                    @update:model-value="onGlobalPresetSelectionChanged"
+                  />
+                </label>
+                <div class="m-row-actions">
+                  <BaseButton size="sm" :disabled="!bindings.global.length" @click="saveCurrentAsGlobalPreset">保存新预设</BaseButton>
+                  <BaseButton size="sm" :disabled="!selectedGlobalPreset" @click="overwriteSelectedGlobalPreset">覆盖预设</BaseButton>
+                  <BaseButton size="sm" variant="danger" :disabled="!selectedGlobalPreset" @click="deleteSelectedGlobalPreset">删除预设</BaseButton>
+                </div>
+              </div>
+
+              <div class="m-role-section">
+                <div class="m-role-status" :class="{ active: Boolean(currentRoleContext) }">
+                  {{ currentRoleContext ? `当前角色：${currentRoleContext.name}` : '当前未进入角色聊天' }}
+                </div>
+                <div class="m-row-actions">
+                  <BaseButton size="sm" :disabled="!selectedGlobalPreset || !currentRoleContext" @click="bindCurrentRoleToSelectedPreset">绑定当前角色</BaseButton>
+                  <BaseButton size="sm" :disabled="!selectedGlobalPreset || !isCurrentRoleBoundToSelectedPreset" @click="unbindCurrentRoleFromSelectedPreset">解绑当前角色</BaseButton>
+                </div>
+
+                <!-- unified-control-exception: mobile role picker accordion trigger -->
+                <button
+                  type="button"
+                  class="m-role-picker-toggle"
+                  :disabled="!selectedGlobalPreset"
+                  @click="toggleRolePicker"
+                >
+                  <span>{{ selectedGlobalPreset ? '从角色卡列表选择绑定' : '请先上方选择一个预设' }}</span>
+                  <StudioIcon :name="rolePickerOpen ? 'collapse' : 'chevron-down'" :size="15" />
+                </button>
+
+                <div v-if="rolePickerOpen && selectedGlobalPreset" class="m-role-picker-drawer">
+                  <BaseInput
+                    v-model="roleBindSearchText"
+                    type="text"
+                    placeholder="搜索角色名称…"
+                    aria-label="搜索角色名"
+                    @keydown.enter.prevent="bindFirstRoleCandidate"
+                  />
+                  <div class="m-candidate-list">
+                    <!-- unified-control-exception: mobile role candidate button -->
+                    <button
+                      v-for="candidate in roleBindingCandidates"
+                      :key="`m-role-${candidate.key}`"
+                      type="button"
+                      class="m-candidate-row"
+                      :disabled="candidate.bound"
+                      @click="bindRoleCandidateToSelectedPreset(candidate)"
+                    >
+                      <span>{{ candidate.name }}</span>
+                      <b>{{ candidate.bound ? '已绑定' : '+ 绑定' }}</b>
+                    </button>
+                    <div v-if="!roleBindingCandidates.length" class="m-inline-empty">没有匹配的角色卡</div>
+                  </div>
+                </div>
+
+                <div v-if="selectedGlobalPreset && selectedGlobalPresetRoleBindings.length" class="m-bound-roles">
+                  <!-- unified-control-exception: mobile bound role chip -->
+                  <button
+                    v-for="binding in selectedGlobalPresetRoleBindings"
+                    :key="`m-rb-${selectedGlobalPreset?.id}-${binding.key}`"
+                    type="button"
+                    class="m-bound-role-chip"
+                    @click="removeRoleBindingFromSelectedPreset(binding.key)"
+                  >
+                    <span>{{ binding.name }}</span>
+                    <i aria-hidden="true">×</i>
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- ═══ Tab 4: 工具箱主页 ═══ -->
+          <div v-show="mobileTab === 'tools'" class="mobile-pane studio-mobile-tools m-tools-pane">
+            <header class="m-page-head">
+              <div>
+                <h2>工作台工具</h2>
+                <p>{{ selectedWorldbookName ? `当前世界书：${selectedWorldbookName}` : '跨书迁移、AI 辅助生成与历史回滚' }}</p>
+              </div>
+            </header>
+
+            <section class="m-bento-grid">
+              <!-- unified-control-exception: mobile bento feature card -->
+              <button type="button" class="m-bento-card" @click="openMobileTool('copy')">
+                <span class="m-bento-icon"><StudioIcon name="copy" :size="20" /></span>
+                <strong>跨书复制</strong>
+                <small>对比差异并批量迁移条目</small>
+              </button>
+              <!-- unified-control-exception: mobile bento feature card -->
+              <button type="button" class="m-bento-card" @click="openMobileTool('ai')">
+                <span class="m-bento-icon"><StudioIcon name="sparkle" :size="20" /></span>
+                <strong>AI 对话工坊</strong>
+                <small>构思设定并一键生成条目</small>
+              </button>
+              <BaseButton type="button" class="m-bento-card m-bento-basebtn" @click="openAiConfigPage">
+                <span class="m-bento-icon"><StudioIcon name="sliders" :size="20" /></span>
+                <strong>AI配置</strong>
+                <small>自然语言批量修改策略位置</small>
+              </BaseButton>
+              <!-- unified-control-exception: mobile bento feature card -->
+              <button type="button" class="m-bento-card" @click="openMobileTool('tags')">
+                <span class="m-bento-icon"><StudioIcon name="tags" :size="20" /></span>
+                <strong>标签管理</strong>
+                <small>多层级分类与筛选世界书</small>
+              </button>
+            </section>
+
+            <section class="m-card m-list-card">
+              <div class="m-list-card-title">编辑与批处理</div>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" @click="toggleFloatingPanel('find')">
+                <StudioIcon name="search" :size="17" />
+                <span class="m-action-copy"><b>查找与替换</b><small>支持正则表达式与排除规则</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" @click="extractFromChat">
+                <StudioIcon name="chat" :size="17" />
+                <span class="m-action-copy"><b>从聊天提取世界书</b><small>扫描当前对话标签生成草稿条目</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" :disabled="!draftEntries.length" @click="sortEntries">
+                <StudioIcon name="sort" :size="17" />
+                <span class="m-action-copy"><b>按位置与权重排序</b><small>整理当前世界书条目顺序</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" :disabled="!draftEntries.length" @click="normalizeAllEntries">
+                <StudioIcon name="layers" :size="17" />
+                <span class="m-action-copy"><b>标准化全部条目</b><small>修复缺失字段并统一数据结构</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+            </section>
+
+            <section class="m-card m-list-card">
+              <div class="m-list-card-title">历史、监控与数据</div>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" :disabled="!selectedWorldbookName" @click="openWorldbookHistoryModal">
+                <StudioIcon name="history" :size="17" />
+                <span class="m-action-copy"><b>整本时光机</b><small>对比历史快照并整本回滚</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" :disabled="!selectedEntry" @click="openEntryHistoryModal">
+                <StudioIcon name="history" :size="17" />
+                <span class="m-action-copy"><b>当前条目时光机</b><small>{{ selectedEntry ? `查看 #${selectedEntry.uid} 的版本历史` : '请先选择一个条目' }}</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" @click="toggleFloatingPanel('activation')">
+                <StudioIcon name="activity" :size="17" />
+                <span class="m-action-copy"><b>激活监控</b><small>实时查看 WORLD_INFO_ACTIVATED 命中记录</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" @click="triggerImport">
+                <StudioIcon name="upload" :size="17" />
+                <span class="m-action-copy"><b>导入世界书 JSON</b><small>兼容酒馆原生与助手导出格式</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+              <!-- unified-control-exception: mobile action row -->
+              <button type="button" class="m-action-row" :disabled="!selectedWorldbookName" @click="exportCurrentWorldbook">
+                <StudioIcon name="download" :size="17" />
+                <span class="m-action-copy"><b>导出当前世界书</b><small>保存为本地 JSON 备份</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </button>
+              <BaseButton type="button" class="m-action-row m-action-basebtn" @click="openSettingsPage">
+                <StudioIcon name="settings" :size="17" />
+                <span class="m-action-copy"><b>设置中心</b><small>主题外观、字体排版、API 密钥与版本</small></span>
+                <StudioIcon name="chevron-right" :size="16" />
+              </BaseButton>
+            </section>
+          </div>
+
+          <!-- ═══ Sub-page: 跨书复制 ═══ -->
+          <div v-show="mobileTab === 'copy'" class="mobile-pane m-subpage-pane">
+            <div class="m-subpage-bar">
+              <BaseButton size="sm" class="m-back-btn" @click="mobileTab = 'tools'">
+                <StudioIcon name="chevron-left" :size="16" />
+                <span>工具</span>
+              </BaseButton>
+              <h3>跨书复制</h3>
+              <span class="m-subpage-spacer"></span>
+            </div>
             <CrossCopyPanel
               variant="mobile"
               :compared-text="crossCopyWorkspaceComparedText"
@@ -659,36 +1104,72 @@
                   </CrossCopyActionRows>
                 </template>
               </CrossCopyMobileStages>
-
             </CrossCopyPanel>
           </div>
-          </Transition>
 
-          <!-- Tab: AI -->
-          <Transition name="mobile-tab">
-          <div v-show="mobileTab === 'ai'" class="mobile-pane">
-            <AIChatPanel
-              :active-session="aiActiveSession"
-              :messages="aiActiveMessages"
-              :input="aiChatInputText"
-              :use-context="aiUseContext"
-              :is-generating="aiIsGenerating"
-              :streaming-text="aiStreamingText"
-              :is-mobile="true"
-              :show-empty-actions="true"
-              @create-session="aiCreateSession"
-              @extract-from-chat="extractFromChat"
-              @update:input="aiChatInputText = $event"
-              @update:use-context="aiUseContext = $event"
-              @send="aiSendMessage"
-              @stop-generation="aiStopGeneration"
-            />
+          <!-- ═══ Sub-page: AI 对话工坊 ═══ -->
+          <div v-show="mobileTab === 'ai'" class="mobile-pane m-subpage-pane m-ai-pane">
+            <div class="m-subpage-bar">
+              <BaseButton size="sm" class="m-back-btn" @click="mobileTab = 'tools'">
+                <StudioIcon name="chevron-left" :size="16" />
+                <span>工具</span>
+              </BaseButton>
+              <h3>AI 对话工坊</h3>
+              <BaseButton size="sm" variant="primary" @click="aiCreateSession">
+                <StudioIcon name="plus" :size="14" /> 新对话
+              </BaseButton>
+            </div>
+            <div v-if="aiSessions.length" class="m-ai-session-strip" aria-label="对话列表">
+              <div
+                v-for="session in aiSessions"
+                :key="session.id"
+                class="m-ai-session-pill"
+                :class="{ active: aiActiveSession?.id === session.id }"
+              >
+                <!-- unified-control-exception: mobile AI session switch button -->
+                <button type="button" class="m-ai-session-select" @click="aiSwitchSession(session.id)">
+                  {{ session.title }}
+                </button>
+                <!-- unified-control-exception: mobile AI session delete button -->
+                <button
+                  v-if="aiActiveSession?.id === session.id"
+                  type="button"
+                  class="m-ai-session-del"
+                  aria-label="删除当前对话"
+                  @click.stop="aiDeleteSession(session.id)"
+                >×</button>
+              </div>
+            </div>
+            <div class="m-ai-body">
+              <AIChatPanel
+                :active-session="aiActiveSession"
+                :messages="aiActiveMessages"
+                :input="aiChatInputText"
+                :use-context="aiUseContext"
+                :is-generating="aiIsGenerating"
+                :streaming-text="aiStreamingText"
+                :is-mobile="true"
+                :show-empty-actions="true"
+                @create-session="aiCreateSession"
+                @extract-from-chat="extractFromChat"
+                @update:input="aiChatInputText = $event"
+                @update:use-context="aiUseContext = $event"
+                @send="aiSendMessage"
+                @stop-generation="aiStopGeneration"
+              />
+            </div>
           </div>
-          </Transition>
 
-          <!-- Tab: 标签 -->
-          <Transition name="mobile-tab">
-          <div v-show="mobileTab === 'tags'" class="mobile-pane">
+          <!-- ═══ Sub-page: 标签管理 ═══ -->
+          <div v-show="mobileTab === 'tags'" class="mobile-pane m-subpage-pane">
+            <div class="m-subpage-bar">
+              <BaseButton size="sm" class="m-back-btn" @click="mobileTab = 'tools'">
+                <StudioIcon name="chevron-left" :size="16" />
+                <span>工具</span>
+              </BaseButton>
+              <h3>标签管理</h3>
+              <span class="m-subpage-spacer"></span>
+            </div>
             <TagEditorPanel
               mobile
               :rows="tagManagementRows"
@@ -717,125 +1198,80 @@
               @toggle-assignment="tagToggleAssignmentForSelectedTag"
             />
           </div>
-          </Transition>
 
-          <!-- Tab: 工具 Sheet -->
-          <Transition name="mobile-tab">
-          <div v-show="mobileTab === 'tools'" class="mobile-pane studio-mobile-tools">
-            <header class="studio-mobile-tools-head">
-              <div class="studio-mobile-tools-title">
-                <span class="studio-eyebrow">TOOLS</span>
-                <b>工具</b>
+        </div>
+
+        <!-- Worldbook Operations Bottom Sheet -->
+        <div v-if="mobileBookSheetOpen" class="m-sheet-backdrop" @click.self="mobileBookSheetOpen = false">
+          <div class="m-bottom-sheet" role="dialog" aria-modal="true" aria-label="世界书操作">
+            <div class="m-sheet-handle" aria-hidden="true"></div>
+            <div class="m-sheet-header">
+              <div>
+                <strong>{{ selectedWorldbookName || '世界书管理' }}</strong>
+                <span>共 {{ draftEntries.length }} 条目 · {{ totalContentChars }} 字符</span>
               </div>
-              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-              <button type="button" class="studio-mobile-tools-close" aria-label="关闭工具面板" @click="closeMobileToolsSheet">
+              <BaseButton size="sm" icon-only aria-label="关闭菜单" @click="mobileBookSheetOpen = false">
                 <StudioIcon name="close" :size="16" />
-              </button>
-            </header>
-
-            <section class="studio-mobile-sheet">
-              <div class="studio-mobile-sheet-head">
-                <b>全部工具</b>
-                <span class="studio-mobile-chip">长按条目可多选</span>
-              </div>
-              <div class="studio-tool-grid">
-                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                <button type="button" class="studio-mtool" @click="openMobileTool('global')"><StudioIcon name="globe" :size="18" /><span>全局</span></button>
-                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                <button type="button" class="studio-mtool" @click="openMobileTool('copy')"><StudioIcon name="copy" :size="18" /><span>跨书</span></button>
-                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                <button type="button" class="studio-mtool" @click="openMobileTool('ai')"><StudioIcon name="sparkle" :size="18" /><span>AI</span></button>
-                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                <button type="button" class="studio-mtool" @click="openMobileTool('history')"><StudioIcon name="history" :size="18" /><span>时光机</span></button>
-                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                <button type="button" class="studio-mtool" @click="openMobileTool('tags')"><StudioIcon name="tags" :size="18" /><span>标签</span></button>
-                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                <button type="button" class="studio-mtool" @click="toggleFloatingPanel('activation')"><StudioIcon name="activity" :size="18" /><span>激活</span></button>
-                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                <button type="button" class="studio-mtool" @click="triggerImport()"><StudioIcon name="upload" :size="18" /><span>导入</span></button>
-                <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                <button type="button" class="studio-mtool" @click="exportCurrentWorldbook()"><StudioIcon name="download" :size="18" /><span>导出</span></button>
-              </div>
-
-              <div v-if="selectedEntryCount" class="studio-mobile-batch">
-                <div class="studio-mobile-batch-head">
-                  <b>已选择 {{ selectedEntryCount }} 项</b>
-                  <span>批量操作</span>
-                </div>
-                <div class="studio-mobile-batch-actions">
-                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                  <button type="button" @click="setStudioSelectedEntriesEnabled(true)">启用</button>
-                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                  <button type="button" @click="setStudioSelectedEntriesEnabled(false)">停用</button>
-                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                  <button type="button" @click="duplicateStudioSelectedEntries()">复制</button>
-                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                  <button type="button" class="danger" @click="removeSelectedEntry()">删除</button>
-                  <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-                  <button type="button" @click="openMobileBatchConfig">批量配置</button>
-                </div>
-              </div>
-              <p v-else class="studio-mobile-empty">长按列表中的条目即可进入多选，批量按钮会出现在这里。</p>
-            </section>
-
-            <section class="studio-mobile-sheet">
-              <div class="studio-mobile-sheet-head">
-                <b>更多</b>
-                <span class="studio-mobile-chip">设置</span>
-              </div>
-              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-              <button type="button" class="studio-mobile-row" @click="extractFromChat">
-                <span class="studio-mobile-dot"></span>
-                <span class="studio-mobile-row-copy"><b>从聊天提取世界书</b><small>从当前对话生成草稿条目</small></span>
-                <StudioIcon name="arrow" :size="16" />
-              </button>
-              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-              <button type="button" class="studio-mobile-row" @click="openSettingsPage">
-                <span class="studio-mobile-dot"></span>
-                <span class="studio-mobile-row-copy"><b>助手设置</b><small>主题、悬浮球、密钥与快照</small></span>
-                <StudioIcon name="arrow" :size="16" />
-              </button>
-              <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-              <button type="button" class="studio-mobile-row" @click="toggleFloatingPanel('find')">
-                <span class="studio-mobile-dot"></span>
-                <span class="studio-mobile-row-copy"><b>查找替换</b><small>在当前世界书中搜索并替换</small></span>
-                <StudioIcon name="arrow" :size="16" />
-              </button>
-            </section>
+              </BaseButton>
+            </div>
+            <div class="m-sheet-grid">
+              <BaseButton variant="primary" size="sm" :disabled="!hasUnsavedChanges" @click="saveCurrentWorldbook(); mobileBookSheetOpen = false">
+                <StudioIcon name="save" :size="15" /> 保存更改
+              </BaseButton>
+              <BaseButton size="sm" @click="mobileBookSheetOpen = false; createNewWorldbook()">
+                <StudioIcon name="plus" :size="15" /> 新建世界书
+              </BaseButton>
+              <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="mobileBookSheetOpen = false; duplicateWorldbook()">
+                <StudioIcon name="copy" :size="15" /> 另存副本
+              </BaseButton>
+              <BaseButton size="sm" @click="mobileBookSheetOpen = false; triggerImport()">
+                <StudioIcon name="upload" :size="15" /> 导入 JSON
+              </BaseButton>
+              <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="mobileBookSheetOpen = false; exportCurrentWorldbook()">
+                <StudioIcon name="download" :size="15" /> 导出 JSON
+              </BaseButton>
+              <BaseButton size="sm" @click="mobileBookSheetOpen = false; extractFromChat()">
+                <StudioIcon name="chat" :size="15" /> 从聊天提取
+              </BaseButton>
+              <BaseButton size="sm" :disabled="!selectedWorldbookName" @click="mobileBookSheetOpen = false; openWorldbookHistoryModal()">
+                <StudioIcon name="history" :size="15" /> 整本时光机
+              </BaseButton>
+              <BaseButton size="sm" @click="openAiConfigPage">
+                <StudioIcon name="sliders" :size="15" /> AI配置
+              </BaseButton>
+              <BaseButton size="sm" @click="openSettingsPage">
+                <StudioIcon name="settings" :size="15" /> 设置中心
+              </BaseButton>
+              <BaseButton size="sm" variant="danger" :disabled="!selectedWorldbookName" @click="mobileBookSheetOpen = false; deleteCurrentWorldbook()">
+                <StudioIcon name="trash" :size="15" /> 删除世界书
+              </BaseButton>
+            </div>
           </div>
-          </Transition>
-
         </div>
       </div>
 
-      <!-- Tab Bar: bottom, direct child of wb-assistant-root via fragment -->
-      <div class="mobile-tab-bar" style="display:flex !important;flex-shrink:0;">
-        <BaseButton @click="switchPanelMode('browse')">
-          <span class="tab-icon"><StudioIcon name="eye" :size="19" /></span><span class="tab-label">浏览</span>
+      <!-- 4-Item Native Bottom Navigation Bar (hidden in full-screen entry editor) -->
+      <nav v-show="mobileTab !== 'edit'" class="mobile-tab-bar" aria-label="移动端主导航">
+        <BaseButton type="button" :class="{ active: mobileTab === 'list' }" @click="mobileTab = 'list'">
+          <span class="tab-icon"><StudioIcon name="list" :size="20" /></span>
+          <span class="tab-label">条目</span>
         </BaseButton>
-        <BaseButton @click="mobileTab = 'list'" :class="{ active: mobileTab === 'list' }">
-          <span class="tab-icon"><StudioIcon name="list" :size="19" /></span><span class="tab-label">列表</span>
+        <BaseButton type="button" :class="{ active: mobileTab === 'global' }" @click="mobileTab = 'global'">
+          <span class="tab-icon m-tab-icon-wrap">
+            <StudioIcon name="globe" :size="20" />
+            <em v-if="bindings.global.length" class="m-tab-badge">{{ bindings.global.length }}</em>
+          </span>
+          <span class="tab-label">全局</span>
         </BaseButton>
-        <BaseButton @click="mobileTab = 'edit'" :class="{ active: mobileTab === 'edit' }">
-          <span class="tab-icon"><StudioIcon name="pen" :size="19" /></span><span class="tab-label">编辑</span>
+        <BaseButton type="button" :class="{ active: ['tools', 'copy', 'ai', 'tags'].includes(mobileTab) }" @click="mobileTab = 'tools'">
+          <span class="tab-icon"><StudioIcon name="workbench" :size="20" /></span>
+          <span class="tab-label">工具</span>
         </BaseButton>
-        <BaseButton @click="mobileTab = 'settings'" :class="{ active: mobileTab === 'settings' }">
-          <span class="tab-icon"><StudioIcon name="sliders" :size="19" /></span><span class="tab-label">配置</span>
+        <BaseButton type="button" @click="openSettingsPage">
+          <span class="tab-icon"><StudioIcon name="settings" :size="20" /></span>
+          <span class="tab-label">设置</span>
         </BaseButton>
-        <BaseButton @click="mobileTab = 'tools'" :class="{ active: mobileTab === 'tools' }">
-          <span class="tab-icon"><StudioIcon name="workbench" :size="19" /></span><span class="tab-label">工具</span>
-        </BaseButton>
-        <BaseButton v-if="mobileTab === 'copy'" class="active" type="button" @click="mobileTab = 'copy'">
-          <span class="tab-icon"><StudioIcon name="copy" :size="19" /></span><span class="tab-label">复制</span>
-        </BaseButton>
-        <BaseButton v-if="mobileTab === 'ai'" class="active" type="button" @click="mobileTab = 'ai'">
-          <span class="tab-icon"><StudioIcon name="sparkle" :size="19" /></span><span class="tab-label">AI</span>
-        </BaseButton>
-        <BaseButton v-if="mobileTab === 'tags'" @click="mobileTab = 'tags'" class="active">
-          <span class="tab-icon"><StudioIcon name="tags" :size="19" /></span><span class="tab-label">标签</span>
-        </BaseButton>
-      </div>
-      </template><!-- end mobile editor mode -->
+      </nav>
     </template>
 
     <!-- ═══ Desktop Layout ═══ -->
@@ -1283,15 +1719,6 @@
               </div>
             </Transition>
           </section>
-
-          <!-- unified-control-exception: hidden native file input required for browser file picker -->
-          <input
-            ref="importFileInput"
-            class="hidden-input"
-            type="file"
-            accept=".json,application/json"
-            @change="onImportChange"
-          />
 
           <div class="wb-scroll-area" :class="{ 'copy-workspace': crossCopyMode && !isMobile }">
           <section
@@ -2349,6 +2776,9 @@
               {{ hasUnsavedChanges ? '存在未保存修改' : '已同步' }}
             </span>
           </footer>
+    </template><!-- end editor mode -->
+      </div>
+    </div>
     </template>
     <!-- ═══ End Desktop Layout ═══ -->
 
@@ -3031,9 +3461,6 @@
               </div>
             </div>
           </div>
-      </div>
-    </div>
-    </template><!-- end editor mode -->
     </div>
 
     <Transition name="studio-command-fade">
@@ -3516,7 +3943,8 @@ function closeMobileToolsSheet(): void {
 }
 
 function openMobileBatchConfig(): void {
-  mobileTab.value = 'settings';
+  mobileDetailSegment.value = 'config';
+  mobileTab.value = 'edit';
 }
 
 function openMobileTool(tool: 'global' | 'copy' | 'ai' | 'history' | 'tags'): void {
@@ -3548,10 +3976,7 @@ function openMobileTool(tool: 'global' | 'copy' | 'ai' | 'history' | 'tags'): vo
     openWorldbookHistoryModal();
     return;
   }
-  if (!globalWorldbookMode.value) {
-    toggleGlobalMode();
-  }
-  mobileTab.value = 'list';
+  mobileTab.value = 'global';
 }
 
 interface StudioCommand {
@@ -3874,7 +4299,12 @@ if (responsiveWindow) {
   };
 }
 const showMobileEditor = computed(() => isMobile.value && selectedEntryUid.value !== null);
-const mobileTab = ref<'list' | 'edit' | 'tools' | 'settings' | 'copy' | 'ai' | 'tags'>('list');
+const mobileTab = ref<'list' | 'edit' | 'global' | 'tools' | 'settings' | 'copy' | 'ai' | 'tags'>('list');
+const mobileDetailSegment = ref<'content' | 'config' | 'read'>('content');
+const mobileBookSheetOpen = ref(false);
+const mobileExpandedReadUid = ref<number | null>(null);
+const mobileSelectiveOnly = ref(false);
+const mobileContentExpanded = ref(false);
 const tagEditorMode = ref(false);
 const tagFilterPanelOpen = ref(false);
 const tagFilterSearchText = ref('');
@@ -3980,11 +4410,31 @@ const filteredEntries = computed(() => {
   let result = searchedEntries.value;
   if (studioConstantOnly.value) {
     result = result.filter(entry => entry.strategy.type === 'constant');
+  } else if (isMobile.value && mobileSelectiveOnly.value) {
+    result = result.filter(entry => entry.strategy.type === 'selective');
   }
   if (viewSortActive.value) {
     return [...result].sort(compareEntriesByPositionThenOrder);
   }
   return result;
+});
+
+const mobileNavigationEntries = computed(() => (
+  filteredEntries.value.length ? filteredEntries.value : draftEntries.value
+));
+
+const mobileCurrentNavIndex = computed(() => {
+  if (!selectedEntry.value) {
+    return -1;
+  }
+  return mobileNavigationEntries.value.findIndex(entry => entry.uid === selectedEntry.value?.uid);
+});
+
+const mobileEntryPositionText = computed(() => {
+  if (mobileCurrentNavIndex.value >= 0) {
+    return `${mobileCurrentNavIndex.value + 1} / ${mobileNavigationEntries.value.length}`;
+  }
+  return `${draftEntries.value.length} 条`;
 });
 
 const enabledEntryCount = computed(() => draftEntries.value.filter(entry => entry.enabled).length);
@@ -5592,6 +6042,12 @@ watch(isMobile, mobile => {
   mobileMultiSelectMode.value = false;
   mobileLongPressState.value = null;
   mobileSuppressNextTap.value = false;
+  mobileSelectiveOnly.value = false;
+  mobileBookSheetOpen.value = false;
+});
+
+watch(utilityPage, () => {
+  mobileBookSheetOpen.value = false;
 });
 
 watch(
@@ -6272,6 +6728,7 @@ function switchToEditorForEntry(uid: number): void {
     selectedEntryUid.value = uid;
     selectedEntryUids.value = [uid];
     selectedEntryAnchorUid.value = uid;
+    mobileDetailSegment.value = 'content';
     mobileTab.value = 'edit';
   } else {
     selectEntry(uid);
@@ -6371,6 +6828,86 @@ function onDesktopEditorScroll(event: Event): void {
   }
 }
 
+function onMobileListScroll(event: Event): void {
+  if (!mobileEditorHasMoreEntries.value) {
+    return;
+  }
+  const target = event.currentTarget as HTMLElement | null;
+  if (target && target.scrollHeight - target.scrollTop - target.clientHeight <= 240) {
+    mobileEditorLoadMore();
+  }
+}
+
+function setMobileListFilter(mode: 'all' | 'enabled' | 'constant' | 'selective'): void {
+  onlyEnabled.value = mode === 'enabled';
+  studioConstantOnly.value = mode === 'constant';
+  mobileSelectiveOnly.value = mode === 'selective';
+}
+
+function toggleMobileMultiSelectFromToolbar(): void {
+  if (mobileMultiSelectMode.value) {
+    finishMobileMultiSelectMode();
+    return;
+  }
+  const initialUid = selectedEntryUid.value ?? mobileEditorVisibleEntries.value[0]?.uid;
+  if (initialUid !== undefined) {
+    enterMobileMultiSelectMode(initialUid);
+  } else {
+    mobileMultiSelectMode.value = true;
+  }
+}
+
+function addMobileEntry(): void {
+  addEntry();
+  if (selectedEntryUid.value !== null) {
+    selectedEntryUids.value = [selectedEntryUid.value];
+    selectedEntryAnchorUid.value = selectedEntryUid.value;
+  }
+  mobileMultiSelectMode.value = false;
+  mobileDetailSegment.value = 'content';
+  mobileTab.value = 'edit';
+}
+
+function toggleMobileInlineRead(uid: number): void {
+  mobileExpandedReadUid.value = mobileExpandedReadUid.value === uid ? null : uid;
+}
+
+function openMobileEntryForEdit(uid: number, segment: 'content' | 'config' | 'read' = 'content'): void {
+  if (!draftEntries.value.some(entry => entry.uid === uid)) {
+    return;
+  }
+  mobileMultiSelectMode.value = false;
+  selectedEntryUid.value = uid;
+  selectedEntryUids.value = [uid];
+  selectedEntryAnchorUid.value = uid;
+  mobileDetailSegment.value = segment;
+  mobileTab.value = 'edit';
+}
+
+function returnFromMobileEditor(): void {
+  finishMobileKeywords(false);
+  finishMobileKeywords(true);
+  mobileTab.value = 'list';
+}
+
+function canSwitchMobileEntry(delta: -1 | 1): boolean {
+  const idx = mobileCurrentNavIndex.value;
+  return idx >= 0 && idx + delta >= 0 && idx + delta < mobileNavigationEntries.value.length;
+}
+
+function switchMobileAdjacentEntry(delta: -1 | 1): void {
+  const idx = mobileCurrentNavIndex.value;
+  const target = mobileNavigationEntries.value[idx + delta];
+  if (!target) {
+    return;
+  }
+  finishMobileKeywords(false);
+  finishMobileKeywords(true);
+  selectedEntryUid.value = target.uid;
+  selectedEntryUids.value = [target.uid];
+  selectedEntryAnchorUid.value = target.uid;
+}
+
 function resetEntryRenderLimits(): void {
   browseRenderLimit.value = BROWSE_RENDER_BATCH;
   desktopEditorRenderLimit.value = DESKTOP_EDITOR_RENDER_BATCH;
@@ -6378,9 +6915,13 @@ function resetEntryRenderLimits(): void {
 }
 
 watch(
-  [selectedWorldbookName, searchText, onlyEnabled, viewSortActive],
+  [selectedWorldbookName, searchText, onlyEnabled, studioConstantOnly, mobileSelectiveOnly, viewSortActive],
   resetEntryRenderLimits,
 );
+
+watch(selectedWorldbookName, () => {
+  mobileExpandedReadUid.value = null;
+});
 
 function normalizeCrossCopyWorldbookSelection(): void {
   const names = worldbookNames.value;
@@ -8388,6 +8929,7 @@ function selectEntry(uid: number, event?: MouseEvent): void {
     selectedEntryUid.value = uid;
     selectedEntryUids.value = [uid];
     selectedEntryAnchorUid.value = uid;
+    mobileDetailSegment.value = 'content';
     // Blur active input to prevent keyboard auto-popup on tab switch
     const active = document.activeElement;
     if (active instanceof HTMLElement) active.blur();
@@ -8957,6 +9499,9 @@ function removeSelectedEntry(): void {
   if (isMobile.value) {
     selectedEntryUid.value = null;
     selectedEntryAnchorUid.value = null;
+    if (mobileTab.value === 'edit') {
+      mobileTab.value = 'list';
+    }
   } else {
     ensureSelectedEntryExists();
   }
@@ -11456,6 +12001,7 @@ function updateHostPanelTheme(): void {
   const root = rootRef.value;
   const panel = root?.closest<HTMLElement>('#wb-assistant-panel');
   if (!root || !panel) return;
+  panel.dataset.wbTheme = currentTheme.value;
   const colors = THEMES[currentTheme.value].colors;
   const computedStyles = root.ownerDocument.defaultView?.getComputedStyle(root);
   const effective = (name: string, fallback: string): string =>
@@ -20268,88 +20814,6 @@ watch(hasUnsavedChanges, (val) => {
   font-size: 10.5px;
   color: var(--wb-text-dim, var(--wb-text-muted));
 }
-/* Mobile reading and writing workspace */
-.wb-assistant-root.is-mobile { padding: 0; gap: 0; }
-.is-mobile .mobile-pane { padding: 18px 16px 32px; }
-.mobile-page-heading, .mobile-editor-heading {
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
-  width: 100%; margin-bottom: 14px;
-}
-.mobile-page-heading h2, .mobile-editor-heading h2 {
-  margin: 4px 0 0; color: var(--wb-text-main); font-size: 23px; line-height: 1.2; letter-spacing: -.03em;
-}
-.mobile-kicker { color: var(--wb-primary); font-size: 10px; font-weight: 700; letter-spacing: .13em; }
-.mobile-heading-actions { display: flex; align-items: center; gap: 10px; }
-.mobile-save-state { color: var(--wb-text-muted); font-size: 11px; white-space: nowrap; }
-.is-mobile .mobile-library-toolbar, .is-mobile .mobile-browse-toolbar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px;
-  border: 0; border-radius: 0; background: var(--wb-bg-panel); box-shadow: none;
-}
-.is-mobile .mobile-library-toolbar { margin: -18px -16px 0; }
-.mobile-library-toolbar .toolbar-label { width: 100%; max-width: none; }
-.mobile-library-toolbar .toolbar-label > span { color: var(--wb-text-muted); font-size: 12px; font-weight: 600; }
-.is-mobile .mobile-library-toolbar .toolbar-btns { gap: 8px !important; padding: 2px 0 4px; }
-.is-mobile .mobile-library-toolbar .toolbar-btns :deep(.wb-control-button) {
-  min-height: 38px; padding: 8px 12px; border-radius: 10px; font-size: 12px;
-}
-.mobile-list-heading { display: flex; align-items: end; justify-content: space-between; gap: 8px; margin: 22px 0 12px; }
-.mobile-list-heading > div { display: flex; align-items: baseline; gap: 8px; }
-.mobile-list-heading strong { color: var(--wb-text-main); font-size: 17px; }
-.mobile-list-heading span, .mobile-list-heading small { color: var(--wb-text-muted); font-size: 11px; }
-.mobile-list-search { display: block; width: 100%; margin-bottom: 12px; }
-.is-mobile .mobile-list-search :deep(input), .is-mobile .mobile-browse-toolbar .browse-search :deep(input) {
-  min-height: 44px; padding-inline: 14px; border-radius: 11px; font-size: 16px;
-}
-.is-mobile .mobile-entry-list { gap: 9px; }
-.is-mobile .mobile-entry-list .entry-item {
-  padding: 15px !important; margin: 0 !important; border-radius: 14px !important;
-  background: var(--wb-bg-card); box-shadow: 0 3px 12px rgba(20, 30, 25, .04);
-}
-.is-mobile .mobile-entry-list .entry-item.selected, .is-mobile .mobile-entry-list .entry-item.primary {
-  border-color: var(--wb-primary) !important; background: color-mix(in srgb, var(--wb-primary) 6%, var(--wb-bg-card));
-}
-.is-mobile .mobile-entry-list .entry-item-title { font-size: 15px; font-weight: 650; }
-.is-mobile .mobile-entry-list .entry-item-keys { margin-top: 7px; color: var(--wb-text-muted); font-size: 12px; line-height: 1.5; }
-.is-mobile .mobile-entry-details { justify-content: flex-start; gap: 6px; margin-top: 10px; opacity: 1; }
-.is-mobile .mobile-entry-details span { padding: 4px 8px !important; border-radius: 6px !important; font-size: 11px !important; }
-.is-mobile .mobile-browse-toolbar .worldbook-picker { flex: 1 1 calc(100% - 55px); max-width: none; min-width: 0; }
-.is-mobile .mobile-browse-toolbar .browse-search { flex: 1 1 100%; order: 3; max-width: none; }
-.is-mobile .mobile-browse-scroll { padding: 8px 16px 24px; }
-.is-mobile .mobile-browse-bindings { display: flex; align-items: center; gap: 6px; padding: 8px 0 14px; }
-.is-mobile .browse-entry-count { margin-left: auto; color: var(--wb-text-muted); font-size: 12px; }
-.is-mobile .mobile-browse-grid { gap: 10px; }
-.is-mobile .mobile-browse-grid .browse-card { padding: 16px; border-radius: 14px; background: var(--wb-bg-card); box-shadow: 0 3px 12px rgba(20,30,25,.04); }
-.is-mobile .mobile-browse-grid .browse-card-header { min-height: 32px; gap: 9px; }
-.is-mobile .mobile-browse-grid .browse-card-title { font-size: 15px; line-height: 1.4; }
-.is-mobile .mobile-browse-grid .browse-card-preview { margin-top: 10px; font-size: 13px; line-height: 1.65; }
-.is-mobile .mobile-browse-grid .browse-card-keys { margin-top: 9px; font-size: 12px; }
-.is-mobile .mobile-browse-grid .browse-card-meta { margin-top: 12px; }
-.is-mobile .mobile-browse-grid .browse-card-expanded { padding-top: 14px; }
-.is-mobile .mobile-browse-grid .browse-card-expanded .field { margin-bottom: 12px; }
-.is-mobile .mobile-browse-grid .browse-card-expanded :deep(input),
-.is-mobile .mobile-browse-grid .browse-card-expanded :deep(textarea) { font-size: 16px; }
-.mobile-editor-heading { margin-bottom: 18px; }
-.mobile-editor-heading button { display: inline-flex; align-items: center; gap: 5px; min-height: 40px; padding: 0 11px; border: 1px solid var(--wb-border-subtle); border-radius: 10px; background: var(--wb-bg-card); color: var(--wb-text-main); font-size: 12px; }
-.is-mobile .mobile-pane .editor-head { padding: 16px; border: 1px solid var(--wb-border-subtle); border-radius: 14px; background: var(--wb-bg-card); }
-.is-mobile .mobile-pane .editor-head .editor-comment > span:first-child,
-.is-mobile .mobile-pane .editor-keyword-grid .field > span:first-child,
-.is-mobile .mobile-pane .editor-content-title { color: var(--wb-text-muted); font-size: 12px; font-weight: 650; letter-spacing: .03em; }
-.is-mobile .mobile-pane .editor-head .editor-comment :deep(input) { font-size: 20px; }
-.is-mobile .mobile-pane .editor-keyword-grid { gap: 12px; margin: 16px 0; }
-.is-mobile .mobile-pane .editor-keyword-grid .field { padding: 14px; border: 1px solid var(--wb-border-subtle); border-radius: 14px; background: var(--wb-bg-card); }
-.is-mobile .mobile-pane .editor-keyword-grid :deep(textarea) { font-size: 16px; line-height: 1.5; }
-.is-mobile .mobile-pane .editor-content-block { padding: 14px; border: 1px solid var(--wb-border-subtle); border-radius: 14px; background: var(--wb-bg-card); }
-.is-mobile .mobile-pane .editor-content-area { min-height: 300px !important; padding: 14px; font-size: 16px; line-height: 1.7; }
-.mobile-editor-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 20px; text-align: center; color: var(--wb-text-muted); }
-.mobile-editor-empty strong { color: var(--wb-text-main); font-size: 18px; }
-.is-mobile .mobile-tab-bar { height: calc(64px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px env(safe-area-inset-bottom, 0px); gap: 3px; }
-.is-mobile .mobile-tab-bar :deep(.wb-control-button) { flex: 1 0 48px; min-height: 52px; padding: 5px 4px; border-radius: 10px; font-size: 11px; }
-.is-mobile .mobile-tab-bar :deep(.wb-control-button.active) { color: var(--wb-primary); background: var(--wb-primary-soft); }
-.is-mobile .mobile-tab-bar .tab-icon { display: flex; align-items: center; justify-content: center; }
-.is-mobile .mobile-tab-bar .tab-label { font-size: 11px; }
-
-
-.is-mobile .mobile-pane .editor-head .editor-comment > span:first-child { display: block; }
 /* Give the desktop writing canvas the same readable hierarchy. */
 .wb-assistant-root:not(.is-mobile) .editor-center { padding: 24px 28px; gap: 18px; }
 .wb-assistant-root:not(.is-mobile) .editor-head .editor-comment :deep(.wb-control-input) { font-size: 24px; }
@@ -20358,107 +20822,6 @@ watch(hasUnsavedChanges, (val) => {
 .wb-assistant-root:not(.is-mobile) .editor-content-title { font-size: 11px; }
 .wb-assistant-root:not(.is-mobile) .editor-keyword-grid .text-area.compact { min-height: 42px; height: auto; font-size: 13px; }
 .wb-assistant-root:not(.is-mobile) .editor-content-area { font-size: 15px; }
-/* Text-first mobile archive, using the selected theme outside the default paper palette. */
-.wb-assistant-root.is-archive-mobile {
-  --wb-bg-root: #f8f5ee !important;
-  --wb-bg-panel: #faf7f0 !important;
-  --wb-bg-card: #faf7f0 !important;
-  --wb-bg-soft: #f0ece4 !important;
-  --wb-input-bg: #faf8f2 !important;
-  --wb-text-main: #172c46 !important;
-  --wb-text-muted: #687282 !important;
-  --wb-primary: #b9503f !important;
-  --wb-primary-light: #a94637 !important;
-  --wb-primary-soft: #f5e8de !important;
-  --wb-border-subtle: #e6e0d7 !important;
-  --wb-border-main: #d9d3ca !important;
-}
-.is-mobile .mobile-browse-view, .is-mobile .mobile-tab-view { background: var(--wb-bg-panel); }
-.is-mobile .mobile-browse-toolbar { padding: 18px 20px 12px; background: transparent; }
-.is-mobile .mobile-browse-toolbar .mobile-page-heading { margin-bottom: 2px; align-items: center; }
-.is-mobile .mobile-browse-toolbar h2 { margin: 0 0 6px; font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 28px; letter-spacing: .02em; }
-.is-mobile .mobile-browse-toolbar .worldbook-picker { flex-basis: 100%; }
-.is-mobile .mobile-browse-toolbar .browse-search { order: initial; }
-.is-mobile .mobile-browse-scroll { padding: 0 20px 20px; }
-.is-mobile .mobile-browse-bindings { padding: 8px 0; border-bottom: 1px solid var(--wb-border-subtle); }
-.is-mobile .mobile-browse-grid { gap: 0; }
-.is-mobile .mobile-browse-grid .browse-card:not(.expanded) {
-  padding: 16px 2px; border: 0; border-bottom: 1px solid var(--wb-border-subtle); border-radius: 0; background: transparent; box-shadow: none; opacity: 1;
-}
-.is-mobile .mobile-browse-grid .browse-card.disabled:not(.expanded) .browse-card-title { opacity: .6; }
-.is-mobile .mobile-browse-grid .browse-card-title { font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 18px; font-weight: 700; }
-.is-mobile .mobile-browse-grid .browse-card-preview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; color: var(--wb-text-main); font-size: 13px; line-height: 1.65; }
-.is-mobile .mobile-browse-grid .browse-key-chip, .mobile-reading-keys .browse-key-chip { padding: 4px 9px; border: 0; border-radius: 999px; background: var(--wb-bg-soft); color: var(--wb-text-main); font-size: 11px; }
-.is-mobile .mobile-browse-grid .browse-meta-pill { background: transparent; padding: 0; color: var(--wb-text-muted); font-size: 11px; }
-.is-mobile .mobile-browse-grid .browse-card.expanded { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; opacity: 1; }
-.is-mobile .mobile-browse-grid .browse-card.expanded .browse-card-expanded { padding: 0; border: 0; }
-.mobile-reading-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; }
-.mobile-reading-actions { display: flex; align-items: center; gap: 12px; }
-.mobile-reading-back { min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--wb-text-main); font-size: 15px; }
-.mobile-reading-title { margin: 16px 0; color: var(--wb-text-main); font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 27px; line-height: 1.3; overflow-wrap: anywhere; }
-.mobile-reading-keys { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
-.mobile-reading-meta { display: grid; gap: 9px; margin: 0; padding: 0 0 22px; border-bottom: 1px solid var(--wb-border-main); }
-.mobile-reading-meta div { display: flex; gap: 24px; font-size: 13px; }
-.mobile-reading-meta dt { flex: 0 0 36px; color: var(--wb-text-main); font-weight: 700; }
-.mobile-reading-meta dd { margin: 0; color: var(--wb-text-muted); }
-.mobile-reading-content { min-height: 160px; padding: 26px 2px; color: var(--wb-text-main); font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 16px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; }
-.is-mobile .mobile-reading-edit { width: 100%; min-height: 48px; margin-bottom: 12px; border-radius: 10px; font-size: 15px; }
-.mobile-inline-editor { margin: 0 0 12px; padding: 0 14px 14px; border: 1px solid var(--wb-border-subtle); border-radius: 10px; }
-.mobile-inline-editor summary { padding: 14px 0; color: var(--wb-text-main); font-size: 14px; font-weight: 600; cursor: pointer; }
-.is-mobile .mobile-editor-heading { align-items: center; margin-bottom: 8px; }
-.is-mobile .mobile-editor-heading h2 { margin: 0; font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 19px; }
-.is-mobile .mobile-editor-heading > button:first-child { padding: 0; border: 0; background: transparent; font-size: 14px; }
-.is-mobile .mobile-editor-heading :deep(.wb-control-button--primary) { min-height: 44px; padding: 0 18px; border-radius: 10px; }
-.mobile-editor-save-state { padding: 10px 12px; border-radius: 9px; background: var(--wb-primary-soft); color: var(--wb-primary-light); font-size: 12px; }
-.mobile-editor-enabled { display: flex; align-items: center; justify-content: space-between; min-height: 48px; margin-top: 8px; color: var(--wb-text-main); font-size: 14px; font-weight: 600; }
-.is-mobile .mobile-pane .editor-head { display: block; padding: 0; border: 0; border-radius: 0; background: transparent; }
-.is-mobile .mobile-pane .editor-head .editor-comment > span:first-child { margin-bottom: 7px; color: var(--wb-text-main); font-family: inherit; font-size: 14px; }
-.is-mobile .mobile-pane .editor-head .editor-comment :deep(input) { min-height: 44px; padding: 9px 12px; border: 1px solid var(--wb-border-main); border-radius: 9px; background: var(--wb-input-bg); font-size: 16px; font-weight: 400; letter-spacing: 0; }
-.is-mobile .mobile-pane .editor-badges { margin-top: 8px; }
-.is-mobile .mobile-pane .editor-keyword-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0; }
-.is-mobile .mobile-pane .editor-keyword-grid .field { padding: 0; border: 0; background: transparent; }
-.is-mobile .mobile-pane .editor-keyword-grid .field > span:first-child, .is-mobile .mobile-pane .editor-content-title { color: var(--wb-text-main); font-family: inherit; font-size: 14px; font-weight: 700; }
-.is-mobile .mobile-pane .editor-keyword-grid :deep(textarea) { min-height: 48px; height: auto; padding: 10px 12px; border: 1px solid var(--wb-border-main); border-radius: 9px; background: var(--wb-input-bg); }
-.is-mobile .mobile-pane .editor-content-block { padding: 0; border: 0; background: transparent; }
-.is-mobile .mobile-pane .editor-content-area { min-height: 300px !important; border: 1px solid var(--wb-border-main); border-radius: 9px; background: var(--wb-input-bg); font-family: 'Songti SC', 'Noto Serif CJK SC', serif; }
-.mobile-editor-config { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; margin-top: 16px; padding: 12px; border: 1px solid var(--wb-border-main); border-radius: 10px; background: transparent; color: var(--wb-text-main); text-align: left; }
-.mobile-editor-config > span:nth-child(2) { display: grid; flex: 1; gap: 4px; }
-.mobile-editor-config small { color: var(--wb-text-muted); font-size: 11px; }
-.is-mobile .mobile-tab-bar { border-color: var(--wb-border-subtle); background: var(--wb-bg-panel); }
-.is-mobile .mobile-tab-bar :deep(.wb-control-button.active) { background: transparent; color: var(--wb-primary); }
-
-/* Shared text-first entry list for both persisted mobile modes. */
-.is-mobile .mobile-archive-library { padding: 18px 20px 12px; border: 0; border-radius: 0; background: var(--wb-bg-panel); }
-.mobile-library-heading { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; }
-.mobile-library-heading h2 { margin: 0 0 6px; color: var(--wb-text-main); font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 28px; }
-.mobile-library-heading span { color: var(--wb-text-muted); font-size: 11px; }
-.mobile-library-picker { width: 100%; }
-.mobile-library-picker .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-.is-mobile .mobile-archive-library .mobile-list-search { width: 100%; margin: 0; }
-.mobile-archive-filters { display: flex; align-items: center; gap: 6px; width: 100%; overflow-x: auto; }
-.mobile-archive-filters :deep(.wb-control-button) { flex: 0 0 auto; min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--wb-bg-soft); color: var(--wb-text-main); font-size: 12px; }
-.mobile-archive-filters :deep(.wb-control-button.active) { background: var(--wb-primary); color: var(--wb-on-primary); }
-.mobile-library-actions { width: 100%; border-bottom: 1px solid var(--wb-border-subtle); }
-.mobile-library-actions summary { padding: 10px 0; color: var(--wb-text-muted); font-size: 12px; cursor: pointer; }
-.is-mobile .mobile-library-actions .toolbar-btns { flex-wrap: wrap !important; overflow: visible !important; padding-bottom: 10px; }
-.is-mobile .mobile-list-heading { margin: 16px 4px 8px; }
-.is-mobile .mobile-entry-list { gap: 0; }
-.is-mobile .mobile-entry-list .mobile-archive-entry { position: relative; display: block !important; padding: 0 !important; margin: 0 !important; border: 0 !important; border-bottom: 1px solid var(--wb-border-subtle) !important; border-radius: 0 !important; background: transparent; box-shadow: none; opacity: 1; }
-.is-mobile .mobile-entry-list .mobile-archive-entry.selected, .is-mobile .mobile-entry-list .mobile-archive-entry.primary { background: transparent; box-shadow: none; }
-.is-mobile .mobile-entry-list .mobile-archive-entry-main { display: flex !important; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; height: auto; min-height: 0; padding: 16px 0; border: 0; border-radius: 0; background: transparent; color: var(--wb-text-main); text-align: left; white-space: normal; }
-.is-mobile .mobile-entry-list .mobile-archive-entry-main .entry-item-head { box-sizing: border-box; padding-right: 90px; }
-.is-mobile .mobile-entry-list .mobile-archive-entry .entry-item-title { font-family: 'Songti SC', 'Noto Serif CJK SC', serif; font-size: 18px; font-weight: 700; }
-.mobile-archive-entry-toggle { position: absolute; top: 12px; right: 0; }
-.mobile-archive-keywords { display: flex; flex-wrap: wrap; gap: 5px; }
-.mobile-archive-keywords span { padding: 4px 9px; border-radius: 999px; background: var(--wb-bg-soft); color: var(--wb-text-main); font-size: 11px; }
-.mobile-archive-preview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; color: var(--wb-text-main); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
-.is-mobile .mobile-archive-entry .mobile-entry-details { justify-content: flex-start; margin: 0; }
-.is-mobile .mobile-archive-entry .mobile-entry-details span { padding: 0 !important; background: transparent !important; color: var(--wb-text-muted); }
-.mobile-reading-footer { flex: 0 0 auto; padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--wb-border-subtle); background: var(--wb-bg-panel); }
-.is-mobile .mobile-reading-footer .mobile-reading-edit { margin: 0; }
-
-.is-mobile .mobile-entry-list .mobile-archive-entry::before { display: none; }
-.is-mobile .mobile-pane .editor-keyword-grid :deep(textarea) { min-height: 48px !important; height: 48px !important; }
 </style>
 
 <style scoped src="./mobile-browse-redesign.css"></style>

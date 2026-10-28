@@ -18,6 +18,7 @@
   font-size: calc(var(--wb-user-font-size) * 1.15) !important;
 }
 .wb-assistant-root.wb-custom-font-size :deep(.mobile-archive-keywords span),
+.wb-assistant-root.wb-custom-font-size :deep(.m-reading-keys span),
 .wb-assistant-root.wb-custom-font-size :deep(.browse-key-chip),
 .wb-assistant-root.wb-custom-font-size :deep(.entry-item-keys) {
   font-size: calc(var(--wb-user-font-size) * 0.9) !important;
