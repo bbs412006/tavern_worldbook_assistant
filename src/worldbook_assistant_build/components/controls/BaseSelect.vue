@@ -164,8 +164,9 @@ function moveActive(direction: 1 | -1): void {
 }
 
 function ownerRoot(): HTMLElement | null {
-  return triggerRef.value?.closest('.wb-assistant-root') as HTMLElement | null
-    ?? triggerRef.value?.parentElement
+  const trigger = triggerRef.value;
+  return (trigger instanceof Element ? trigger.closest('.wb-assistant-root') as HTMLElement | null : null)
+    ?? trigger?.parentElement
     ?? null;
 }
 

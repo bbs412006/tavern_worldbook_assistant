@@ -6090,8 +6090,14 @@ watch(crossCopyDiffRow, row => {
 
 watch(mobileTab, tab => {
   // Dismiss any open dropdowns or floating menus when switching tabs
+  typographyModalOpen.value = false;
   const hostDoc = rootRef.value?.ownerDocument || document;
-  hostDoc.dispatchEvent(new Event('pointerdown'));
+  try {
+    const target = hostDoc.body || hostDoc.documentElement || hostDoc;
+    target.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
+  } catch {
+    // Ignore synthetic event errors
+  }
   if (tab !== 'copy') {
     return;
   }
@@ -12086,7 +12092,7 @@ function updateHostPanelTheme(): void {
   // The panel can be mounted in the parent document; use the rendered root's
   // effective variables so mobile overrides and glass mode match the header.
   const root = rootRef.value;
-  const panel = root?.closest<HTMLElement>('#wb-assistant-panel');
+  const panel = root instanceof Element ? root.closest<HTMLElement>('#wb-assistant-panel') : null;
   if (!root || !panel) return;
   panel.dataset.wbTheme = currentTheme.value;
   const colors = THEMES[currentTheme.value].colors;
@@ -12131,7 +12137,7 @@ const currentMobileTitle = computed(() => {
 });
 
 watch([currentMobileTitle, isMobile], ([title, mobile]) => {
-  const panel = rootRef.value?.closest('#wb-assistant-panel');
+  const panel = rootRef.value instanceof Element ? rootRef.value.closest('#wb-assistant-panel') : null;
   const strong = panel?.querySelector('.wb-assistant-title-copy strong');
   if (strong) {
     strong.textContent = mobile ? title : '世界书助手';

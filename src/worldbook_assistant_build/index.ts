@@ -879,12 +879,9 @@ function toggleThemeDropdown(panel: HTMLDivElement): void {
   });
 }
 
-function closeThemeDropdownOnOutside(event: PointerEvent): void {
-  const target = event.target as HTMLElement | null;
-  if (!target) {
-    return;
-  }
-  if (target.closest('.wb-assistant-theme') || target.closest('.wb-theme-dropdown')) {
+function closeThemeDropdownOnOutside(event: Event): void {
+  const target = event.target instanceof Element ? event.target : null;
+  if (target && (target.closest('.wb-assistant-theme') || target.closest('.wb-theme-dropdown'))) {
     return;
   }
   const doc = getHostDocument();
@@ -945,7 +942,7 @@ function enablePanelDrag(panel: HTMLDivElement): void {
     if (event.button !== 0) {
       return;
     }
-    if ((event.target as HTMLElement).closest('button')) {
+    if (event.target instanceof Element && event.target.closest('button')) {
       return;
     }
     const rect = panel.getBoundingClientRect();
@@ -2150,7 +2147,8 @@ function showExtractionModal(tags: ExtractedFloorTag[], mesId: number): void {
 
       // Click info area to expand/collapse (skip if clicking tag name or input)
       info.addEventListener('click', (e) => {
-        if ((e.target as HTMLElement).closest('.wbex-tag-name') || (e.target as HTMLElement).tagName === 'INPUT') return;
+        const targetEl = e.target instanceof Element ? e.target : null;
+        if (targetEl && (targetEl.closest('.wbex-tag-name') || targetEl.tagName === 'INPUT')) return;
         e.stopPropagation();
         const expanded = item.classList.toggle('expanded');
         if (expanded) {

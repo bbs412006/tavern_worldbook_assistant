@@ -1072,6 +1072,17 @@ describe('App utility navigation', () => {
     const segmentTabs = wrapper.findAll('.m-segmented [role="tab"]');
     expect(segmentTabs.map(tab => tab.text())).toEqual(['内容', '配置', '阅读']);
 
+    // Test tab switching safely dispatches pointerdown without TypeError: t.closest is not a function
+    vm.mobileTab = 'global';
+    await nextTick();
+    expect(vm.mobileTab).toBe('global');
+    vm.mobileTab = 'tools';
+    await nextTick();
+    expect(vm.mobileTab).toBe('tools');
+    vm.mobileTab = 'list';
+    await nextTick();
+    expect(vm.mobileTab).toBe('list');
+
     wrapper.unmount();
   });
 });
