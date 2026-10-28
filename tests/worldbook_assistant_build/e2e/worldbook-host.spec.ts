@@ -62,11 +62,15 @@ test('opens the redesigned list for existing mobile editor users and preserves l
   // The host fixture persists panel_mode: editor, as an existing user would.
   const list = page.locator('.mobile-entry-list');
   const rows = list.locator('.mobile-archive-entry');
-  await expect(page.getByRole('heading', { name: '世界书', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '世界书助手', exact: true })).toBeVisible();
   await expect(rows).toHaveCount(18);
   const first = rows.filter({ hasText: '大型世界书条目 1' }).first();
   await expect(first.locator('.mobile-archive-keywords')).toContainText('关键词1');
+  await expect(first.locator('.mobile-archive-preview')).toHaveCount(0);
+  await page.getByRole('button', { name: '切换精简与预览模式' }).click();
   await expect(first.locator('.mobile-archive-preview')).toContainText('这是第 1 个条目的正文内容');
+  await page.getByRole('button', { name: '切换精简与预览模式' }).click();
+  await expect(first.locator('.mobile-archive-preview')).toHaveCount(0);
   await expect(first.locator('.mobile-entry-details')).toContainText('权重 1');
 
   const firstSwitch = first.getByRole('switch', { name: '大型世界书条目 1启用状态' });
@@ -477,4 +481,66 @@ test('keeps the desktop large-list initial DOM bounded', async ({ page }) => {
 
   const count = await page.locator('.list-scroll .entry-item').count();
   expect(count).toBeLessThanOrEqual(60);
+});
+
+test('renders only a single header title across mobile and desktop views without duplicate inner headings', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAssistant(page);
+
+  const hostTitle = page.locator('#wb-assistant-panel .wb-assistant-title-copy strong');
+  await expect(hostTitle).toHaveText('世界书助手');
+  await expect(page.locator('.m-home-top h2, .m-page-head, .m-subpage-bar h3')).toHaveCount(0);
+
+  // Entry detail screen
+  await page.locator('.mobile-archive-entry-main').first().click();
+  await expect(hostTitle).toHaveText('编辑条目');
+  await expect(page.locator('.m-detail-title-box h2')).toHaveCount(0);
+  await page.locator('.m-detail-topbar').getByRole('button', { name: '返回' }).click();
+
+  // Global tab
+  await page.locator('.mobile-tab-bar').getByRole('button', { name: '全局', exact: true }).click();
+  await expect(hostTitle).toHaveText('全局与绑定');
+
+  // Tools tab and sub-pages
+  await page.locator('.mobile-tab-bar').getByRole('button', { name: '工具', exact: true }).click();
+  await expect(hostTitle).toHaveText('工作台工具');
+
+  await page.getByRole('button', { name: /跨书复制/ }).first().click();
+  await expect(hostTitle).toHaveText('跨书复制');
+  await expect(page.locator('.m-subpage-bar h3')).toHaveCount(0);
+  await page.locator('.m-subpage-pane:visible .m-back-btn').click();
+
+  await page.getByRole('button', { name: /标签管理/ }).first().click();
+  await expect(hostTitle).toHaveText('标签管理');
+  await expect(page.locator('.m-subpage-bar h3')).toHaveCount(0);
+  await page.locator('.m-subpage-pane:visible .m-back-btn').click();
+
+  // Settings & AI Config utility pages on mobile
+  await openUtilityPage(page, '⚙️ 设置', '⚙️ 设置中心');
+  await expect(hostTitle).toHaveText('⚙️ 设置中心');
+  await expect(page.locator('.utility-page-title')).toBeHidden();
+  await page.locator('.utility-page-back').click();
+
+  await openUtilityPage(page, '🔧 AI配置', '🔧 AI 配置世界书');
+  await expect(hostTitle).toHaveText('🔧 AI 配置世界书');
+  await expect(page.locator('.utility-page-title')).toBeHidden();
+  await page.locator('.utility-page-back').click();
+
+  // Desktop views
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(hostTitle).toHaveText('世界书助手');
+
+  await page.locator('.studio-rail [title="标签管理"]').click();
+  await expect(hostTitle).toHaveText('标签管理');
+  await expect(page.locator('.studio-tag-head h1')).toBeHidden();
+  await expect(page.locator('.tag-editor-title')).toBeHidden();
+
+  await page.locator('.studio-rail [title="跨书复制"]').click();
+  await expect(hostTitle).toHaveText('跨书复制');
+  await expect(page.locator('.wb-copy-workspace-head')).toBeHidden();
+  await expect(page.locator('.cross-copy-head-main strong')).toBeHidden();
+
+  await page.locator('.studio-rail [title="设置中心"]').click();
+  await expect(hostTitle).toHaveText('⚙️ 设置中心');
+  await expect(page.locator('.utility-page-title')).toBeHidden();
 });

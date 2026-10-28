@@ -773,7 +773,7 @@ function ensurePanelElement(): JQuery {
   <div class="wb-assistant-header">
     <div class="wb-assistant-header-title">
       <span class="wb-assistant-brand-mark">W/</span>
-      <span class="wb-assistant-title-copy"><strong>世界书助手</strong><small>WORLDBOOK STUDIO</small></span>
+      <span class="wb-assistant-title-copy"><strong role="heading" aria-level="1">世界书助手</strong><small>WORLDBOOK STUDIO</small></span>
     </div>
     <div class="wb-assistant-header-actions">
       <button type="button" class="wb-assistant-tool wb-assistant-refresh" title="刷新" aria-label="刷新"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-4L3 10M3 4v6h6M4 13a8 8 0 0 0 14 4l3-3M21 20v-6h-6"/></svg></button>

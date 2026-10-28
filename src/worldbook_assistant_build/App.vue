@@ -74,10 +74,33 @@
           <!-- ═══ Tab 1: 条目主页 (Unified List & Inline Reader) ═══ -->
           <div v-show="mobileTab === 'list'" class="mobile-pane m-list-pane" @scroll.passive="onMobileListScroll">
             <section class="wb-toolbar mobile-library-toolbar mobile-archive-library m-home-hero">
+              <label class="toolbar-label mobile-library-picker m-picker-wrap">
+                <span class="sr-only">世界书</span>
+                <WorldbookPicker
+                  class="archive-book-picker m-book-picker"
+                  :model-value="selectedWorldbookName"
+                  :names="selectableWorldbookNames"
+                  placeholder="请选择世界书"
+                  search-placeholder="搜索世界书..."
+                  no-match-text="没有匹配的世界书"
+                  show-tag-filter
+                  :tag-definitions="tagDefinitions"
+                  :tag-assignments="tagAssignments"
+                  :tag-path-map="tagPathMap"
+                  :selected-tag-ids="selectedTagFilterIds"
+                  :tag-filter-logic="tagFilterLogic"
+                  :tag-filter-match-mode="tagFilterMatchMode"
+                  mobile-tag-view
+                  @update:model-value="handleWorldbookSelectionUpdate"
+                  @update:selected-tag-ids="updateSelectedTagFilterIds"
+                  @update:tag-filter-logic="updateTagFilterLogic"
+                  @update:tag-filter-match-mode="updateTagFilterMatchMode"
+                />
+              </label>
+
               <div class="m-home-top">
                 <div class="m-home-title-wrap">
-                  <h2>世界书</h2>
-                  <span class="m-home-count">{{ draftEntries.length }} 条目 · {{ enabledEntryCount }} 启用</span>
+                  <span class="m-home-count">共 {{ draftEntries.length }} 条目 · {{ enabledEntryCount }} 启用</span>
                 </div>
                 <div class="m-home-actions">
                   <BaseButton
@@ -113,30 +136,6 @@
                   </BaseButton>
                 </div>
               </div>
-
-              <label class="toolbar-label mobile-library-picker m-picker-wrap">
-                <span class="sr-only">世界书</span>
-                <WorldbookPicker
-                  class="archive-book-picker m-book-picker"
-                  :model-value="selectedWorldbookName"
-                  :names="selectableWorldbookNames"
-                  placeholder="请选择世界书"
-                  search-placeholder="搜索世界书..."
-                  no-match-text="没有匹配的世界书"
-                  show-tag-filter
-                  :tag-definitions="tagDefinitions"
-                  :tag-assignments="tagAssignments"
-                  :tag-path-map="tagPathMap"
-                  :selected-tag-ids="selectedTagFilterIds"
-                  :tag-filter-logic="tagFilterLogic"
-                  :tag-filter-match-mode="tagFilterMatchMode"
-                  mobile-tag-view
-                  @update:model-value="handleWorldbookSelectionUpdate"
-                  @update:selected-tag-ids="updateSelectedTagFilterIds"
-                  @update:tag-filter-logic="updateTagFilterLogic"
-                  @update:tag-filter-match-mode="updateTagFilterMatchMode"
-                />
-              </label>
 
               <div class="m-status-strip">
                 <div class="m-binding-pills">
@@ -407,8 +406,7 @@
                     <StudioIcon name="chevron-left" :size="15" />
                   </button>
                   <div class="m-detail-title-box">
-                    <h2>编辑条目</h2>
-                    <small>#{{ selectedEntry.uid }} · {{ mobileEntryPositionText }}</small>
+                    <span class="m-detail-pos-pill">#{{ selectedEntry.uid }} · {{ mobileEntryPositionText }}</span>
                   </div>
                   <!-- unified-control-exception: mobile next entry nav -->
                   <button
@@ -754,23 +752,17 @@
 
           <!-- ═══ Tab 3: 全局与角色绑定页 ═══ -->
           <div v-show="mobileTab === 'global'" class="mobile-pane m-global-pane">
-            <header class="m-page-head">
-              <div>
-                <h2>全局与绑定</h2>
-                <p>管理全局常驻世界书、预设组合与角色自动切换</p>
-              </div>
-              <BaseButton
-                size="sm"
-                :class="{ active: globalWorldbookMode }"
-                @click="toggleGlobalMode"
-              >
-                {{ globalWorldbookMode ? '仅选全局: 开' : '列表筛选全局' }}
-              </BaseButton>
-            </header>
-
             <section class="m-card">
               <div class="m-card-head">
                 <h4>当前会话生效状态</h4>
+                <BaseButton
+                  size="sm"
+                  class="m-global-filter-btn"
+                  :class="{ active: globalWorldbookMode }"
+                  @click="toggleGlobalMode"
+                >
+                  {{ globalWorldbookMode ? '仅选全局: 开' : '列表筛选全局' }}
+                </BaseButton>
               </div>
               <div class="m-binding-overview">
                 <div class="m-binding-kv">
@@ -922,13 +914,6 @@
 
           <!-- ═══ Tab 4: 工具箱主页 ═══ -->
           <div v-show="mobileTab === 'tools'" class="mobile-pane studio-mobile-tools m-tools-pane">
-            <header class="m-page-head">
-              <div>
-                <h2>工作台工具</h2>
-                <p>{{ selectedWorldbookName ? `当前世界书：${selectedWorldbookName}` : '跨书迁移、AI 辅助生成与历史回滚' }}</p>
-              </div>
-            </header>
-
             <section class="m-bento-grid">
               <!-- unified-control-exception: mobile bento feature card -->
               <button type="button" class="m-bento-card" @click="openMobileTool('copy')">
@@ -1028,10 +1013,8 @@
             <div class="m-subpage-bar">
               <BaseButton size="sm" class="m-back-btn" @click="mobileTab = 'tools'">
                 <StudioIcon name="chevron-left" :size="16" />
-                <span>工具</span>
+                <span>返回工具</span>
               </BaseButton>
-              <h3>跨书复制</h3>
-              <span class="m-subpage-spacer"></span>
             </div>
             <CrossCopyPanel
               variant="mobile"
@@ -1140,9 +1123,8 @@
             <div class="m-subpage-bar">
               <BaseButton size="sm" class="m-back-btn" @click="mobileTab = 'tools'">
                 <StudioIcon name="chevron-left" :size="16" />
-                <span>工具</span>
+                <span>返回工具</span>
               </BaseButton>
-              <h3>AI 对话工坊</h3>
               <BaseButton size="sm" variant="primary" @click="aiCreateSession">
                 <StudioIcon name="plus" :size="14" /> 新对话
               </BaseButton>
@@ -1193,10 +1175,8 @@
             <div class="m-subpage-bar">
               <BaseButton size="sm" class="m-back-btn" @click="mobileTab = 'tools'">
                 <StudioIcon name="chevron-left" :size="16" />
-                <span>工具</span>
+                <span>返回工具</span>
               </BaseButton>
-              <h3>标签管理</h3>
-              <span class="m-subpage-spacer"></span>
             </div>
             <TagEditorPanel
               mobile
@@ -1898,7 +1878,7 @@
             </Transition>
             <div v-if="globalWorldbookMode" class="global-mode-panel studio-module-page studio-global-page">
               <div class="global-mode-head">
-                <span class="global-mode-title">全局世界书（{{ bindings.global.length }}）</span>
+                <span class="global-mode-title">已启用常驻世界书（{{ bindings.global.length }}）</span>
                 <BaseButton class="btn mini danger" type="button" :disabled="!bindings.global.length" @click="clearGlobalWorldbooks">
                   清空全局
                 </BaseButton>
@@ -6103,6 +6083,9 @@ watch(mobileTab, tab => {
     // Ignore synthetic event errors
   }
   if (tab !== 'copy') {
+    if (isMobile.value && crossCopyMode.value) {
+      setCrossCopyModeActive(false);
+    }
     return;
   }
   globalWorldbookMode.value = false;
@@ -12017,6 +12000,7 @@ onMounted(() => {
 
   handleFloatingWindowResize();
   updateHostPanelTheme();
+  updateHostPanelTitle();
   void hardRefresh({
     source: 'manual',
     reason: '初始化加载',
@@ -12128,25 +12112,48 @@ function updateHostPanelTheme(): void {
 
 watch([currentTheme, isMobile, () => persistedState.value.glass_mode, () => persistedState.value.typography.family, () => persistedState.value.typography.scope, () => persistedState.value.typography.color, () => persistedState.value.typography.size, () => persistedState.value.typography.weight], updateHostPanelTheme, { flush: 'post' });
 
-const currentMobileTitle = computed(() => {
-  if (utilityPage.value === 'settings') return '⚙️ 设置中心';
-  if (utilityPage.value === 'ai-config') return '🔧 AI配置';
-  if (mobileTab.value === 'edit') return '编辑条目';
-  if (mobileTab.value === 'global') return '全局与绑定';
-  if (mobileTab.value === 'tools') return '工作台工具';
-  if (mobileTab.value === 'copy') return '跨书复制';
-  if (mobileTab.value === 'ai') return 'AI对话工坊';
-  if (mobileTab.value === 'tags') return '标签管理';
-  return '世界书助手';
+const currentPanelHeader = computed<{ title: string; subtitle: string }>(() => {
+  if (utilityPage.value === 'settings') {
+    return { title: '⚙️ 设置中心', subtitle: 'SETTINGS' };
+  }
+  if (utilityPage.value === 'ai-config') {
+    return {
+      title: aiConfigPreview.value && !aiConfigGenerating.value ? '📋 配置变更预览' : '🔧 AI 配置世界书',
+      subtitle: 'AI CONFIG',
+    };
+  }
+  if (isMobile.value) {
+    if (mobileTab.value === 'edit') return { title: '编辑条目', subtitle: 'ENTRY EDITOR' };
+    if (mobileTab.value === 'global') return { title: '全局与绑定', subtitle: 'GLOBAL BINDINGS' };
+    if (mobileTab.value === 'tools') return { title: '工作台工具', subtitle: 'WORKBENCH TOOLS' };
+    if (mobileTab.value === 'copy') return { title: '跨书复制', subtitle: 'CROSS COPY' };
+    if (mobileTab.value === 'ai') return { title: 'AI 对话工坊', subtitle: 'AI WORKSPACE' };
+    if (mobileTab.value === 'tags') return { title: '标签管理', subtitle: 'TAG SYSTEM' };
+    return { title: '世界书助手', subtitle: 'WORLDBOOK STUDIO' };
+  }
+  if (panelMode.value === 'browse') return { title: '世界书浏览', subtitle: 'WORLDBOOK BROWSE' };
+  if (aiGeneratorMode.value) return { title: 'AI 工坊', subtitle: 'AI WORKSPACE' };
+  if (tagEditorMode.value) return { title: '标签管理', subtitle: 'TAG SYSTEM' };
+  if (crossCopyMode.value) return { title: '跨书复制', subtitle: 'CROSS COPY' };
+  if (globalWorldbookMode.value) return { title: '全局与绑定', subtitle: 'GLOBAL BINDINGS' };
+  if (historyHubMode.value) return { title: '时间线', subtitle: 'TIMELINE' };
+  return { title: '世界书助手', subtitle: 'WORLDBOOK STUDIO' };
 });
 
-watch([currentMobileTitle, isMobile], ([title, mobile]) => {
-  const panel = rootRef.value instanceof Element ? rootRef.value.closest('#wb-assistant-panel') : null;
-  const strong = panel?.querySelector('.wb-assistant-title-copy strong');
-  if (strong) {
-    strong.textContent = mobile ? title : '世界书助手';
-  }
-}, { flush: 'post' });
+function updateHostPanelTitle(): void {
+  const root = rootRef.value;
+  const panel =
+    (root instanceof Element ? root.closest<HTMLElement>('#wb-assistant-panel') : null) ??
+    hostResizeWindow.value?.document.getElementById('wb-assistant-panel') ??
+    document.getElementById('wb-assistant-panel');
+  if (!panel) return;
+  const strong = panel.querySelector('.wb-assistant-title-copy strong');
+  const small = panel.querySelector('.wb-assistant-title-copy small');
+  if (strong) strong.textContent = currentPanelHeader.value.title;
+  if (small) small.textContent = currentPanelHeader.value.subtitle;
+}
+
+watch(currentPanelHeader, updateHostPanelTitle, { flush: 'post' });
 
 watch(() => persistedState.value.theme, theme => {
   if (theme in THEMES && currentTheme.value !== theme) {
@@ -18909,24 +18916,44 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .wb-assistant-root :deep(.utility-page-header) {
-  min-height: 54px;
-  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 44px;
+  padding: 6px 16px;
   border-bottom: 1px solid var(--studio-line);
   background: color-mix(in srgb, var(--studio-surface) 92%, transparent);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.01);
 }
 
+.wb-assistant-root :deep(.utility-page-header:has(.utility-page-back-placeholder)) {
+  display: none;
+}
+
 .wb-assistant-root :deep(.utility-page-title) {
-  font-size: 15px;
-  font-weight: 620;
-  letter-spacing: -0.025em;
+  display: none;
 }
 
 .wb-assistant-root :deep(.utility-page-back) {
-  border-color: transparent;
-  background: transparent;
-  color: var(--wb-text-muted);
-  font-size: 10px;
+  border-color: var(--studio-line);
+  background: var(--studio-surface);
+  color: var(--wb-text-main);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.wb-assistant-root :deep(.browse-heading) {
+  display: none;
+}
+
+.wb-assistant-root :deep(.browse-header) {
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+.wb-assistant-root :deep(.browse-header-controls) {
+  width: 100%;
+  justify-content: space-between;
 }
 
 .wb-assistant-root :deep(.utility-page-body) {
@@ -19372,15 +19399,7 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .studio-rail-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 0 0 15px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
+  display: none;
 }
 
 .studio-rail-brand span {
@@ -19586,7 +19605,8 @@ watch(hasUnsavedChanges, (val) => {
   opacity: .45;
 }
 
-.studio-desktop-main .wb-history-shortcuts {
+.studio-desktop-main .wb-history-shortcuts,
+.studio-desktop-main .wb-copy-workspace-head {
   display: none;
 }
 
@@ -20421,25 +20441,21 @@ watch(hasUnsavedChanges, (val) => {
 
 .studio-module-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 13px;
+  margin-bottom: 10px;
 }
 
+.studio-module-head .studio-eyebrow,
 .studio-module-head h1 {
-  margin: 5px 0 0;
-  color: var(--wb-text-main);
-  font-family: var(--studio-serif, "Songti SC", serif);
-  font-size: 25px;
-  font-weight: 550;
-  letter-spacing: -.035em;
+  display: none;
 }
 
 .studio-module-head p {
-  margin: 5px 0 0;
+  margin: 0;
   color: var(--wb-text-muted);
-  font-size: 9px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 .studio-module-head-actions {
@@ -20554,7 +20570,7 @@ watch(hasUnsavedChanges, (val) => {
   overflow-y: auto;
 }
 
-.studio-tag-page .tag-editor-title {
+.studio-tag-page :deep(.tag-editor-title) {
   display: none;
 }
 
@@ -20661,6 +20677,10 @@ watch(hasUnsavedChanges, (val) => {
   border-radius: 12px;
   background: var(--studio-surface);
   box-shadow: var(--studio-shadow);
+}
+
+.studio-copy-page :deep(.cross-copy-head-main strong) {
+  display: none;
 }
 
 .studio-global-page .global-mode-grid {

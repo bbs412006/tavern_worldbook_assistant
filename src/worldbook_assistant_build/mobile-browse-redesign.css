@@ -229,27 +229,15 @@
 .wb-assistant-root.is-mobile .m-home-title-wrap {
   display: flex;
   flex: 1 1 auto;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   min-width: 0;
 }
 
-.wb-assistant-root.is-mobile .m-home-title-wrap h2 {
-  margin: 0;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--wb-text-main);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
 .wb-assistant-root.is-mobile .m-home-count {
   color: var(--wb-text-muted);
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1029,40 +1017,19 @@
   line-height: 1.5;
 }
 
-/* ── Page Header (Global & Tools Tabs) ── */
-.wb-assistant-root.is-mobile .m-page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 2px 2px 8px;
-}
-
-.wb-assistant-root.is-mobile .m-page-head h2 {
-  margin: 0;
-  color: var(--wb-text-main);
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.wb-assistant-root.is-mobile .m-page-head p {
-  margin: 2px 0 0;
-  color: var(--wb-text-muted);
-  font-size: 11px;
-}
-
-.wb-assistant-root.is-mobile .m-page-head :deep(.wb-control-button) {
-  min-height: 36px !important;
-  height: 36px;
-  padding: 0 11px !important;
-  border-radius: 10px;
+/* ── Global Card Filter Action ── */
+.wb-assistant-root.is-mobile .m-card-head :deep(.m-global-filter-btn) {
+  min-height: 32px !important;
+  height: 32px;
+  padding: 0 10px !important;
+  border-radius: 9px;
   border: 1px solid var(--wb-border-subtle) !important;
-  background: var(--wb-bg-card);
-  font-size: 12px;
+  background: var(--wb-bg-soft);
+  font-size: 11.5px;
+  font-weight: 600;
 }
 
-.wb-assistant-root.is-mobile .m-page-head :deep(.wb-control-button.active) {
+.wb-assistant-root.is-mobile .m-card-head :deep(.m-global-filter-btn.active) {
   border-color: var(--wb-primary) !important;
   background: var(--wb-primary-soft);
   color: var(--wb-primary);
@@ -1420,32 +1387,32 @@
 
 /* ── Tool Sub-Pages (Copy, AI Workshop, Tags) ── */
 .wb-assistant-root.is-mobile .m-subpage-bar {
-  display: grid;
-  grid-template-columns: minmax(64px, 1fr) minmax(0, auto) minmax(64px, 1fr);
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  min-height: 40px;
+  padding: 0 0 8px;
+}
+
+.wb-assistant-root.is-mobile :deep(.utility-page-header) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   min-height: 44px;
-  padding: 0 0 10px;
+  padding: 6px 12px;
 }
 
-.wb-assistant-root.is-mobile .m-subpage-bar h3 {
-  margin: 0;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.wb-assistant-root.is-mobile :deep(.utility-page-back) {
+  min-height: 36px !important;
+  height: 36px;
+  padding: 0 12px !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--wb-border-subtle) !important;
+  background: var(--wb-bg-card) !important;
   color: var(--wb-text-main);
-  font-size: 16px;
-  font-weight: 700;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.wb-assistant-root.is-mobile .m-subpage-bar > :first-child {
-  justify-self: start;
-}
-
-.wb-assistant-root.is-mobile .m-subpage-bar > :last-child {
-  justify-self: end;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .wb-assistant-root.is-mobile :deep(.m-back-btn) {
