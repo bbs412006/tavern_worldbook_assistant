@@ -1,6 +1,6 @@
 <template>
   <section class="tag-editor-panel" :class="{ 'mobile-tag-editor': mobile }" :style="panelStyle">
-    <div class="tag-editor-title">🏷️ 标签管理</div>
+    <div v-if="!mobile" class="tag-editor-title">🏷️ 标签管理</div>
     <TagCreatePanel
       :name="newName"
       :parent-id="newParentId"

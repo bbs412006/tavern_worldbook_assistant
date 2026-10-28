@@ -1,7 +1,6 @@
 <template>
   <section class="cross-copy-panel mobile">
-    <div class="cross-copy-head">
-      <strong>📚 跨世界书复制</strong>
+    <div v-if="comparedText" class="cross-copy-head">
       <span>{{ comparedText }}</span>
     </div>
     <CrossCopyMobileStepper

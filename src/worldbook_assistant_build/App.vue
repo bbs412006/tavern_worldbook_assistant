@@ -6005,6 +6005,9 @@ watch(crossCopyDiffRow, row => {
 });
 
 watch(mobileTab, tab => {
+  // Dismiss any open dropdowns or floating menus when switching tabs
+  const hostDoc = rootRef.value?.ownerDocument || document;
+  hostDoc.dispatchEvent(new Event('pointerdown'));
   if (tab !== 'copy') {
     return;
   }
@@ -12031,6 +12034,26 @@ function updateHostPanelTheme(): void {
 
 watch([currentTheme, isMobile, () => persistedState.value.glass_mode, () => persistedState.value.typography.family, () => persistedState.value.typography.scope, () => persistedState.value.typography.color, () => persistedState.value.typography.size, () => persistedState.value.typography.weight], updateHostPanelTheme, { flush: 'post' });
 
+const currentMobileTitle = computed(() => {
+  if (utilityPage.value === 'settings') return '⚙️ 设置中心';
+  if (utilityPage.value === 'ai-config') return '🔧 AI配置';
+  if (mobileTab.value === 'edit') return '编辑条目';
+  if (mobileTab.value === 'global') return '全局与绑定';
+  if (mobileTab.value === 'tools') return '工作台工具';
+  if (mobileTab.value === 'copy') return '跨书复制';
+  if (mobileTab.value === 'ai') return 'AI对话工坊';
+  if (mobileTab.value === 'tags') return '标签管理';
+  return '世界书助手';
+});
+
+watch([currentMobileTitle, isMobile], ([title, mobile]) => {
+  const panel = rootRef.value?.closest('#wb-assistant-panel');
+  const strong = panel?.querySelector('.wb-assistant-title-copy strong');
+  if (strong) {
+    strong.textContent = mobile ? title : '世界书助手';
+  }
+}, { flush: 'post' });
+
 watch(() => persistedState.value.theme, theme => {
   if (theme in THEMES && currentTheme.value !== theme) {
     currentTheme.value = theme;
@@ -12464,7 +12487,7 @@ watch(hasUnsavedChanges, (val) => {
   --wb-control-border-hover: var(--wb-primary-light);
   --wb-control-focus-ring: 0 0 0 2px color-mix(in srgb, var(--wb-primary) 34%, transparent);
   --wb-control-disabled-opacity: 0.5;
-  --wb-control-menu-bg: var(--wb-dropdown-bg, var(--wb-bg-panel));
+  --wb-control-menu-bg: var(--wb-bg-panel);
   --wb-control-menu-shadow: var(--wb-shadow-main);
   --wb-control-option-active: var(--wb-primary-hover);
   --wb-control-option-selected: var(--wb-primary-soft);

@@ -208,13 +208,13 @@ function addOpenListeners(): void {
     request: ownerWindow.requestAnimationFrame.bind(ownerWindow),
     cancel: ownerWindow.cancelAnimationFrame.bind(ownerWindow),
   });
-  ownerDocument.addEventListener('pointerdown', onOwnerPointerDown);
+  ownerDocument.addEventListener('pointerdown', onOwnerPointerDown, true);
   ownerDocument.addEventListener('scroll', schedulePlacement, true);
   ownerWindow.addEventListener('resize', schedulePlacement);
 }
 
 function removeOpenListeners(): void {
-  ownerDocument?.removeEventListener('pointerdown', onOwnerPointerDown);
+  ownerDocument?.removeEventListener('pointerdown', onOwnerPointerDown, true);
   ownerDocument?.removeEventListener('scroll', schedulePlacement, true);
   ownerWindow?.removeEventListener('resize', schedulePlacement);
   frame?.dispose();
