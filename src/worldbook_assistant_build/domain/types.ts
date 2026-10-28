@@ -307,6 +307,7 @@ export interface PersistedState {
   cross_copy: CrossCopyPersistState;
   sort: { mode: 'mutate' | 'view'; reassign_uid: boolean };
   glass_mode: boolean;
+  show_entry_preview: boolean;
   panel_mode: 'browse' | 'editor';
 }
 

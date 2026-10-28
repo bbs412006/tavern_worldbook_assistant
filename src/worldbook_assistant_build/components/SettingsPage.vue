@@ -46,6 +46,12 @@
             >
               多选联动时同步高级字段 / extra JSON
             </BaseSwitch>
+            <BaseSwitch
+              :model-value="Boolean(persistedState.show_entry_preview)"
+              @update:model-value="$emit('update-persisted-state', (state: any) => state.show_entry_preview = $event)"
+            >
+              显示条目内容预览（关闭后仅保留关键信息，显示更多条目）
+            </BaseSwitch>
           </div>
           <label class="field settings-field">
             <span id="settings-delete-parent-label">父标签删除策略</span>

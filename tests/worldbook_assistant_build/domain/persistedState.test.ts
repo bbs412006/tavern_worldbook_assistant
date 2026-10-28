@@ -153,4 +153,11 @@ describe('persisted-state helpers', () => {
       entry: { uid: 9, name: '旧条目', content: '正文' },
     });
   });
+
+  it('normalizes show_entry_preview to boolean defaulting to false', () => {
+    expect(createDefaultPersistedState().show_entry_preview).toBe(false);
+    expect(normalizePersistedState({}).show_entry_preview).toBe(false);
+    expect(normalizePersistedState({ show_entry_preview: true }).show_entry_preview).toBe(true);
+    expect(normalizePersistedState({ show_entry_preview: 'true' }).show_entry_preview).toBe(false);
+  });
 });

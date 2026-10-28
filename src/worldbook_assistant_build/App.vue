@@ -226,6 +226,29 @@
                     <StudioIcon name="check" :size="14" />
                     <span>{{ mobileMultiSelectMode ? '退出' : '多选' }}</span>
                   </button>
+                  <!-- unified-control-exception: mobile typography quick toggle -->
+                  <button
+                    type="button"
+                    class="m-quick-chip"
+                    :class="{ active: typographyModalOpen }"
+                    aria-label="字体排版与外观设置"
+                    @click="typographyModalOpen = !typographyModalOpen"
+                  >
+                    <StudioIcon name="font" :size="14" />
+                    <span>字体</span>
+                  </button>
+                  <!-- unified-control-exception: mobile compact toggle -->
+                  <button
+                    type="button"
+                    class="m-quick-chip"
+                    :class="{ active: !persistedState.show_entry_preview }"
+                    :title="persistedState.show_entry_preview ? '当前显示正文预览，点击切换为精简视图' : '当前为精简视图，点击显示正文预览'"
+                    aria-label="切换精简与预览模式"
+                    @click="persistedState.show_entry_preview = !persistedState.show_entry_preview"
+                  >
+                    <StudioIcon :name="persistedState.show_entry_preview ? 'expand' : 'collapse'" :size="13" />
+                    <span>{{ persistedState.show_entry_preview ? '预览' : '精简' }}</span>
+                  </button>
                 </div>
               </div>
             </section>
@@ -272,6 +295,7 @@
                   disabled: !entry.enabled,
                   'mobile-multi-item': mobileMultiSelectMode,
                   'is-inline-reading': mobileExpandedReadUid === entry.uid,
+                  'is-compact': !persistedState.show_entry_preview,
                 }"
                 @click="selectEntry(entry.uid, $event)"
               >
@@ -301,7 +325,7 @@
                     <span v-for="(key, index) in entry.strategy.keys.slice(0, 4)" :key="`mkey-${entry.uid}-${index}`">{{ String(key) }}</span>
                     <span v-if="entry.strategy.keys.length > 4" class="is-more">+{{ entry.strategy.keys.length - 4 }}</span>
                   </div>
-                  <div v-if="mobileExpandedReadUid !== entry.uid" class="mobile-archive-preview">{{ browseGetContentPreview(entry) }}</div>
+                  <div v-if="persistedState.show_entry_preview && mobileExpandedReadUid !== entry.uid" class="mobile-archive-preview">{{ browseGetContentPreview(entry) }}</div>
                   <div class="mobile-entry-details">
                     <span class="m-detail-tag" :data-status="getEntryVisualStatus(entry)">{{ browseGetStrategyLabel(entry) }}</span>
                     <span class="m-detail-tag">{{ getPositionTypeLabel(entry.position.type, entry.position.role) }}</span>
@@ -1425,7 +1449,7 @@
             </div>
 
             <!-- Content preview (collapsed) -->
-            <div v-if="!expandedBrowseCardUids.has(entry.uid)" class="browse-card-preview" @click="toggleBrowseCard(entry.uid)">
+            <div v-if="persistedState.show_entry_preview && !expandedBrowseCardUids.has(entry.uid)" class="browse-card-preview" @click="toggleBrowseCard(entry.uid)">
               {{ browseGetContentPreview(entry) }}
             </div>
 
@@ -3504,6 +3528,52 @@
         </div>
       </div>
     </Transition>
+
+    <!-- ═══ Quick Typography & Display Modal ═══ -->
+    <Transition name="studio-command-fade">
+      <div
+        v-if="typographyModalOpen"
+        class="wb-typography-modal-backdrop"
+        @click.self="typographyModalOpen = false"
+      >
+        <div class="wb-typography-modal-card" role="dialog" aria-modal="true" aria-label="字体排版与显示设置">
+          <div class="wb-typography-modal-head">
+            <div class="wb-typography-modal-title">
+              <StudioIcon name="font" :size="18" />
+              <h3>字体排版与显示设置</h3>
+            </div>
+            <!-- unified-control-exception: modal close button -->
+            <button
+              type="button"
+              class="wb-typography-modal-close"
+              aria-label="关闭字体设置"
+              @click="typographyModalOpen = false"
+            >✕</button>
+          </div>
+          <div class="wb-typography-modal-body">
+            <TypographySettings
+              :preferences="persistedState.typography"
+              :theme-color="currentThemeTextMainColor"
+              @update="patchTypographyState"
+              @reset="resetTypographyState"
+            />
+            <div class="wb-typography-modal-preview-toggle">
+              <BaseSwitch
+                :model-value="persistedState.show_entry_preview"
+                @update:model-value="persistedState.show_entry_preview = $event"
+              >
+                显示条目正文预览（关闭后仅保留关键信息，显示更多条目）
+              </BaseSwitch>
+            </div>
+          </div>
+          <div class="wb-typography-modal-foot">
+            <BaseButton size="sm" variant="primary" @click="typographyModalOpen = false">
+              完成
+            </BaseButton>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -3531,6 +3601,7 @@ import AIChatPanel from './components/AIChatPanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
 import TagEditorPanel from './components/TagEditorPanel.vue';
 import SettingsPage from './components/SettingsPage.vue';
+import TypographySettings from './components/TypographySettings.vue';
 import AIConfigPage from './components/AIConfigPage.vue';
 import StudioIcon from './components/StudioIcon.vue';
 import BaseButton from './components/controls/BaseButton.vue';
@@ -3540,7 +3611,7 @@ import BaseInput from './components/controls/BaseInput.vue';
 import BaseTextarea from './components/controls/BaseTextarea.vue';
 import BaseSelect, { type BaseSelectOption } from './components/controls/BaseSelect.vue';
 import { APP_VERSION } from './domain/version';
-import { typographyStyle } from './domain/typography';
+import { createDefaultTypography, normalizeTypography, typographyStyle, type TypographyPreferences } from './domain/typography';
 import {
   type ThemeKey,
   THEMES,
@@ -4047,6 +4118,8 @@ const STUDIO_COMMAND_GROUPS: StudioCommandGroup[] = [
   {
     label: '视图与外观',
     items: [
+      { id: 'typography-settings', label: '字体排版与外观设置', hint: '设置文字大小、颜色、粗细、字体系列', icon: 'font', action: () => { typographyModalOpen.value = true; } },
+      { id: 'toggle-entry-preview', label: '切换条目精简/预览', hint: '开启显示内容预览，关闭仅显示关键信息', icon: 'list', action: () => { persistedState.value.show_entry_preview = !persistedState.value.show_entry_preview; } },
       { id: 'view-browse', label: '切换到浏览模式', hint: '卡片式浏览条目', icon: 'eye', action: () => switchPanelMode('browse') },
       { id: 'view-edit', label: '切换到编辑模式', hint: '列表 + 编辑器', icon: 'pen', action: () => switchPanelMode('editor') },
       { id: 'view-focus', label: '切换专注编辑', hint: '只保留正文与检查器', icon: 'eye', action: () => toggleFocusEditing() },
@@ -4518,6 +4591,17 @@ const editorShellStyle = computed<Record<string, string> | undefined>(() =>
 );
 
 const userTypographyStyles = computed(() => typographyStyle(persistedState.value.typography));
+
+const typographyModalOpen = ref(false);
+const currentThemeTextMainColor = computed(() => THEMES[currentTheme.value]?.colors['--wb-text-main'] ?? '#e2e8f0');
+
+function patchTypographyState(patch: Partial<TypographyPreferences>): void {
+  persistedState.value.typography = normalizeTypography({ ...persistedState.value.typography, ...patch });
+}
+
+function resetTypographyState(): void {
+  persistedState.value.typography = createDefaultTypography();
+}
 
 const themeStyles = computed(() => {
   const baseColors = THEMES[currentTheme.value].colors;

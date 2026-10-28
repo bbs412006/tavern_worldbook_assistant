@@ -70,6 +70,8 @@ const icons: Record<string, string[]> = {
   collapse: ['M4 14h6v6', 'M20 10h-6V4', 'M14 10l7-7', 'M3 21l7-7'],
   chat: ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
   layers: ['m12 2 9 4.5-9 4.5L3 6.5 12 2Z', 'm3 12 9 4.5 9-4.5', 'm3 17.5 9 4.5 9-4.5'],
+  font: ['M4 7V4h16v3', 'M9 20h6', 'M12 4v16'],
+  typography: ['M4 7V4h16v3', 'M9 20h6', 'M12 4v16'],
 };
 
 const paths = computed(() => icons[props.name] ?? icons.workbench);

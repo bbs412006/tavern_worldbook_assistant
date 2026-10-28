@@ -17,6 +17,7 @@ function createPersistedState() {
     tag_editor: { delete_parent_mode: 'promote' },
     sort: { mode: 'mutate', reassign_uid: false },
     glass_mode: false,
+    show_entry_preview: false,
     ai_api_config: {
       mode: 'custom',
       use_main_api: false,

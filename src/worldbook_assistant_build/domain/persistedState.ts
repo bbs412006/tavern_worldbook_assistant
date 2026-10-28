@@ -661,6 +661,7 @@ export function createDefaultPersistedState(): PersistedState {
     cross_copy: createDefaultCrossCopyPersistState(),
     sort: { mode: 'mutate', reassign_uid: true },
     glass_mode: false,
+    show_entry_preview: false,
     panel_mode: 'browse',
   };
 }
@@ -839,6 +840,7 @@ export function normalizePersistedState(input: unknown): PersistedState {
       };
     })(),
     glass_mode: root.glass_mode === true,
+    show_entry_preview: root.show_entry_preview === true,
     panel_mode: root.panel_mode === 'editor' ? 'editor' : 'browse',
   };
 }
