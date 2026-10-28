@@ -1,6 +1,6 @@
 <template>
   <section class="utility-page">
-    <header class="utility-page-header">
+    <header v-if="!isMobile" class="utility-page-header">
       <BaseButton class="utility-page-back" size="md" @click="$emit('back')">← 返回</BaseButton>
       <h2 class="utility-page-title">⚙️ 设置中心</h2>
     </header>
@@ -680,7 +680,7 @@ function updateNumberApiField(field: string, fallback: number, event: Event): vo
 
 @media (max-width: 760px) {
   .utility-page-body {
-    padding: 12px 14px calc(26px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 14px calc(64px + env(safe-area-inset-bottom, 0px));
   }
 
   .settings-page-shell {
@@ -701,8 +701,11 @@ function updateNumberApiField(field: string, fallback: number, event: Event): vo
     display: none;
   }
 
-  .settings-page-nav a,
   .settings-page-nav button {
+    display: none;
+  }
+
+  .settings-page-nav a {
     flex: 0 0 auto;
     min-height: 36px;
     padding: 0 12px;

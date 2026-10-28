@@ -1,7 +1,7 @@
 <template>
   <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode, 'wb-typography-interface': persistedState.typography.scope === 'interface', 'wb-custom-font-family': persistedState.typography.family !== 'default', 'wb-custom-font-size': persistedState.typography.size !== null, 'wb-custom-font-weight': persistedState.typography.weight !== null, 'wb-custom-font-color': persistedState.typography.color !== null, 'wb-custom-line-height': persistedState.typography.line_height !== null }]" :style="[themeStyles, userTypographyStyles]">
     <SettingsPage
-      v-if="utilityPage === 'settings'"
+      v-if="!isMobile && utilityPage === 'settings'"
       :persisted-state="persistedState"
       :fab-visible="fabVisible"
       :floor-btn-visible="floorBtnVisible"
@@ -1207,6 +1207,33 @@
             />
           </div>
 
+          <!-- ═══ Tab 4: 设置中心 (Settings Tab) ═══ -->
+          <div v-if="mobileTab === 'settings'" class="mobile-pane m-settings-pane" data-settings-page>
+            <SettingsPage
+              :persisted-state="persistedState"
+              :fab-visible="fabVisible"
+              :floor-btn-visible="floorBtnVisible"
+              :current-theme="currentTheme"
+              :is-mobile="isMobile"
+              :theme-options="themeOptions"
+              :api-model-list="apiModelList"
+              :api-model-loading="apiModelLoading"
+              :version-info="versionInfo"
+              :version-check-loading="versionCheckLoading"
+              :version-check-error="versionCheckError"
+              @back="closeSettingsOnMobile"
+              @set-fab-visible="setFabVisible"
+              @toggle-floor-btns="toggleFloorBtns"
+              @update-persisted-state="updatePersistedState"
+              @set-tag-delete-parent-mode="setTagDeleteParentMode"
+              @set-theme="setTheme"
+              @update-api-config="updateApiConfig"
+              @load-model-list="loadModelList"
+              @check-latest-version="checkLatestVersion"
+              @copy-version-import-url="copyVersionImportUrl"
+            />
+          </div>
+
         </div>
 
         <!-- Worldbook Operations Bottom Sheet -->
@@ -1275,7 +1302,7 @@
           <span class="tab-icon"><StudioIcon name="workbench" :size="20" /></span>
           <span class="tab-label">工具</span>
         </BaseButton>
-        <BaseButton type="button" @click="openSettingsPage">
+        <BaseButton type="button" :class="{ active: mobileTab === 'settings' }" @click="openSettingsPage">
           <span class="tab-icon"><StudioIcon name="settings" :size="20" /></span>
           <span class="tab-label">设置</span>
         </BaseButton>
@@ -4160,7 +4187,19 @@ function onStudioCommandKeydown(event: KeyboardEvent): void {
   }
 }
 
+function closeSettingsOnMobile(): void {
+  mobileTab.value = mobileTabBeforeSettings.value || 'list';
+}
+
 function openSettingsPage(): void {
+  if (isMobile.value) {
+    mobileBookSheetOpen.value = false;
+    if (mobileTab.value !== 'settings') {
+      mobileTabBeforeSettings.value = mobileTab.value as 'list' | 'edit' | 'global' | 'tools' | 'copy' | 'ai' | 'tags';
+      mobileTab.value = 'settings';
+    }
+    return;
+  }
   measureNavigation('open-settings', '[data-settings-page], .utility-page', 'settings');
   studioBatchMode.value = false;
   historyHubMode.value = false;
@@ -4357,6 +4396,7 @@ if (responsiveWindow) {
 }
 const showMobileEditor = computed(() => isMobile.value && selectedEntryUid.value !== null);
 const mobileTab = ref<'list' | 'edit' | 'global' | 'tools' | 'settings' | 'copy' | 'ai' | 'tags'>('list');
+const mobileTabBeforeSettings = ref<'list' | 'edit' | 'global' | 'tools' | 'copy' | 'ai' | 'tags'>('list');
 const mobileDetailSegment = ref<'content' | 'config' | 'read'>('content');
 const mobileBookSheetOpen = ref(false);
 const mobileExpandedReadUid = ref<number | null>(null);
@@ -6072,7 +6112,12 @@ watch(crossCopyDiffRow, row => {
   }
 });
 
-watch(mobileTab, tab => {
+watch(mobileTab, (tab, oldTab) => {
+  if (tab === 'settings' && oldTab !== 'settings') {
+    measureNavigation('open-settings', '[data-settings-page], .utility-page', 'settings');
+  } else if (oldTab === 'settings' && tab !== 'settings') {
+    measureNavigation('return-main', '[data-main-workspace]:not([style*="display: none"])', null);
+  }
   // Dismiss any open dropdowns or floating menus when switching tabs
   typographyModalOpen.value = false;
   const hostDoc = rootRef.value?.ownerDocument || document;
@@ -12129,6 +12174,7 @@ const currentPanelHeader = computed<{ title: string; subtitle: string }>(() => {
     if (mobileTab.value === 'copy') return { title: '跨书复制', subtitle: 'CROSS COPY' };
     if (mobileTab.value === 'ai') return { title: 'AI 对话工坊', subtitle: 'AI WORKSPACE' };
     if (mobileTab.value === 'tags') return { title: '标签管理', subtitle: 'TAG SYSTEM' };
+    if (mobileTab.value === 'settings') return { title: '⚙️ 设置中心', subtitle: 'SETTINGS' };
     return { title: '世界书助手', subtitle: 'WORLDBOOK STUDIO' };
   }
   if (panelMode.value === 'browse') return { title: '世界书浏览', subtitle: 'WORLDBOOK BROWSE' };
@@ -18932,6 +18978,21 @@ watch(hasUnsavedChanges, (val) => {
 
 .wb-assistant-root :deep(.utility-page-title) {
   display: none;
+}
+
+.m-settings-pane {
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.m-settings-pane > .utility-page {
+  height: 100%;
+}
+
+.wb-assistant-root.is-mobile .m-settings-pane :deep(.utility-page-header) {
+  display: none !important;
 }
 
 .wb-assistant-root :deep(.utility-page-back) {

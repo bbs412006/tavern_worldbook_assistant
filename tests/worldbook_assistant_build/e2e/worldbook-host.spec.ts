@@ -249,7 +249,7 @@ test('keeps the production workspace and owned resources bounded across 20 utili
 
   for (let cycle = 0; cycle < 20; cycle += 1) {
     await openUtilityPage(page, '⚙️ 设置', '⚙️ 设置中心');
-    await page.locator('.utility-page-back').click();
+    await page.locator('.mobile-tab-bar').getByRole('button', { name: '条目', exact: true }).click();
     await expect(originalWorkspace).toBeVisible();
 
     await openUtilityPage(page, '🔧 AI配置', '🔧 AI 配置世界书');
@@ -365,7 +365,7 @@ test('persists typography settings and applies them to reading and editing', asy
     scope: 'interface', family: 'mono', size: 20, weight: 700, color: '#336699', line_height: 1.8,
   });
 
-  await page.locator('.utility-page-back').click();
+  await page.locator('.mobile-tab-bar').getByRole('button', { name: '条目', exact: true }).click();
   await page.locator('.mobile-archive-entry-main').first().click();
   const editor = page.locator('.mobile-pane:visible .editor-content-area');
   await expect(editor).toHaveCSS('font-size', '20px');
@@ -519,7 +519,7 @@ test('renders only a single header title across mobile and desktop views without
   await openUtilityPage(page, '⚙️ 设置', '⚙️ 设置中心');
   await expect(hostTitle).toHaveText('⚙️ 设置中心');
   await expect(page.locator('.utility-page-title')).toBeHidden();
-  await page.locator('.utility-page-back').click();
+  await page.locator('.mobile-tab-bar').getByRole('button', { name: '条目', exact: true }).click();
 
   await openUtilityPage(page, '🔧 AI配置', '🔧 AI 配置世界书');
   await expect(hostTitle).toHaveText('🔧 AI 配置世界书');
