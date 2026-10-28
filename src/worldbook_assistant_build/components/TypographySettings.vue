@@ -17,6 +17,14 @@
         <BaseSelect :model-value="preferences.family" :options="familyOptions" :searchable="false" aria-labelledby="typography-family-label" @update:model-value="updateFamily" />
       </label>
       <label class="typography-field">
+        <span id="typography-weight-label">文字粗细</span>
+        <BaseSelect :model-value="preferences.weight ?? 'default'" :options="weightOptions" :searchable="false" aria-labelledby="typography-weight-label" @update:model-value="updateNumber('weight', $event)" />
+      </label>
+      <label class="typography-field">
+        <span id="typography-line-height-label">{{ preferences.scope === 'interface' ? '文字行距' : '正文行距' }}</span>
+        <BaseSelect :model-value="preferences.line_height ?? 'default'" :options="lineHeightOptions" :searchable="false" aria-labelledby="typography-line-height-label" @update:model-value="updateNumber('line_height', $event)" />
+      </label>
+      <label class="typography-field typography-size-field">
         <span id="typography-size-label">文字大小</span>
         <div class="typography-size-row">
           <BaseSelect :model-value="preferences.size ?? 'default'" :options="sizeOptions" :searchable="false" aria-labelledby="typography-size-label" @update:model-value="updateNumber('size', $event)" />
@@ -25,14 +33,6 @@
             <BaseButton size="sm" type="button" :disabled="(preferences.size ?? 15) >= 28" aria-label="增大字号" @click="stepSize(1)">A+</BaseButton>
           </div>
         </div>
-      </label>
-      <label class="typography-field">
-        <span id="typography-weight-label">文字粗细</span>
-        <BaseSelect :model-value="preferences.weight ?? 'default'" :options="weightOptions" :searchable="false" aria-labelledby="typography-weight-label" @update:model-value="updateNumber('weight', $event)" />
-      </label>
-      <label class="typography-field">
-        <span id="typography-line-height-label">{{ preferences.scope === 'interface' ? '文字行距' : '正文行距' }}</span>
-        <BaseSelect :model-value="preferences.line_height ?? 'default'" :options="lineHeightOptions" :searchable="false" aria-labelledby="typography-line-height-label" @update:model-value="updateNumber('line_height', $event)" />
       </label>
       <div class="typography-field typography-color-field">
         <span id="typography-color-label">文字颜色</span>
@@ -152,10 +152,11 @@ function updateColor(value: string | number | null): void {
 .typography-heading p { margin: 6px 0 0; color: var(--wb-text-muted); font-size: 12px; line-height: 1.55; }
 .typography-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
 .typography-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--wb-text-main); font-size: 12px; }
-.typography-size-row { display: flex; align-items: center; gap: 8px; }
+.typography-size-field { grid-column: 1 / -1; }
+.typography-size-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .typography-size-row :deep(.wb-control-select-shell) { flex: 1; min-width: 0; }
 .typography-steppers { display: flex; gap: 4px; flex-shrink: 0; }
-.typography-steppers :deep(.wb-control-button) { min-width: 32px; padding: 0 6px; font-weight: 700; font-size: 11px; }
+.typography-steppers :deep(.wb-control-button) { min-width: 34px; padding: 0 7px; font-weight: 700; font-size: 11px; }
 .typography-color-field { grid-column: 1 / -1; }
 .typography-color-controls { display: flex; flex-direction: column; gap: 10px; color: var(--wb-text-muted); }
 .typography-color-swatches { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -198,5 +199,5 @@ function updateColor(value: string | number | null): void {
 .typography-preview { margin-top: 16px; padding: 14px; border: 1px solid var(--wb-border-subtle); border-radius: 10px; background: var(--wb-bg-soft, var(--wb-input-bg)); }
 .typography-preview-label, .typography-preview small { display: block; color: var(--wb-text-muted); font-size: 11px; }
 .typography-preview p { margin: 10px 0; color: var(--wb-user-font-color, var(--wb-text-main)); font-family: var(--wb-user-font-family, 'Songti SC', 'Noto Serif CJK SC', serif); font-size: var(--wb-user-font-size, 16px); font-weight: var(--wb-user-font-weight, 400); line-height: var(--wb-user-line-height, 1.7); overflow-wrap: anywhere; }
-@media (max-width: 360px) { .typography-grid { grid-template-columns: 1fr; } .typography-color-field { grid-column: auto; } }
+@media (max-width: 520px) { .typography-heading { flex-wrap: wrap; } .typography-grid { grid-template-columns: minmax(0, 1fr); } .typography-size-field, .typography-color-field { grid-column: auto; } }
 </style>

@@ -242,14 +242,16 @@ function ensurePanelStyle(): void {
   cursor: move;
   user-select: none;
   position: relative;
-  z-index: 10;
+  z-index: 30;
 }
 
 #${PANEL_ID} .wb-assistant-header-title {
   display: inline-flex;
+  flex: 1 1 auto;
   align-items: center;
   gap: 9px;
   min-width: 0;
+  overflow: hidden;
   color: var(--wb-host-text, #eef4ef);
   font-size: 12px;
   font-weight: 600;

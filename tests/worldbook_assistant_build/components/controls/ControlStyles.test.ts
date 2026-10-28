@@ -6,6 +6,14 @@ const appSource = readFileSync(
   fileURLToPath(new URL('../../../../src/worldbook_assistant_build/App.vue', import.meta.url)),
   'utf8',
 );
+const baseSelectSource = readFileSync(
+  fileURLToPath(new URL('../../../../src/worldbook_assistant_build/components/controls/BaseSelect.vue', import.meta.url)),
+  'utf8',
+);
+const mobileBrowseCssSource = readFileSync(
+  fileURLToPath(new URL('../../../../src/worldbook_assistant_build/mobile-browse-redesign.css', import.meta.url)),
+  'utf8',
+);
 
 function cssRule(selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -60,5 +68,17 @@ describe('worldbook control CSS contracts', () => {
     expect(danger).toContain('var(--wb-control-danger-soft)');
     expect(danger).toContain('var(--wb-control-danger-contrast)');
     expect(danger).not.toMatch(/#e11d48|#f43f5e/);
+  });
+
+  it('keeps select menus above modals and isolates mobile entry side controls from card content', () => {
+    const rootRule = cssRule('.wb-assistant-root');
+    expect(rootRule).toContain('isolation: isolate');
+    expect(baseSelectSource).toMatch(/\.wb-control-select-menu\s*\{[^}]*z-index:\s*10600;/);
+    expect(mobileBrowseCssSource).toMatch(/\.wb-typography-modal-backdrop\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*10400;/s);
+    expect(mobileBrowseCssSource).toMatch(/\.wb-assistant-root\.is-mobile \.m-sheet-backdrop\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*10200;/s);
+    expect(appSource).toContain('class="m-entry-card-row"');
+    expect(appSource).toContain('class="m-entry-side-controls"');
+    expect(mobileBrowseCssSource).toMatch(/\.wb-assistant-root\.is-mobile \.mobile-archive-entry-toggle\s*\{[^}]*position:\s*static;/s);
+    expect(mobileBrowseCssSource).toMatch(/\.wb-assistant-root\.is-mobile \.m-card-quick-actions\s*\{[^}]*position:\s*static;/s);
   });
 });

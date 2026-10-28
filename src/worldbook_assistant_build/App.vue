@@ -299,61 +299,65 @@
                 }"
                 @click="selectEntry(entry.uid, $event)"
               >
-                <BaseButton
-                  type="button"
-                  class="mobile-archive-entry-main"
-                  :aria-pressed="mobileMultiSelectMode ? selectedEntryUidSet.has(entry.uid) : undefined"
-                  @pointerdown="startMobileEntryLongPress(entry.uid, $event)"
-                  @pointermove="handleMobileEntryLongPressMove($event)"
-                  @pointerup="finishMobileEntryLongPress($event)"
-                  @pointercancel="finishMobileEntryLongPress($event)"
-                  @lostpointercapture="finishMobileEntryLongPress()"
-                  @contextmenu.prevent
-                >
-                  <div class="entry-item-head">
-                    <div class="mobile-entry-title-group">
-                      <span v-if="mobileMultiSelectMode" class="mobile-archive-selected" :class="{ on: selectedEntryUidSet.has(entry.uid) }" aria-hidden="true">{{ selectedEntryUidSet.has(entry.uid) ? '✓' : '' }}</span>
-                      <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
-                      <span class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
-                    </div>
-                    <div class="mobile-entry-meta">
-                      <span v-if="mobileMultiSelectMode && selectedEntryUid === entry.uid && selectedEntryUidSet.has(entry.uid)" class="entry-chip mono">样板</span>
-                      <span class="entry-chip uid">#{{ entry.uid }}</span>
-                    </div>
-                  </div>
-                  <div v-if="entry.strategy.keys?.length" class="mobile-archive-keywords">
-                    <span v-for="(key, index) in entry.strategy.keys.slice(0, 4)" :key="`mkey-${entry.uid}-${index}`">{{ String(key) }}</span>
-                    <span v-if="entry.strategy.keys.length > 4" class="is-more">+{{ entry.strategy.keys.length - 4 }}</span>
-                  </div>
-                  <div v-if="persistedState.show_entry_preview && mobileExpandedReadUid !== entry.uid" class="mobile-archive-preview">{{ browseGetContentPreview(entry) }}</div>
-                  <div class="mobile-entry-details">
-                    <span class="m-detail-tag" :data-status="getEntryVisualStatus(entry)">{{ browseGetStrategyLabel(entry) }}</span>
-                    <span class="m-detail-tag">{{ getPositionTypeLabel(entry.position.type, entry.position.role) }}</span>
-                    <span class="m-detail-tag">权重 {{ entry.position.order }}</span>
-                    <span v-if="entry.recursion.prevent_incoming || entry.recursion.prevent_outgoing" class="m-detail-tag warn">防递归</span>
-                  </div>
-                </BaseButton>
-
-                <div v-if="!mobileMultiSelectMode" class="mobile-archive-entry-toggle" @click.stop>
-                  <BaseSwitch
-                    :model-value="entry.enabled"
-                    :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
-                    @update:model-value="browseToggleEnabled(entry)"
-                  />
-                </div>
-
-                <div v-if="!mobileMultiSelectMode" class="m-card-quick-actions" @click.stop>
-                  <!-- unified-control-exception: mobile card inline reader toggle -->
-                  <button
+                <div class="m-entry-card-row">
+                  <BaseButton
                     type="button"
-                    class="m-inline-read-btn"
-                    :class="{ active: mobileExpandedReadUid === entry.uid }"
-                    :aria-label="mobileExpandedReadUid === entry.uid ? `收起阅读 ${entry.name || entry.uid}` : `阅读 ${entry.name || entry.uid}`"
-                    @click.stop="toggleMobileInlineRead(entry.uid)"
+                    class="mobile-archive-entry-main"
+                    :aria-pressed="mobileMultiSelectMode ? selectedEntryUidSet.has(entry.uid) : undefined"
+                    @pointerdown="startMobileEntryLongPress(entry.uid, $event)"
+                    @pointermove="handleMobileEntryLongPressMove($event)"
+                    @pointerup="finishMobileEntryLongPress($event)"
+                    @pointercancel="finishMobileEntryLongPress($event)"
+                    @lostpointercapture="finishMobileEntryLongPress()"
+                    @contextmenu.prevent
                   >
-                    <StudioIcon :name="mobileExpandedReadUid === entry.uid ? 'collapse' : 'eye'" :size="13" />
-                    <span>{{ mobileExpandedReadUid === entry.uid ? '收起' : '阅读' }}</span>
-                  </button>
+                    <div class="entry-item-head">
+                      <div class="mobile-entry-title-group">
+                        <span v-if="mobileMultiSelectMode" class="mobile-archive-selected" :class="{ on: selectedEntryUidSet.has(entry.uid) }" aria-hidden="true">{{ selectedEntryUidSet.has(entry.uid) ? '✓' : '' }}</span>
+                        <span class="entry-status-dot" :data-status="getEntryVisualStatus(entry)"></span>
+                        <span class="entry-item-title">{{ entry.name || `条目 ${entry.uid}` }}</span>
+                      </div>
+                      <div class="mobile-entry-meta">
+                        <span v-if="mobileMultiSelectMode && selectedEntryUid === entry.uid && selectedEntryUidSet.has(entry.uid)" class="entry-chip mono">样板</span>
+                        <span class="entry-chip uid">#{{ entry.uid }}</span>
+                      </div>
+                    </div>
+                    <div v-if="entry.strategy.keys?.length" class="mobile-archive-keywords">
+                      <span v-for="(key, index) in entry.strategy.keys.slice(0, 4)" :key="`mkey-${entry.uid}-${index}`">{{ String(key) }}</span>
+                      <span v-if="entry.strategy.keys.length > 4" class="is-more">+{{ entry.strategy.keys.length - 4 }}</span>
+                    </div>
+                    <div v-if="persistedState.show_entry_preview && mobileExpandedReadUid !== entry.uid" class="mobile-archive-preview">{{ browseGetContentPreview(entry) }}</div>
+                    <div class="mobile-entry-details">
+                      <span class="m-detail-tag" :data-status="getEntryVisualStatus(entry)">{{ browseGetStrategyLabel(entry) }}</span>
+                      <span class="m-detail-tag">{{ getPositionTypeLabel(entry.position.type, entry.position.role) }}</span>
+                      <span class="m-detail-tag">权重 {{ entry.position.order }}</span>
+                      <span v-if="entry.recursion.prevent_incoming || entry.recursion.prevent_outgoing" class="m-detail-tag warn">防递归</span>
+                    </div>
+                  </BaseButton>
+
+                  <div v-if="!mobileMultiSelectMode" class="m-entry-side-controls" @click.stop>
+                    <div class="mobile-archive-entry-toggle">
+                      <BaseSwitch
+                        :model-value="entry.enabled"
+                        :aria-label="`${entry.name || `条目 ${entry.uid}`}启用状态`"
+                        @update:model-value="browseToggleEnabled(entry)"
+                      />
+                    </div>
+
+                    <div class="m-card-quick-actions">
+                      <!-- unified-control-exception: mobile card inline reader toggle -->
+                      <button
+                        type="button"
+                        class="m-inline-read-btn"
+                        :class="{ active: mobileExpandedReadUid === entry.uid }"
+                        :aria-label="mobileExpandedReadUid === entry.uid ? `收起阅读 ${entry.name || entry.uid}` : `阅读 ${entry.name || entry.uid}`"
+                        @click.stop="toggleMobileInlineRead(entry.uid)"
+                      >
+                        <StudioIcon :name="mobileExpandedReadUid === entry.uid ? 'collapse' : 'eye'" :size="13" />
+                        <span>{{ mobileExpandedReadUid === entry.uid ? '收起' : '阅读' }}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div v-if="mobileExpandedReadUid === entry.uid" class="m-inline-reader" @click.stop>
@@ -12586,6 +12590,8 @@ watch(hasUnsavedChanges, (val) => {
   --wb-control-danger-border: color-mix(in srgb, var(--wb-control-danger) 55%, transparent);
   --wb-control-danger-contrast: var(--wb-danger-contrast, var(--wb-text-main));
   position: relative;
+  isolation: isolate;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   width: 100%;
@@ -16022,7 +16028,7 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .wb-assistant-root .wb-modal-backdrop {
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: var(--wb-overlay-bg);
   backdrop-filter: blur(8px);
@@ -16030,14 +16036,14 @@ watch(hasUnsavedChanges, (val) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10020;
+  z-index: 10320;
   padding: 14px;
   box-sizing: border-box;
 }
 
 .wb-assistant-root .wb-history-modal {
   width: min(1260px, 100%);
-  max-height: min(88vh, 940px);
+  max-height: min(88vh, calc(100% - 20px), 940px);
   border: 1px solid var(--wb-border-subtle);
   border-radius: 12px;
   background: var(--wb-glass-bg);
@@ -16364,8 +16370,8 @@ watch(hasUnsavedChanges, (val) => {
 
   .wb-history-modal {
     width: 100%;
-    max-height: calc(100vh - 4px);
-    height: calc(100vh - 4px);
+    max-height: calc(100% - 8px);
+    height: calc(100% - 8px);
     border-radius: 6px;
   }
 
@@ -17099,7 +17105,7 @@ watch(hasUnsavedChanges, (val) => {
    Tag Review Modal (API Settings / AI Config / Chat Extract)
    ═════════════════════════════════════════════════ */
 .ai-tag-review-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 10350;
   background: var(--wb-overlay-bg);
@@ -17120,8 +17126,8 @@ watch(hasUnsavedChanges, (val) => {
   border-radius: 16px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.1);
   width: 580px;
-  max-width: 92vw;
-  max-height: 80vh;
+  max-width: min(92vw, 100%);
+  max-height: min(80vh, calc(100% - 20px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -20116,12 +20122,22 @@ watch(hasUnsavedChanges, (val) => {
   display: none;
 }
 
+.studio-batch-mode .list-scroll {
+  padding-bottom: 72px;
+}
+
+.studio-batch-mode .editor-center,
+.studio-batch-mode .editor-side {
+  padding-bottom: 72px;
+}
+
 .studio-batch-dock {
   position: absolute;
   left: calc(50% + 39px);
   bottom: 39px;
   z-index: 40;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   width: min(850px, calc(100% - 130px));

@@ -109,6 +109,3 @@
   min-height: max(44px, calc(var(--wb-user-font-size) * 1.5 + 10px));
   white-space: normal;
 }
-.wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.mobile-archive-entry-main .entry-item-head) {
-  padding-right: max(90px, calc(var(--wb-user-font-size) * 3.5 + 50px));
-}

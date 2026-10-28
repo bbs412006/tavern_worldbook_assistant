@@ -12,7 +12,7 @@ import {
 
 describe('version domain', () => {
   it('reports the font settings release version', () => {
-    expect(APP_VERSION).toBe('2.7.1');
+    expect(APP_VERSION).toBe('2.7.2');
   });
 
   it('normalizes whitespace and a leading v prefix', () => {

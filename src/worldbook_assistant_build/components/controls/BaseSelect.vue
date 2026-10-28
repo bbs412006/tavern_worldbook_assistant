@@ -516,7 +516,7 @@ onBeforeUnmount(() => {
 
 .wb-control-select-menu {
   position: absolute;
-  z-index: 30;
+  z-index: 10600;
   box-sizing: border-box;
   display: flex;
   min-height: 40px;
