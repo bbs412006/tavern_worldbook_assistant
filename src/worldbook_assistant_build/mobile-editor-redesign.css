@@ -22,9 +22,7 @@
   min-height: 52px;
   margin: 0 -14px 10px;
   padding: 8px 14px;
-  background: color-mix(in srgb, var(--wb-bg-panel) 92%, transparent);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  background: var(--wb-bg-panel);
   border-bottom: 1px solid var(--wb-border-subtle);
 }
 

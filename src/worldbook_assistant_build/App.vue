@@ -4521,7 +4521,7 @@ const userTypographyStyles = computed(() => typographyStyle(persistedState.value
 
 const themeStyles = computed(() => {
   const baseColors = THEMES[currentTheme.value].colors;
-  if (!persistedState.value.glass_mode) {
+  if (!persistedState.value.glass_mode || isMobile.value) {
     return baseColors;
   }
 
@@ -12007,8 +12007,8 @@ function updateHostPanelTheme(): void {
   const effective = (name: string, fallback: string): string =>
     computedStyles?.getPropertyValue(name).trim() || colors[name] || fallback;
 
-  panel.style.setProperty('--wb-host-bg', effective('--wb-bg-root', '#0b1220'));
-  panel.style.setProperty('--wb-host-header-bg', effective('--wb-bg-panel', '#141c18'));
+  panel.style.setProperty('--wb-host-bg', isMobile.value ? (colors['--wb-bg-root'] || '#0b1220') : effective('--wb-bg-root', '#0b1220'));
+  panel.style.setProperty('--wb-host-header-bg', isMobile.value ? (colors['--wb-bg-panel'] || '#141c18') : effective('--wb-bg-panel', '#141c18'));
   panel.style.setProperty('--wb-host-border', effective('--wb-border-main', '#334155'));
   panel.style.setProperty('--wb-host-text', effective('--wb-text-main', '#e2e8f0'));
   panel.style.setProperty('--wb-host-muted', effective('--wb-text-muted', '#94a3b8'));
@@ -20574,6 +20574,9 @@ watch(hasUnsavedChanges, (val) => {
   .wb-assistant-root {
     padding: 6px;
     gap: 6px;
+    background: var(--wb-bg-root) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   .studio-workbench-area {
@@ -20592,6 +20595,17 @@ watch(hasUnsavedChanges, (val) => {
   .studio-editor-tabs-hint {
     display: none;
   }
+}
+
+.wb-assistant-root.is-mobile {
+  background: var(--wb-bg-root) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.wb-assistant-root.is-mobile.is-glass-mode {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* ── Mobile tool sheet (SHELF 02) ── */

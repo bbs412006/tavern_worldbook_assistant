@@ -456,22 +456,38 @@ function ensurePanelStyle(): void {
   color: var(--wb-host-accent, #5ad9b4);
 }
 
+#${PANEL_ID}.is-fullscreen {
+  inset: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  resize: none !important;
+}
+
 @media (max-width: 760px), (orientation: portrait), (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
   #${PANEL_ID} {
     inset: 0 !important;
-    margin: 0 !important;
+    margin: auto !important;
     transform: none !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
+    width: calc(100vw - 16px) !important;
+    height: calc(100vh - 24px) !important;
+    height: calc(100dvh - 24px) !important;
     min-width: unset;
     min-height: 0;
-    max-width: 100vw;
-    max-height: 100vh;
-    max-height: 100dvh;
-    border-radius: 0;
-    border: 0;
-    box-shadow: none;
+    max-width: 540px;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    border-radius: 14px;
+    border: 1px solid var(--wb-host-border, #334155);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.48);
     resize: none;
     /* Mobile: use display:none to avoid blocking FAB behind the invisible panel */
     display: none;
@@ -479,6 +495,9 @@ function ensurePanelStyle(): void {
     visibility: visible;
     pointer-events: auto;
     transition: none;
+    background: var(--wb-host-bg, #0b1220) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   #${PANEL_ID}.active {
@@ -489,10 +508,14 @@ function ensurePanelStyle(): void {
   #${PANEL_ID} .wb-assistant-header {
     height: auto;
     min-height: 46px;
-    padding: env(safe-area-inset-top, 0px) 8px 0 14px;
-    background: var(--wb-host-header-bg, #fffdf8);
+    padding: 0 8px 0 14px;
+    background: var(--wb-host-header-bg, #fffdf8) !important;
     border-bottom: 1px solid var(--wb-host-tool-border, var(--wb-host-border, #e6e0d3));
     cursor: default;
+  }
+
+  #${PANEL_ID}.is-fullscreen .wb-assistant-header {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   #${PANEL_ID} .wb-assistant-header-title {
@@ -571,6 +594,14 @@ function ensurePanelStyle(): void {
     min-height: 0;
     display: flex;
     flex-direction: column;
+  }
+}
+
+@media (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
+  #${PANEL_ID}:not(.is-fullscreen) {
+    max-width: min(calc(100vw - 16px), 840px);
+    max-height: calc(100dvh - 16px);
+    height: calc(100dvh - 16px) !important;
   }
 }
 
@@ -746,6 +777,7 @@ function ensurePanelElement(): JQuery {
       <button type="button" class="wb-assistant-tool wb-assistant-refresh" title="刷新" aria-label="刷新"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-4L3 10M3 4v6h6M4 13a8 8 0 0 0 14 4l3-3M21 20v-6h-6"/></svg></button>
       <button type="button" class="wb-assistant-tool wb-assistant-fab-toggle" title="悬浮按钮" aria-label="悬浮按钮"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg></button>
       <button type="button" class="wb-assistant-tool wb-assistant-theme" title="切换主题" aria-label="切换主题" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none"/></svg></button>
+      <button type="button" class="wb-assistant-tool wb-assistant-fullscreen" title="全屏" aria-label="全屏"><svg class="icon-expand" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="icon-collapse" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
       <button type="button" class="wb-assistant-tool wb-assistant-save" title="保存" aria-label="保存"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
       <button type="button" class="wb-assistant-close" title="关闭" aria-label="关闭">×</button>
     </div>
@@ -766,6 +798,13 @@ function ensurePanelElement(): JQuery {
   $panel.off(`click${EVENT_NS}`, '.wb-assistant-theme').on(`click${EVENT_NS}`, '.wb-assistant-theme', (evt) => {
     evt.stopPropagation();
     toggleThemeDropdown($panel[0] as HTMLDivElement);
+  });
+  $panel.off(`click${EVENT_NS}`, '.wb-assistant-fullscreen').on(`click${EVENT_NS}`, '.wb-assistant-fullscreen', () => {
+    const isFs = $panel.toggleClass('is-fullscreen').hasClass('is-fullscreen');
+    const btn = $panel.find('.wb-assistant-fullscreen');
+    btn.attr('title', isFs ? '退出全屏' : '全屏').attr('aria-label', isFs ? '退出全屏' : '全屏');
+    btn.find('.icon-expand').toggle(!isFs);
+    btn.find('.icon-collapse').toggle(isFs);
   });
   // Close theme dropdown on clicks elsewhere
   // Only register once — guard against duplicate registration
@@ -894,9 +933,10 @@ function enablePanelDrag(panel: HTMLDivElement): void {
   };
 
   handle.addEventListener('pointerdown', event => {
-    // Disable drag on mobile viewports
+    // Disable drag on mobile viewports or fullscreen
     if (
-      hostWin.innerWidth <= 760
+      panel.classList.contains('is-fullscreen')
+      || hostWin.innerWidth <= 760
       || hostWin.matchMedia('(orientation: portrait)').matches
       || (hostWin.innerWidth <= 1000 && hostWin.innerHeight <= 600)
     ) {
@@ -997,7 +1037,11 @@ function hidePanel(): boolean {
     host[DIRTY_STATE_KEY] = false;
   }
   const doc = getHostDocument();
-  $(`#${PANEL_ID}`, doc).removeClass('active');
+  $(`#${PANEL_ID}`, doc).removeClass('active is-fullscreen');
+  const $fsBtn = $(`#${PANEL_ID} .wb-assistant-fullscreen`, doc);
+  $fsBtn.attr('title', '全屏').attr('aria-label', '全屏');
+  $fsBtn.find('.icon-expand').show();
+  $fsBtn.find('.icon-collapse').hide();
   isPanelVisible = false;
   setMenuActive(false);
   return true;

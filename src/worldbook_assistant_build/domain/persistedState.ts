@@ -660,7 +660,7 @@ export function createDefaultPersistedState(): PersistedState {
     layout: createDefaultLayoutState(),
     cross_copy: createDefaultCrossCopyPersistState(),
     sort: { mode: 'mutate', reassign_uid: true },
-    glass_mode: true,
+    glass_mode: false,
     panel_mode: 'browse',
   };
 }
