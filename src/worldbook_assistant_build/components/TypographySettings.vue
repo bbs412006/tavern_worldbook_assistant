@@ -146,10 +146,16 @@ function updateColor(value: string | number | null): void {
 </script>
 
 <style scoped>
-.typography-settings { padding: 16px; border: 1px solid var(--wb-border-subtle); border-radius: 12px; background: var(--wb-bg-card); }
+.typography-settings {
+  padding: 16px 18px;
+  border: 1px solid var(--wb-border-subtle);
+  border-radius: 16px;
+  background: var(--wb-bg-card);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.028);
+}
 .typography-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.typography-heading h3 { margin: 0; color: var(--wb-text-main); font-size: 15px; }
-.typography-heading p { margin: 6px 0 0; color: var(--wb-text-muted); font-size: 12px; line-height: 1.55; }
+.typography-heading h3 { margin: 0; color: var(--wb-text-main); font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; }
+.typography-heading p { margin: 4px 0 0; color: var(--wb-text-muted); font-size: 11.5px; line-height: 1.4; }
 .typography-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
 .typography-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--wb-text-main); font-size: 12px; }
 .typography-size-field { grid-column: 1 / -1; }

@@ -19044,7 +19044,8 @@ watch(hasUnsavedChanges, (val) => {
   grid-column: 1 / -1;
 }
 
-.wb-assistant-root :deep(.settings-card) {
+/* ── Desktop-only utility page overrides ──────────────────────── */
+.wb-assistant-root:not(.is-mobile) :deep(.settings-card) {
   padding: 15px;
   border: 1px solid var(--studio-line);
   border-radius: 12px;
@@ -19052,14 +19053,14 @@ watch(hasUnsavedChanges, (val) => {
   box-shadow: none;
 }
 
-.wb-assistant-root :deep(.settings-section-title) {
+.wb-assistant-root:not(.is-mobile) :deep(.settings-section-title) {
   color: var(--wb-text-main);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
-.wb-assistant-root :deep(.settings-section-title)::before {
+.wb-assistant-root:not(.is-mobile) :deep(.settings-section-title)::before {
   content: "";
   display: inline-block;
   width: 5px;
@@ -19070,12 +19071,12 @@ watch(hasUnsavedChanges, (val) => {
   vertical-align: 1px;
 }
 
-.wb-assistant-root :deep(.settings-choice-list) {
+.wb-assistant-root:not(.is-mobile) :deep(.settings-choice-list) {
   gap: 0;
 }
 
-.wb-assistant-root :deep(.settings-choice-list .wb-control-choice),
-.wb-assistant-root :deep(.settings-card > .wb-control-choice) {
+.wb-assistant-root:not(.is-mobile) :deep(.settings-choice-list .wb-control-choice),
+.wb-assistant-root:not(.is-mobile) :deep(.settings-card > .wb-control-choice) {
   min-height: 34px;
   padding: 6px 0;
   border-bottom: 1px solid var(--studio-line-soft);
@@ -19083,29 +19084,29 @@ watch(hasUnsavedChanges, (val) => {
   font-size: 10px;
 }
 
-.wb-assistant-root :deep(.settings-hint),
-.wb-assistant-root :deep(.settings-error) {
+.wb-assistant-root:not(.is-mobile) :deep(.settings-hint),
+.wb-assistant-root:not(.is-mobile) :deep(.settings-error) {
   color: var(--wb-text-dim, var(--wb-text-muted));
   font-size: 9px;
   line-height: 1.55;
 }
 
-.wb-assistant-root :deep(.version-details) {
+.wb-assistant-root:not(.is-mobile) :deep(.version-details) {
   color: var(--wb-text-muted);
   font-family: var(--studio-mono);
   font-size: 9px;
   line-height: 1.8;
 }
 
-.wb-assistant-root :deep(.api-section-heading) {
+.wb-assistant-root:not(.is-mobile) :deep(.api-section-heading) {
   margin-top: 18px;
 }
 
-.wb-assistant-root :deep(.api-mode-choices) {
+.wb-assistant-root:not(.is-mobile) :deep(.api-mode-choices) {
   gap: 6px;
 }
 
-.wb-assistant-root :deep(.api-mode-choice) {
+.wb-assistant-root:not(.is-mobile) :deep(.api-mode-choice) {
   min-height: 34px;
   border-radius: 8px;
   font-size: 10px;
