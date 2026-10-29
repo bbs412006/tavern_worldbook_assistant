@@ -1333,7 +1333,7 @@
           <button type="button" :class="{ on: activeStudioModule === 'history' }" title="时间线" @click="activateStudioModule('history')"><StudioIcon name="history" :size="18" /><span>时间线</span></button>
           <div class="studio-rail-sep"></div>
           <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
-          <button type="button" title="设置中心" @click="activateStudioModule('settings')"><StudioIcon name="settings" :size="18" /><span>设置</span></button>
+          <button type="button" :class="{ on: activeStudioModule === 'settings' }" title="设置中心" @click="activateStudioModule('settings')"><StudioIcon name="settings" :size="18" /><span>设置</span></button>
         </nav>
         <div class="studio-rail-bottom">
           <!-- unified-control-exception: SHELF 02 studio custom-styled control -->
