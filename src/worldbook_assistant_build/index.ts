@@ -510,7 +510,7 @@ function ensurePanelStyle(): void {
   #${PANEL_ID} .wb-assistant-header {
     height: auto;
     min-height: 46px;
-    padding: 0 8px 0 14px;
+    padding: 0 6px 0 10px;
     background: var(--wb-host-header-bg, #fffdf8) !important;
     border-bottom: 1px solid var(--wb-host-tool-border, var(--wb-host-border, #e6e0d3));
     cursor: default;
@@ -521,15 +521,16 @@ function ensurePanelStyle(): void {
   }
 
   #${PANEL_ID} .wb-assistant-header-title {
-    gap: 8px;
+    gap: 6px;
     color: var(--wb-host-text, #17201b);
   }
 
   #${PANEL_ID} .wb-assistant-brand-mark {
-    width: 24px;
-    height: 24px;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
     border-radius: 7px;
-    font-size: 9px;
+    font-size: 8.5px;
   }
 
   #${PANEL_ID} .wb-assistant-title-copy small {
@@ -544,15 +545,15 @@ function ensurePanelStyle(): void {
   }
 
   #${PANEL_ID} .wb-assistant-header-actions {
-    gap: 2px;
+    gap: 0px;
   }
 
   #${PANEL_ID} .wb-assistant-tool,
   #${PANEL_ID} .wb-assistant-close {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 32px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 8px;
     background: transparent;
     color: var(--wb-host-text, #17201b);
   }

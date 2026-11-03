@@ -8,6 +8,7 @@
   background: var(--wb-bg-root);
   color: var(--wb-text-main);
   overscroll-behavior: contain;
+  overflow-x: hidden;
 }
 
 /* ── Sticky Native Detail Navigation Bar ── */
@@ -521,7 +522,24 @@
 .wb-assistant-root.is-mobile .m-switch-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+}
+
+.wb-assistant-root.is-mobile .m-switch-list :deep(.wb-control-switch) {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--wb-border-subtle);
+  font-size: 13px;
+}
+
+.wb-assistant-root.is-mobile .m-switch-list :deep(.wb-control-switch:last-child) {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .wb-assistant-root.is-mobile .m-advanced-card summary {
@@ -533,6 +551,25 @@
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
+  list-style: none;
+}
+
+.wb-assistant-root.is-mobile .m-advanced-card summary::-webkit-details-marker,
+.wb-assistant-root.is-mobile .mobile-keyword-raw summary::-webkit-details-marker {
+  display: none;
+}
+
+.wb-assistant-root.is-mobile .m-advanced-card summary::after,
+.wb-assistant-root.is-mobile .mobile-keyword-raw summary::after {
+  content: '▸';
+  color: var(--wb-text-muted);
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.wb-assistant-root.is-mobile .m-advanced-card[open] summary::after,
+.wb-assistant-root.is-mobile .mobile-keyword-raw[open] summary::after {
+  content: '▾';
 }
 
 .wb-assistant-root.is-mobile .m-advanced-card[open] summary {
@@ -637,8 +674,8 @@
   border-radius: 12px;
 }
 
-/* ── Narrow Screen (<= 360px) & Phone Landscape Polish ── */
-@media (max-width: 360px) {
+/* ── Ultra-Narrow Screen (<= 330px) & Phone Landscape Polish ── */
+@media (max-width: 330px) {
   .wb-assistant-root.is-mobile .mobile-pane {
     padding-inline: 10px;
   }
