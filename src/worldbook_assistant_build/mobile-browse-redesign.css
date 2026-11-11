@@ -2086,6 +2086,69 @@
   box-shadow: var(--wb-shadow-soft);
 }
 
+.wb-assistant-root.is-mobile :deep(.cross-copy-controls-wrap) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-panel.mobile .cross-copy-controls) {
+  display: contents;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-panel.mobile .cross-copy-controls > .field) {
+  grid-column: 1 / -1;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-panel.mobile .cross-copy-control-actions) {
+  grid-column: 1 / 2;
+  width: 100%;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-panel.mobile .cross-copy-control-actions .wb-control-button),
+.wb-assistant-root.is-mobile :deep(.cross-copy-mobile-advanced-toggle) {
+  width: 100% !important;
+  justify-content: center;
+  min-height: 36px !important;
+  height: 36px !important;
+  font-size: 12.5px !important;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-mobile-advanced-toggle) {
+  grid-column: 2 / 3;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-mobile-advanced),
+.wb-assistant-root.is-mobile :deep(.cross-copy-controls-wrap > .cross-copy-inline-tip) {
+  grid-column: 1 / -1;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-mobile-bulk) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-mobile-bulk > .wb-control-button) {
+  width: 100%;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+  justify-content: center;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-mobile-bulk > .wb-control-button--primary) {
+  grid-column: 1 / -1;
+}
+
+.wb-assistant-root.is-mobile :deep(.cross-copy-mobile-bulk .cross-copy-bulk-box) {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
 .wb-assistant-root.is-mobile :deep(.cross-copy-left),
 .wb-assistant-root.is-mobile :deep(.cross-copy-right) {
   flex: 1 1 auto;
@@ -2185,6 +2248,33 @@
   box-shadow: var(--wb-shadow-soft);
 }
 
+.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-create-panel) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-create-row) {
+  display: contents;
+}
+
+.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-create-row > :first-child) {
+  grid-column: 1 / -1;
+  order: 1;
+}
+
+.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-parent-field) {
+  grid-column: 1 / -1;
+  order: 2;
+  margin-top: 0;
+}
+
+.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-create-row > .wb-control-button) {
+  order: 3;
+  width: 100%;
+  justify-content: center;
+}
+
 .wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-editor-layout) {
   display: flex;
   flex-direction: column;
@@ -2199,38 +2289,42 @@
 
 .wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-editor-tree-item) {
   display: grid !important;
-  grid-template-columns: auto 12px minmax(0, 1fr) auto !important;
+  grid-template-columns: auto 12px minmax(88px, 1fr) minmax(96px, 118px) 28px !important;
   align-items: center;
-  padding: 10px 12px;
+  padding: 9px 11px;
   border-radius: 12px;
-  gap: 8px;
+  gap: 7px 6px;
 }
 
 .wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-editor-tree-item .tag-editor-name-input) {
   grid-column: 3 / 4;
+  grid-row: 1;
   width: 100% !important;
   min-width: 0;
 }
 
-.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-editor-tree-item .tag-delete-btn) {
+.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-editor-tree-item .tag-parent-select) {
   grid-column: 4 / 5;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-editor-tree-item .tag-delete-btn) {
+  grid-column: 5 / 6;
   grid-row: 1;
   justify-self: end;
 }
 
-.wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-editor-tree-item .tag-parent-select) {
-  grid-column: 1 / -1;
-  width: 100%;
-}
-
 .wb-assistant-root.is-mobile :deep(.mobile-tag-editor .tag-color-picker) {
   grid-column: 1 / -1;
+  grid-row: 2;
   width: 100%;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  padding-top: 2px;
+  padding-top: 1px;
 }
 
 .wb-assistant-root.is-mobile :deep(.tag-color-custom) {
@@ -2271,4 +2365,52 @@
   background: var(--wb-control-danger-soft) !important;
   color: var(--wb-danger) !important;
 }
+
+/* Unified disclosure triangles on mobile <details><summary> */
+.wb-assistant-root.is-mobile :deep(.custom-prompt-section > summary),
+.wb-assistant-root.is-mobile :deep(.tool-details > summary) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+  cursor: pointer;
+}
+
+.wb-assistant-root.is-mobile :deep(.custom-prompt-section > summary::-webkit-details-marker),
+.wb-assistant-root.is-mobile :deep(.tool-details > summary::-webkit-details-marker) {
+  display: none;
+}
+
+.wb-assistant-root.is-mobile :deep(.custom-prompt-section > summary::after),
+.wb-assistant-root.is-mobile :deep(.tool-details > summary::after) {
+  content: '▸';
+  color: var(--wb-text-muted);
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.wb-assistant-root.is-mobile :deep(.custom-prompt-section[open] > summary::after),
+.wb-assistant-root.is-mobile :deep(.tool-details[open] > summary::after) {
+  content: '▾';
+}
+
+/* Global tab compact spacing & Typography modal footer polish */
+.wb-assistant-root.is-mobile .m-global-pane {
+  gap: 10px;
+}
+
+.wb-assistant-root.is-mobile .m-global-pane > .m-card {
+  padding: 12px 13px;
+  gap: 9px;
+}
+
+.wb-assistant-root.is-mobile .m-global-pane .m-binding-kv {
+  padding: 8px 10px;
+}
+
+.wb-assistant-root.is-mobile .wb-typography-modal-foot :deep(.wb-control-button) {
+  min-width: 112px;
+  justify-content: center;
+}
+
 

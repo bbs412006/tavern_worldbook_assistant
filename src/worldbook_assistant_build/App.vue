@@ -15642,8 +15642,10 @@ watch(hasUnsavedChanges, (val) => {
   min-height: 190px;
 }
 
-.checkbox-inline {
+.checkbox-inline,
+.field.checkbox-inline {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   gap: 6px;
 }
@@ -18502,31 +18504,48 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .list-summary {
-  padding: 0 4px 7px;
+  padding: 0 4px 6px;
   border-bottom: 1px solid var(--studio-line-soft);
   color: var(--wb-text-dim, var(--wb-text-muted));
   font-family: var(--studio-mono);
-  font-size: 9px;
-  letter-spacing: 0.01em;
+  font-size: 9.5px;
+  letter-spacing: 0;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.list-summary > span:first-child {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .list-summary :deep(.btn) {
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding-inline: 6px;
   font-family: inherit;
-  font-size: 8px;
+  font-size: 10px !important;
 }
 
 .list-scroll {
-  gap: 1px;
-  padding: 1px 0;
+  gap: 3px;
+  padding: 2px 0;
 }
 
 .wb-assistant-root .entry-item {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  flex: 0 0 auto;
+  height: auto;
+  gap: 2px 6px;
   width: 100%;
-  min-height: 46px;
-  padding: 5px 8px 5px 12px;
+  min-height: 0;
+  margin-bottom: 0;
+  padding: 5px 8px 5px 11px;
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
@@ -18577,7 +18596,9 @@ watch(hasUnsavedChanges, (val) => {
 
 .entry-item-tags {
   gap: 4px;
-  margin-top: 2px;
+  margin-top: 0;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .entry-item-head .entry-chip.uid,
@@ -18587,7 +18608,7 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .entry-chip {
-  min-height: 18px;
+  min-height: 17px;
   padding: 1px 5px;
   border-color: transparent;
   border-radius: 5px;
@@ -18619,9 +18640,11 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .entry-item-preview {
+  grid-column: 1 / -1;
+  padding-left: 13px;
   color: var(--wb-text-muted);
-  font-size: 8px;
-  line-height: 1.4;
+  font-size: 9px;
+  line-height: 1.35;
 }
 
 .entry-item-preview::before {
@@ -18659,8 +18682,16 @@ watch(hasUnsavedChanges, (val) => {
 
 /* ── Editor canvas ────────────────────────────────────────────── */
 .wb-editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   border: 0;
   background: transparent;
+}
+
+.wb-editor-shell {
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .editor-center {
@@ -18674,9 +18705,15 @@ watch(hasUnsavedChanges, (val) => {
 
 .editor-head {
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--studio-line-soft);
+}
+
+.wb-assistant-root:not(.is-mobile) .editor-head .editor-comment {
+  flex: 1 1 220px;
+  min-width: 180px;
 }
 
 .editor-head .editor-comment > span:first-child {
@@ -19593,10 +19630,11 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) {
-  min-height: 52px;
+  min-height: 50px;
   margin: 10px 14px 0;
-  padding: 8px 10px;
-  gap: 7px;
+  padding: 7px 12px;
+  gap: 8px;
+  flex-wrap: nowrap;
   border: 1px solid var(--studio-line);
   border-radius: 13px;
   background: color-mix(in srgb, var(--wb-bg-panel) 92%, transparent);
@@ -19604,17 +19642,73 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .toolbar-label {
-  flex: 0 1 290px;
-  min-width: 230px;
-  max-width: 320px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  gap: 8px;
 }
 
 .studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .toolbar-label > span {
+  flex-shrink: 0;
+  white-space: nowrap;
   color: var(--wb-text-dim);
   font-family: var(--studio-mono, ui-monospace, monospace);
-  font-size: 8px;
-  letter-spacing: .1em;
+  font-size: 9px;
+  letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .worldbook-picker,
+.wb-focus-toolbar .focus-toolbar-label .worldbook-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) .worldbook-picker > :deep(.wb-control),
+.wb-focus-toolbar .focus-toolbar-label .worldbook-picker > :deep(.wb-control) {
+  flex: 0 1 210px;
+  min-width: 145px;
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) :deep(.worldbook-picker-tags.tree-mode),
+.wb-focus-toolbar .focus-toolbar-label :deep(.worldbook-picker-tags.tree-mode) {
+  position: relative;
+  width: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 3px 6px;
+  border-radius: 8px;
+  border-color: var(--studio-line);
+  background: var(--studio-soft);
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) :deep(.tag-filter-toolbar),
+.wb-focus-toolbar .focus-toolbar-label :deep(.tag-filter-toolbar) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) :deep(.tag-filter-summary),
+.wb-focus-toolbar .focus-toolbar-label :deep(.tag-filter-summary) {
+  max-width: 88px;
+  font-size: 11px;
+}
+
+.studio-desktop-main > .wb-toolbar:not(.wb-focus-toolbar):not(.browse-toolbar) :deep(.tag-filter-panel),
+.wb-focus-toolbar .focus-toolbar-label :deep(.tag-filter-panel) {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 10130;
+  min-width: 320px;
+  border-color: var(--studio-line);
+  background: var(--studio-surface);
+  box-shadow: var(--studio-shadow);
 }
 
 .studio-desktop-main > .wb-toolbar > .wb-control-button:not(.studio-save-btn) {
@@ -19625,9 +19719,10 @@ watch(hasUnsavedChanges, (val) => {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  flex: 1;
-  max-width: 360px;
-  min-width: 190px;
+  flex: 0 1 240px;
+  max-width: 280px;
+  min-width: 165px;
+  margin-left: auto;
   height: 33px;
   padding: 0 9px;
   border: 1px solid var(--studio-line);
@@ -19697,9 +19792,18 @@ watch(hasUnsavedChanges, (val) => {
   display: none;
 }
 
-.studio-desktop-main .wb-bindings {
-  padding: 7px 15px 0;
-  gap: 5px;
+.main-workspace:not(.module-global) .studio-desktop-main .wb-bindings {
+  display: none;
+}
+
+.main-workspace.module-global .studio-desktop-main .wb-bindings {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 /* sidebar + workbench */
@@ -20031,16 +20135,21 @@ watch(hasUnsavedChanges, (val) => {
   white-space: nowrap;
 }
 
+.wb-editor-shell.studio-tab-content,
+.wb-editor-shell.studio-tab-config,
 .studio-tab-content .wb-editor-shell,
 .studio-tab-config .wb-editor-shell {
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
+.wb-editor-shell.studio-tab-content .wb-resize-handle.editor,
+.wb-editor-shell.studio-tab-config .wb-resize-handle.editor,
 .studio-tab-content .wb-resize-handle.editor,
 .studio-tab-config .wb-resize-handle.editor {
   display: none;
 }
 
+.wb-editor-shell.studio-tab-config .editor-side,
 .studio-tab-config .editor-side {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -20050,12 +20159,14 @@ watch(hasUnsavedChanges, (val) => {
   overflow-y: auto;
 }
 
+.wb-editor-shell.studio-tab-config .editor-side .editor-card,
 .studio-tab-config .editor-side .editor-card {
   min-width: 0;
 }
 
+.wb-editor-shell.studio-tab-history,
 .studio-tab-history .wb-editor-shell {
-  display: none;
+  display: none !important;
 }
 
 .wb-main-layout.focus-mode .studio-editor-tabs {
@@ -20529,13 +20640,23 @@ watch(hasUnsavedChanges, (val) => {
 .studio-module-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
 }
 
-.studio-module-head .studio-eyebrow,
+.studio-module-head .studio-eyebrow {
+  display: block;
+  margin-bottom: 2px;
+}
+
 .studio-module-head h1 {
-  display: none;
+  margin: 0 0 3px;
+  color: var(--wb-text-main);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
 .studio-module-head p {
@@ -20767,7 +20888,10 @@ watch(hasUnsavedChanges, (val) => {
 }
 
 .studio-copy-page :deep(.cross-copy-head-main strong) {
-  display: none;
+  display: inline-block;
+  color: var(--wb-text-main);
+  font-size: 15px;
+  font-weight: 650;
 }
 
 .studio-global-page .global-mode-grid {
