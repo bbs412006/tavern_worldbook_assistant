@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode, 'wb-typography-interface': persistedState.typography.scope === 'interface', 'wb-custom-font-family': persistedState.typography.family !== 'default', 'wb-custom-font-size': persistedState.typography.size !== null, 'wb-custom-font-weight': persistedState.typography.weight !== null, 'wb-custom-font-color': persistedState.typography.color !== null, 'wb-custom-line-height': persistedState.typography.line_height !== null }]" :style="[themeStyles, userTypographyStyles]">
+  <div ref="rootRef" class="wb-assistant-root" :class="[focusCineRootClass, { 'is-mobile': isMobile, 'is-glass-mode': persistedState.glass_mode, 'wb-typography-interface': persistedState.typography.scope === 'interface', 'wb-custom-font-family': persistedState.typography.family !== 'default', 'wb-custom-font-size': persistedState.typography.size !== null, 'wb-custom-font-weight': persistedState.typography.weight !== null, 'wb-custom-font-color': persistedState.typography.color !== null, 'wb-custom-title-weight': persistedState.typography.title_weight !== null, 'wb-custom-title-color': persistedState.typography.title_color !== null, 'wb-custom-content-weight': persistedState.typography.content_weight !== null, 'wb-custom-content-color': persistedState.typography.content_color !== null, 'wb-custom-line-height': persistedState.typography.line_height !== null }]" :style="[themeStyles, userTypographyStyles]">
     <SettingsPage
       v-if="!isMobile && utilityPage === 'settings'"
       :persisted-state="persistedState"
@@ -9882,21 +9882,56 @@ async function refreshBindings(): Promise<void> {
   }
 }
 
+function resolveCurrentRoleBoundWorldbook(): string | null {
+  let currentCharacter: string | null = null;
+  try {
+    currentCharacter = typeof getCurrentCharacterName === 'function' ? getCurrentCharacterName() : null;
+  } catch {
+    currentCharacter = null;
+  }
+  if (!currentCharacter || !currentCharacter.trim()) {
+    return null;
+  }
+
+  const available = worldbookNames.value.length ? worldbookNames.value : (typeof getWorldbookNames === 'function' ? getWorldbookNames() : []);
+  if (!available.length) {
+    return null;
+  }
+
+  let primary: string | null = bindings.charPrimary;
+  let additional: string[] = bindings.charAdditional;
+  try {
+    const charBindings = typeof getCharWorldbookNames === 'function' ? getCharWorldbookNames('current') : null;
+    if (charBindings) {
+      primary = charBindings.primary;
+      additional = charBindings.additional ?? [];
+    }
+  } catch {
+    // fallback to bindings
+  }
+
+  const primaryName = toStringSafe(primary).trim();
+  if (primaryName && available.includes(primaryName)) {
+    return primaryName;
+  }
+  const additionalName = additional.find(name => available.includes(name));
+  return additionalName ?? null;
+}
+
 function resolveContextWorldbookCandidate(): string | null {
   const available = worldbookNames.value;
   if (!available.length) {
     return null;
   }
+  const roleBound = resolveCurrentRoleBoundWorldbook();
+  if (roleBound) {
+    return roleBound;
+  }
   const chatBound = toStringSafe(bindings.chat).trim();
   if (chatBound && available.includes(chatBound)) {
     return chatBound;
   }
-  const charPrimary = toStringSafe(bindings.charPrimary).trim();
-  if (charPrimary && available.includes(charPrimary)) {
-    return charPrimary;
-  }
-  const charAdditional = bindings.charAdditional.find(name => available.includes(name));
-  return charAdditional ?? null;
+  return null;
 }
 
 function ensureSelectionForGlobalMode(options: WorldbookSwitchOptions = {}): boolean {
@@ -11280,8 +11315,10 @@ async function reloadWorldbookNames(preferred?: string, switchOptions: Worldbook
   }
 
   const fallbackName = persistedState.value.last_worldbook;
+  const roleBound = resolveCurrentRoleBoundWorldbook();
   const candidate =
     (preferred && names.includes(preferred) && preferred) ||
+    (roleBound && names.includes(roleBound) && roleBound) ||
     (fallbackName && names.includes(fallbackName) && fallbackName) ||
     selectedWorldbookName.value ||
     names[0];
@@ -11329,7 +11366,14 @@ async function hardRefreshUncoalesced(options: HardRefreshOptions = {}): Promise
   applyThemeFromPersistedState();
   syncSelectedGlobalPresetFromState();
   applyCrossCopyStateFromPersisted();
-  const reloaded = await reloadWorldbookNames(selectedWorldbookName.value || undefined, {
+
+  const roleBound = resolveCurrentRoleBoundWorldbook();
+  const fallback = persistedState.value.last_worldbook;
+  const preferredName = options.preferContextSelection
+    ? (roleBound || fallback || selectedWorldbookName.value || undefined)
+    : (selectedWorldbookName.value || undefined);
+
+  const reloaded = await reloadWorldbookNames(preferredName, {
     source: options.source ?? 'auto',
     reason: options.reason ?? '刷新后同步世界书',
     allowDirty,
@@ -11346,7 +11390,6 @@ async function hardRefreshUncoalesced(options: HardRefreshOptions = {}): Promise
     selectedKeysRaw.value = selectedKeysText.value;
     selectedSecondaryKeysRaw.value = selectedSecondaryKeysText.value;
   }
-  await refreshBindings();
   refreshRoleBindingCandidates();
   refreshCurrentRoleContext();
   await autoApplyRoleBoundPreset();
@@ -11922,7 +11965,7 @@ function stopPaneResize(): void {
 }
 
 function onPanelRefresh(): void {
-  void hardRefresh({ source: 'manual', reason: '手动刷新' });
+  void hardRefresh({ source: 'auto', reason: '打开面板刷新', preferContextSelection: true });
 }
 
 function onPanelSave(): void {
@@ -12151,11 +12194,15 @@ function updateHostPanelTheme(): void {
   const typography = persistedState.value.typography;
   if (typography.scope === 'interface' && typography.size !== null) panel.style.setProperty('--wb-host-font-size', `${typography.size}px`);
   else panel.style.removeProperty('--wb-host-font-size');
-  if (typography.scope === 'interface' && typography.weight !== null) panel.style.setProperty('--wb-host-font-weight', String(typography.weight));
+  const effectiveTitleWeight = typography.title_weight ?? typography.weight;
+  if (typography.scope === 'interface' && effectiveTitleWeight !== null) panel.style.setProperty('--wb-host-font-weight', String(effectiveTitleWeight));
   else panel.style.removeProperty('--wb-host-font-weight');
+  const effectiveTitleColor = typography.title_color ?? typography.color;
+  if (typography.scope === 'interface' && effectiveTitleColor !== null) panel.style.setProperty('--wb-host-title-color', effectiveTitleColor);
+  else panel.style.removeProperty('--wb-host-title-color');
 }
 
-watch([currentTheme, isMobile, () => persistedState.value.glass_mode, () => persistedState.value.typography.family, () => persistedState.value.typography.scope, () => persistedState.value.typography.color, () => persistedState.value.typography.size, () => persistedState.value.typography.weight], updateHostPanelTheme, { flush: 'post' });
+watch([currentTheme, isMobile, () => persistedState.value.glass_mode, () => persistedState.value.typography.family, () => persistedState.value.typography.scope, () => persistedState.value.typography.color, () => persistedState.value.typography.size, () => persistedState.value.typography.weight, () => persistedState.value.typography.title_weight, () => persistedState.value.typography.title_color, () => persistedState.value.typography.content_weight, () => persistedState.value.typography.content_color], updateHostPanelTheme, { flush: 'post' });
 
 const currentPanelHeader = computed<{ title: string; subtitle: string }>(() => {
   if (utilityPage.value === 'settings') {

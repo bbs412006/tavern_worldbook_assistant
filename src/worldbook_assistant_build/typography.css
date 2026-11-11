@@ -8,7 +8,8 @@
 .wb-assistant-root.wb-custom-font-size :deep(.mobile-archive-preview),
 .wb-assistant-root.wb-custom-font-size :deep(.browse-card-preview),
 .wb-assistant-root.wb-custom-font-size :deep(.browse-content-input),
-.wb-assistant-root.wb-custom-font-size :deep(.editor-content-area) {
+.wb-assistant-root.wb-custom-font-size :deep(.editor-content-area),
+.wb-assistant-root.wb-custom-font-size :deep(.entry-item-preview) {
   font-size: var(--wb-user-font-size) !important;
 }
 .wb-assistant-root.wb-custom-font-size :deep(.entry-item-title),
@@ -27,36 +28,50 @@
   font-size: max(10px, calc(var(--wb-user-font-size) * 0.82)) !important;
 }
 
-.wb-assistant-root.wb-custom-font-weight :deep(.entry-item-title),
-.wb-assistant-root.wb-custom-font-weight :deep(.browse-card-title),
-.wb-assistant-root.wb-custom-font-weight :deep(.mobile-reading-title),
-.wb-assistant-root.wb-custom-font-weight :deep(.editor-comment input),
-.wb-assistant-root.wb-custom-font-weight :deep(.mobile-reading-content),
-.wb-assistant-root.wb-custom-font-weight :deep(.mobile-archive-preview),
-.wb-assistant-root.wb-custom-font-weight :deep(.browse-card-preview),
-.wb-assistant-root.wb-custom-font-weight :deep(.browse-content-input),
-.wb-assistant-root.wb-custom-font-weight :deep(.editor-content-area),
-.wb-assistant-root.wb-custom-font-weight :deep(.mobile-archive-keywords span),
-.wb-assistant-root.wb-custom-font-weight :deep(.m-detail-tag),
-.wb-assistant-root.wb-custom-font-weight :deep(.browse-key-chip),
-.wb-assistant-root.wb-custom-font-weight :deep(.entry-chip) {
-  font-weight: var(--wb-user-font-weight) !important;
+/* ── Title Weight & Color ── */
+:is(.wb-assistant-root.wb-custom-title-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.entry-item-title),
+:is(.wb-assistant-root.wb-custom-title-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.browse-card-title),
+:is(.wb-assistant-root.wb-custom-title-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.mobile-reading-title),
+:is(.wb-assistant-root.wb-custom-title-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.editor-comment input) {
+  font-weight: var(--wb-user-title-font-weight, var(--wb-user-font-weight)) !important;
 }
 
-.wb-assistant-root.wb-custom-font-color :deep(.entry-item-title),
-.wb-assistant-root.wb-custom-font-color :deep(.browse-card-title),
-.wb-assistant-root.wb-custom-font-color :deep(.mobile-reading-title),
-.wb-assistant-root.wb-custom-font-color :deep(.editor-comment input),
-.wb-assistant-root.wb-custom-font-color :deep(.mobile-reading-content),
-.wb-assistant-root.wb-custom-font-color :deep(.mobile-archive-preview),
-.wb-assistant-root.wb-custom-font-color :deep(.browse-card-preview),
-.wb-assistant-root.wb-custom-font-color :deep(.browse-content-input),
-.wb-assistant-root.wb-custom-font-color :deep(.editor-content-area) {
-  color: var(--wb-user-font-color) !important;
+:is(.wb-assistant-root.wb-custom-title-color, .wb-assistant-root.wb-custom-font-color) :deep(.entry-item-title),
+:is(.wb-assistant-root.wb-custom-title-color, .wb-assistant-root.wb-custom-font-color) :deep(.browse-card-title),
+:is(.wb-assistant-root.wb-custom-title-color, .wb-assistant-root.wb-custom-font-color) :deep(.mobile-reading-title),
+:is(.wb-assistant-root.wb-custom-title-color, .wb-assistant-root.wb-custom-font-color) :deep(.editor-comment input) {
+  color: var(--wb-user-title-font-color, var(--wb-user-font-color)) !important;
 }
-.wb-assistant-root.wb-custom-font-color :deep(.mobile-archive-keywords span),
-.wb-assistant-root.wb-custom-font-color :deep(.browse-key-chip) {
-  color: color-mix(in srgb, var(--wb-user-font-color) 88%, var(--wb-bg-panel)) !important;
+
+/* ── Content Weight & Color ── */
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.mobile-reading-content),
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.mobile-archive-preview),
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.browse-card-preview),
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.browse-content-input),
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.editor-content-area),
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.entry-item-preview) {
+  font-weight: var(--wb-user-content-font-weight, var(--wb-user-font-weight)) !important;
+}
+
+:is(.wb-assistant-root.wb-custom-content-color, .wb-assistant-root.wb-custom-font-color) :deep(.mobile-reading-content),
+:is(.wb-assistant-root.wb-custom-content-color, .wb-assistant-root.wb-custom-font-color) :deep(.mobile-archive-preview),
+:is(.wb-assistant-root.wb-custom-content-color, .wb-assistant-root.wb-custom-font-color) :deep(.browse-card-preview),
+:is(.wb-assistant-root.wb-custom-content-color, .wb-assistant-root.wb-custom-font-color) :deep(.browse-content-input),
+:is(.wb-assistant-root.wb-custom-content-color, .wb-assistant-root.wb-custom-font-color) :deep(.editor-content-area),
+:is(.wb-assistant-root.wb-custom-content-color, .wb-assistant-root.wb-custom-font-color) :deep(.entry-item-preview) {
+  color: var(--wb-user-content-font-color, var(--wb-user-font-color)) !important;
+}
+
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.mobile-archive-keywords span),
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.m-detail-tag),
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.browse-key-chip),
+:is(.wb-assistant-root.wb-custom-content-weight, .wb-assistant-root.wb-custom-font-weight) :deep(.entry-chip) {
+  font-weight: var(--wb-user-content-font-weight, var(--wb-user-font-weight)) !important;
+}
+
+:is(.wb-assistant-root.wb-custom-content-color, .wb-assistant-root.wb-custom-font-color) :deep(.mobile-archive-keywords span),
+:is(.wb-assistant-root.wb-custom-content-color, .wb-assistant-root.wb-custom-font-color) :deep(.browse-key-chip) {
+  color: color-mix(in srgb, var(--wb-user-content-font-color, var(--wb-user-font-color)) 88%, var(--wb-bg-panel)) !important;
 }
 
 .wb-assistant-root.wb-custom-line-height :deep(.mobile-reading-content),
@@ -67,11 +82,17 @@
   line-height: var(--wb-user-line-height) !important;
 }
 
-/* Optional whole-interface scope: retain semantic button/contrast colors while
-   adjusting readable text and control labels. */
-.wb-assistant-root.wb-typography-interface.wb-custom-font-color {
-  --wb-text-main: var(--wb-user-font-color) !important;
-  --wb-text-muted: color-mix(in srgb, var(--wb-user-font-color) 72%, var(--wb-bg-panel)) !important;
+/* Optional whole-interface scope */
+.wb-assistant-root.wb-typography-interface.wb-custom-font-color,
+.wb-assistant-root.wb-typography-interface.wb-custom-content-color {
+  --wb-text-main: var(--wb-user-content-font-color, var(--wb-user-font-color)) !important;
+  --wb-text-muted: color-mix(in srgb, var(--wb-user-content-font-color, var(--wb-user-font-color)) 72%, var(--wb-bg-panel)) !important;
+}
+:is(.wb-assistant-root.wb-typography-interface.wb-custom-title-color, .wb-assistant-root.wb-typography-interface.wb-custom-font-color) :deep(:is(h1, h2, h3, h4)) {
+  color: var(--wb-user-title-font-color, var(--wb-user-font-color)) !important;
+}
+:is(.wb-assistant-root.wb-typography-interface.wb-custom-title-weight, .wb-assistant-root.wb-typography-interface.wb-custom-font-weight) :deep(:is(h1, h2, h3, h4)) {
+  font-weight: var(--wb-user-title-font-weight, var(--wb-user-font-weight)) !important;
 }
 .wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(:is(button, input, textarea, p, span, small, strong, b, label, summary, a, dt, dd, div, li)) {
   font-size: var(--wb-user-font-size) !important;
@@ -82,8 +103,8 @@
 .wb-assistant-root.wb-typography-interface.wb-custom-font-size :deep(.mobile-tab-bar .tab-label) {
   font-size: clamp(11px, calc(var(--wb-user-font-size) * 0.75), 18px) !important;
 }
-.wb-assistant-root.wb-typography-interface.wb-custom-font-weight :deep(:is(button, input, textarea, p, span, small, strong, b, label, summary, a, dt, dd, div, li, h1, h2, h3, h4)) {
-  font-weight: var(--wb-user-font-weight) !important;
+:is(.wb-assistant-root.wb-typography-interface.wb-custom-content-weight, .wb-assistant-root.wb-typography-interface.wb-custom-font-weight) :deep(:is(button, input, textarea, p, span, small, strong, b, label, summary, a, dt, dd, div, li)) {
+  font-weight: var(--wb-user-content-font-weight, var(--wb-user-font-weight)) !important;
 }
 .wb-assistant-root.wb-typography-interface.wb-custom-line-height :deep(:is(p, input, textarea, label, summary, dt, dd)) {
   line-height: var(--wb-user-line-height) !important;

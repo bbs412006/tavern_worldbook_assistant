@@ -385,6 +385,7 @@ test('persists typography settings and applies them to reading and editing', asy
   await page.getByRole('button', { name: '恢复默认', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (globalThis as Record<string, any>).getVariables().worldbook_assistant_state_v1.typography)).toEqual({
     scope: 'entries', family: 'default', size: null, weight: null, color: null, line_height: null,
+    title_weight: null, title_color: null, content_weight: null, content_color: null,
   });
   await expect(page.locator('.wb-assistant-root')).not.toHaveClass(/wb-custom-font-size|wb-custom-font-color/);
   await expect(hostTitle).toHaveCSS('color', 'rgb(23, 32, 27)');

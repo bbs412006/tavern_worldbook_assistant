@@ -15,6 +15,7 @@ describe('typography preferences', () => {
   it('normalizes supported values and rejects unsafe CSS values', () => {
     expect(normalizeTypography({ family: 'serif', size: 99, weight: 700, color: '#A1B2C3', line_height: 0.4 })).toEqual({
       scope: 'entries', family: 'serif', size: 28, weight: 700, color: '#a1b2c3', line_height: 1.2,
+      title_weight: null, title_color: null, content_weight: null, content_color: null,
     });
     expect(normalizeTypography({ family: 'url(evil)', size: '20px', weight: 123, color: 'red; display:none', line_height: Infinity }))
       .toEqual(createDefaultTypography());
@@ -27,5 +28,25 @@ describe('typography preferences', () => {
       '--wb-user-font-size': '20px', '--wb-user-font-weight': '600', '--wb-user-font-color': '#245678', '--wb-user-line-height': '1.8',
     });
     expect(typographyStyle(saved.typography)['--wb-user-font-family']).toContain('monospace');
+  });
+
+  it('normalizes separate title and content typography settings and applies styles', () => {
+    const custom = normalizeTypography({
+      title_weight: 800,
+      title_color: '#FF0000',
+      content_weight: 500,
+      content_color: '#00FF00',
+    });
+    expect(custom.title_weight).toBe(800);
+    expect(custom.title_color).toBe('#ff0000');
+    expect(custom.content_weight).toBe(500);
+    expect(custom.content_color).toBe('#00ff00');
+
+    expect(typographyStyle(custom)).toMatchObject({
+      '--wb-user-title-font-weight': '800',
+      '--wb-user-title-font-color': '#ff0000',
+      '--wb-user-content-font-weight': '500',
+      '--wb-user-content-font-color': '#00ff00',
+    });
   });
 });

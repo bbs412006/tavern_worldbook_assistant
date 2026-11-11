@@ -1085,4 +1085,45 @@ describe('App utility navigation', () => {
 
     wrapper.unmount();
   });
+
+  it('defaults to current character bound worldbook when entering in character card context', async () => {
+    const globals = globalThis as Record<string, any>;
+    globals.getCurrentCharacterName = vi.fn(() => '角色卡 A');
+    globals.getCharWorldbookNames = vi.fn(() => ({ primary: '角色A专属世界书', additional: [] }));
+    globals.getWorldbookNames = vi.fn(() => ['通用世界书', '角色A专属世界书', '上次世界书']);
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      selectedWorldbookName: string;
+      hardRefresh(options?: unknown): Promise<void>;
+    };
+    await vm.hardRefresh({ preferContextSelection: true });
+    await nextTick();
+
+    expect(vm.selectedWorldbookName).toBe('角色A专属世界书');
+    wrapper.unmount();
+  });
+
+  it('opens the last worldbook when entering without an active character card', async () => {
+    const globals = globalThis as Record<string, any>;
+    globals.getCurrentCharacterName = vi.fn(() => null);
+    globals.getCharWorldbookNames = vi.fn(() => ({ primary: null, additional: [] }));
+    globals.getWorldbookNames = vi.fn(() => ['通用世界书', '角色A专属世界书', '上次世界书']);
+    globals.getVariables = vi.fn(() => ({
+      [STORAGE_KEY]: {
+        last_worldbook: '上次世界书',
+      },
+    }));
+
+    const wrapper = mountApp();
+    const vm = wrapper.vm as unknown as {
+      selectedWorldbookName: string;
+      hardRefresh(options?: unknown): Promise<void>;
+    };
+    await vm.hardRefresh({ preferContextSelection: true });
+    await nextTick();
+
+    expect(vm.selectedWorldbookName).toBe('上次世界书');
+    wrapper.unmount();
+  });
 });

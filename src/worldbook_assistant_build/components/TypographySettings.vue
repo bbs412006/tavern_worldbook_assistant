@@ -3,7 +3,7 @@
     <div class="typography-heading">
       <div>
         <h3 id="typography-title">字体与阅读</h3>
-        <p>字体系列应用于整个助手；其他选项可选择作用于条目文字或整个界面。</p>
+        <p>字体系列应用于整个助手；标题与正文的字号、粗细与颜色可分别精细调节。</p>
       </div>
       <BaseButton size="sm" :disabled="isDefault" @click="$emit('reset')">恢复默认</BaseButton>
     </div>
@@ -17,8 +17,12 @@
         <BaseSelect :model-value="preferences.family" :options="familyOptions" :searchable="false" aria-labelledby="typography-family-label" @update:model-value="updateFamily" />
       </label>
       <label class="typography-field">
-        <span id="typography-weight-label">文字粗细</span>
-        <BaseSelect :model-value="preferences.weight ?? 'default'" :options="weightOptions" :searchable="false" aria-labelledby="typography-weight-label" @update:model-value="updateNumber('weight', $event)" />
+        <span id="typography-title-weight-label">标题粗细</span>
+        <BaseSelect :model-value="preferences.title_weight ?? 'default'" :options="weightOptions" :searchable="false" aria-labelledby="typography-title-weight-label" @update:model-value="updateTitleWeight" />
+      </label>
+      <label class="typography-field">
+        <span id="typography-weight-label">正文粗细</span>
+        <BaseSelect :model-value="preferences.content_weight ?? preferences.weight ?? 'default'" :options="weightOptions" :searchable="false" aria-labelledby="typography-weight-label" @update:model-value="updateContentWeight" />
       </label>
       <label class="typography-field">
         <span id="typography-line-height-label">{{ preferences.scope === 'interface' ? '文字行距' : '正文行距' }}</span>
@@ -34,40 +38,77 @@
           </div>
         </div>
       </label>
+
+      <!-- 标题颜色 -->
       <div class="typography-field typography-color-field">
-        <span id="typography-color-label">文字颜色</span>
+        <span id="typography-title-color-label">标题颜色</span>
         <div class="typography-color-controls">
-          <div class="typography-color-swatches" aria-label="快捷色板">
+          <div class="typography-color-swatches" aria-label="标题快捷色板">
             <!-- unified-control-exception: color swatch pill -->
             <button
               type="button"
               class="typography-swatch-pill"
-              :class="{ active: preferences.color === null }"
-              @click="$emit('update', { color: null })"
+              :class="{ active: preferences.title_color === null }"
+              @click="updateTitleColor(null)"
             >跟随主题</button>
             <!-- unified-control-exception: color swatch circle -->
             <button
               v-for="swatch in colorSwatches"
-              :key="swatch.color"
+              :key="'title-' + swatch.color"
               type="button"
               class="typography-swatch-circle"
-              :class="{ active: preferences.color?.toLowerCase() === swatch.color.toLowerCase() }"
+              :class="{ active: preferences.title_color?.toLowerCase() === swatch.color.toLowerCase() }"
               :style="{ backgroundColor: swatch.color }"
-              :title="swatch.name"
-              :aria-label="swatch.name"
-              @click="$emit('update', { color: swatch.color })"
+              :title="'标题 ' + swatch.name"
+              :aria-label="'标题 ' + swatch.name"
+              @click="updateTitleColor(swatch.color)"
             ></button>
           </div>
           <div class="typography-custom-color">
-            <BaseInput :model-value="preferences.color ?? themeColor" type="color" aria-labelledby="typography-color-label" @update:model-value="updateColor" />
-            <span class="typography-color-hex">{{ preferences.color ?? '跟随主题' }}</span>
+            <BaseInput :model-value="preferences.title_color ?? themeColor" type="color" aria-labelledby="typography-title-color-label" @update:model-value="updateTitleColor" />
+            <span class="typography-color-hex">{{ preferences.title_color ?? '跟随主题' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 正文颜色 -->
+      <div class="typography-field typography-color-field">
+        <span id="typography-color-label">正文颜色</span>
+        <div class="typography-color-controls">
+          <div class="typography-color-swatches" aria-label="正文快捷色板">
+            <!-- unified-control-exception: color swatch pill -->
+            <button
+              type="button"
+              class="typography-swatch-pill"
+              :class="{ active: (preferences.content_color ?? preferences.color) === null }"
+              @click="updateContentColor(null)"
+            >跟随主题</button>
+            <!-- unified-control-exception: color swatch circle -->
+            <button
+              v-for="swatch in colorSwatches"
+              :key="'content-' + swatch.color"
+              type="button"
+              class="typography-swatch-circle"
+              :class="{ active: (preferences.content_color ?? preferences.color)?.toLowerCase() === swatch.color.toLowerCase() }"
+              :style="{ backgroundColor: swatch.color }"
+              :title="'正文 ' + swatch.name"
+              :aria-label="'正文 ' + swatch.name"
+              @click="updateContentColor(swatch.color)"
+            ></button>
+          </div>
+          <div class="typography-custom-color">
+            <BaseInput :model-value="preferences.content_color ?? preferences.color ?? themeColor" type="color" aria-labelledby="typography-color-label" @update:model-value="updateContentColor" />
+            <span class="typography-color-hex">{{ preferences.content_color ?? preferences.color ?? '跟随主题' }}</span>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 实时预览区 -->
     <div class="typography-preview" :style="typographyStyle(preferences)">
       <span class="typography-preview-label">实时预览</span>
-      <p>世界书是一份慢慢展开的档案。</p>
+      <h4 class="typography-preview-title">世界书词条标题示例</h4>
+      <p class="typography-preview-content">世界书是一份慢慢展开的档案，记录着关于角色、世界与事件的设定。</p>
       <small>文字样式随设置即时变化</small>
     </div>
   </section>
@@ -140,8 +181,19 @@ function updateFamily(value: string | number | null): void {
 function updateNumber(field: 'size' | 'weight' | 'line_height', value: string | number | null): void {
   emit('update', { [field]: value === 'default' || value === null ? null : Number(value) });
 }
-function updateColor(value: string | number | null): void {
-  if (typeof value === 'string') emit('update', { color: value });
+function updateTitleWeight(value: string | number | null): void {
+  emit('update', { title_weight: value === 'default' || value === null ? null : Number(value) });
+}
+function updateContentWeight(value: string | number | null): void {
+  const num = value === 'default' || value === null ? null : Number(value);
+  emit('update', { content_weight: num, weight: num });
+}
+function updateTitleColor(value: string | number | null): void {
+  emit('update', { title_color: value === null ? null : String(value) });
+}
+function updateContentColor(value: string | number | null): void {
+  const col = value === null ? null : String(value);
+  emit('update', { content_color: col, color: col });
 }
 </script>
 
@@ -204,6 +256,21 @@ function updateColor(value: string | number | null): void {
 .typography-color-hex { font-size: 12px; color: var(--wb-text-muted); font-family: monospace; }
 .typography-preview { margin-top: 16px; padding: 14px; border: 1px solid var(--wb-border-subtle); border-radius: 10px; background: var(--wb-bg-soft, var(--wb-input-bg)); }
 .typography-preview-label, .typography-preview small { display: block; color: var(--wb-text-muted); font-size: 11px; }
-.typography-preview p { margin: 10px 0; color: var(--wb-user-font-color, var(--wb-text-main)); font-family: var(--wb-user-font-family, 'Songti SC', 'Noto Serif CJK SC', serif); font-size: var(--wb-user-font-size, 16px); font-weight: var(--wb-user-font-weight, 400); line-height: var(--wb-user-line-height, 1.7); overflow-wrap: anywhere; }
+.typography-preview-title {
+  margin: 6px 0 4px;
+  color: var(--wb-user-title-font-color, var(--wb-user-font-color, var(--wb-text-main)));
+  font-family: var(--wb-user-font-family, inherit);
+  font-size: calc(var(--wb-user-font-size, 15px) * 1.15);
+  font-weight: var(--wb-user-title-font-weight, var(--wb-user-font-weight, 700));
+}
+.typography-preview-content {
+  margin: 6px 0 10px;
+  color: var(--wb-user-content-font-color, var(--wb-user-font-color, var(--wb-text-main)));
+  font-family: var(--wb-user-font-family, 'Songti SC', 'Noto Serif CJK SC', serif);
+  font-size: var(--wb-user-font-size, 16px);
+  font-weight: var(--wb-user-content-font-weight, var(--wb-user-font-weight, 400));
+  line-height: var(--wb-user-line-height, 1.7);
+  overflow-wrap: anywhere;
+}
 @media (max-width: 520px) { .typography-heading { flex-wrap: wrap; } .typography-grid { grid-template-columns: minmax(0, 1fr); } .typography-size-field, .typography-color-field { grid-column: auto; } }
 </style>
